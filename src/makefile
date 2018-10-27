@@ -1,6 +1,7 @@
 PROJECT=main
 BUILD_DIR=../build
 DEVICES=lpc1768
+GHENT360=1
 
 # BUILD_TYPE can be set to the following values:
 #  Checked - Optimizations enabled with MRI debug monitor support. (Recommended Type)

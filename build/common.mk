@@ -85,9 +85,6 @@ else
 CSRCS2 = $(CSRCS1)
 endif
 
-# do not compile the src/testframework as that can only be done with rake
-CSRCS = $(filter-out $(SRC)/testframework/%,$(CSRCS2))
-
 ifeq "$(DISABLEMSD)" "1"
 DEFINES += -DDISABLEMSD
 endif
@@ -117,15 +114,26 @@ else
 	CPPSRCS21 = $(filter-out $(SRC)/modules/utils/panel/screens/cnc/%,$(CPPSRCS2))
 endif
 
+# ghent360: exclude the LPC17XX filder from libs. Seems device dependent.
+ifeq "$(GHENT360)" "1"
+	CPPSRCS22 = $(filter-out $(SRC)/libs/LPC17xx/%,$(CPPSRCS21))
+	CSRCS22 = $(filter-out $(SRC)/libs/LPC17xx/%,$(CSRCS2))
+else
+	CPPSRCS22 = $(CPPSRCS21)
+	CSRCS22 = $(CSRCS2)
+endif
+
 # Totally exclude any modules listed in EXCLUDE_MODULES
 # uppercase function
 uc = $(subst a,A,$(subst b,B,$(subst c,C,$(subst d,D,$(subst e,E,$(subst f,F,$(subst g,G,$(subst h,H,$(subst i,I,$(subst j,J,$(subst k,K,$(subst l,L,$(subst m,M,$(subst n,N,$(subst o,O,$(subst p,P,$(subst q,Q,$(subst r,R,$(subst s,S,$(subst t,T,$(subst u,U,$(subst v,V,$(subst w,W,$(subst x,X,$(subst y,Y,$(subst z,Z,$1))))))))))))))))))))))))))
 EXL = $(patsubst %,$(SRC)/modules/%/%,$(EXCLUDED_MODULES))
-CPPSRCS3 = $(filter-out $(EXL),$(CPPSRCS21))
+CPPSRCS3 = $(filter-out $(EXL),$(CPPSRCS22))
 DEFINES += $(call uc, $(subst /,_,$(patsubst %,-DNO_%,$(EXCLUDED_MODULES))))
 
 # do not compile the src/testframework as that can only be done with rake
 CPPSRCS = $(filter-out $(SRC)/testframework/%,$(CPPSRCS3))
+# do not compile the src/testframework as that can only be done with rake
+CSRCS = $(filter-out $(SRC)/testframework/%,$(CSRCS22))
 
 # List of the objects files to be compiled/assembled
 OBJECTS = $(patsubst %.c,$(OUTDIR)/%.o,$(CSRCS)) $(patsubst %.s,$(OUTDIR)/%.o,$(patsubst %.S,$(OUTDIR)/%.o,$(ASRCS))) $(patsubst %.cpp,$(OUTDIR)/%.o,$(CPPSRCS))
@@ -170,7 +178,8 @@ ifeq "$(MRI_ENABLE)" "1"
 LIBS += $(MRI_DIR)/mri.ar
 endif
 
-LIBS += $(MBED_LIBS)
+# ghent360: remove mbed lib to see what breaks.
+#LIBS += $(MBED_LIBS)
 LIBS += $(SYS_LIBS)
 LIBS += $(LIBS_SUFFIX)
 
