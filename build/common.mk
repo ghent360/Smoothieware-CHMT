@@ -114,12 +114,12 @@ else
 	CPPSRCS21 = $(filter-out $(SRC)/modules/utils/panel/screens/cnc/%,$(CPPSRCS2))
 endif
 
-# ghent360: exclude the LPX17xx lib from the build
+# ghent360: exclude the LPC17XX filder from libs. Seems device dependent.
 ifeq "$(GHENT360)" "1"
 	CPPSRCS22 = $(filter-out $(SRC)/libs/LPC17xx/%,$(CPPSRCS21))
 	CSRCS22 = $(filter-out $(SRC)/libs/LPC17xx/%,$(CSRCS2))
 else
-	CPPSRCS22 = $(CPPSRCS2)
+	CPPSRCS22 = $(CPPSRCS21)
 	CSRCS22 = $(CSRCS2)
 endif
 
@@ -178,7 +178,8 @@ ifeq "$(MRI_ENABLE)" "1"
 LIBS += $(MRI_DIR)/mri.ar
 endif
 
-LIBS += $(MBED_LIBS)
+# ghent360: remove mbed lib to see what breaks.
+#LIBS += $(MBED_LIBS)
 LIBS += $(SYS_LIBS)
 LIBS += $(LIBS_SUFFIX)
 
