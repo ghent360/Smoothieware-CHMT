@@ -2,6 +2,8 @@
 
 #ifndef __STM32F4__
 #include <sLPC17xx.h>
+#else
+#include <stm32f446xx.h>
 #endif
 #include <mri.h>
 
@@ -9,32 +11,31 @@
 // See http://smoothieware.org/mri-debugging 
 
 extern "C" {
-    static uint32_t _set_high_on_debug[5] = {
-//         (1 << 4) | (1 << 10) | (1 << 19) | (1 << 21), // smoothieboard stepper EN pins
-        0,
-        0,
-        0,
-        0,
-        0
-    };
-    static uint32_t _set_low_on_debug[5]  = {
-        0,
-        0,
-//         (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7), // smoothieboard heater outputs
-        0,
-        0,
-        0
-    };
 
-    static uint32_t _previous_state[5];
-
+#ifndef __STM32F4__
     static LPC_GPIO_TypeDef* io;
+    #define GPIO_PORT_COUNT     5
+    #define GPIO_PIN_MAX        32
+#else
+    static GPIO_TypeDef* io;
+
+    static GPIO_TypeDef* const gpios[] = {
+        GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH, GPIOI};
+
+    #define GPIO_PORT_COUNT     (sizeof(gpios)/sizeof(gpios[0]))
+    #define GPIO_PIN_MAX        16
+#endif
+    static uint32_t _set_high_on_debug[GPIO_PORT_COUNT] = {0};
+    static uint32_t _set_low_on_debug[GPIO_PORT_COUNT]  = {0};
+    static uint32_t _previous_state[GPIO_PORT_COUNT];
+
     static int i;
 
     void __mriPlatform_EnteringDebuggerHook()
     {
-        for (i = 0; i < 5; i++)
+        for (i = 0; i < GPIO_PORT_COUNT; i++)
         {
+#ifndef __STM32F4__
             io           = (LPC_GPIO_TypeDef*) (LPC_GPIO_BASE + (0x20 * i));
             io->FIOMASK &= ~(_set_high_on_debug[i] | _set_low_on_debug[i]);
 
@@ -42,34 +43,46 @@ extern "C" {
 
             io->FIOSET   = _set_high_on_debug[i];
             io->FIOCLR   = _set_low_on_debug[i];
+#else
+            io          = gpios[i];
+            _previous_state[i] = io->IDR;
+            io->BSRR    = _set_high_on_debug[i];
+            io->BSRR    = (_set_low_on_debug[i] << GPIO_BSRR_BR0_Pos);
+#endif
         }
     }
 
     void __mriPlatform_LeavingDebuggerHook()
     {
-        for (i = 0; i < 5; i++)
+        for (i = 0; i < GPIO_PORT_COUNT; i++)
         {
+#ifndef __STM32F4__
             io           = (LPC_GPIO_TypeDef*) (LPC_GPIO_BASE + (0x20 * i));
             io->FIOMASK &= ~(_set_high_on_debug[i] | _set_low_on_debug[i]);
             io->FIOSET   =   _previous_state[i]  & (_set_high_on_debug[i] | _set_low_on_debug[i]);
             io->FIOCLR   = (~_previous_state[i]) & (_set_high_on_debug[i] | _set_low_on_debug[i]);
+#else
+            io       = gpios[i];
+            io->BSRR = _previous_state[i]  & (_set_high_on_debug[i] | _set_low_on_debug[i]);
+            io->BSRR = ((~_previous_state[i]) & (_set_high_on_debug[i] | _set_low_on_debug[i])) << GPIO_BSRR_BR0_Pos;
+#endif
         }
     }
 
     void set_high_on_debug(int port, int pin)
     {
-        if ((port >= 5) || (port < 0))
+        if ((port >= GPIO_PORT_COUNT) || (port < 0))
             return;
-        if ((pin >= 32) || (pin < 0))
+        if ((pin >= MAX_PIN) || (pin < 0))
             return;
         _set_high_on_debug[port] |= (1<<pin);
     }
 
     void set_low_on_debug(int port, int pin)
     {
-        if ((port >= 5) || (port < 0))
+        if ((port >= GPIO_PORT_COUNT) || (port < 0))
             return;
-        if ((pin >= 32) || (pin < 0))
+        if ((pin >= MAX_PIN) || (pin < 0))
             return;
         _set_low_on_debug[port] |= (1<<pin);
     }
