@@ -100,8 +100,8 @@ class Pin {
 #else        
         LPC_GPIO_TypeDef* port;
 #endif
-        unsigned char pin;
-        char port_number;
+        uint8_t pin;
+        uint8_t port_number;
 
     private:
         struct {

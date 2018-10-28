@@ -106,7 +106,7 @@ GPIO leds[5] = {
 void init() {
 
     // Default pins to low status
-    for (int i = 0; i < sizeof(leds)/sizeof(leds[0]); i++){
+    for (size_t i = 0; i < sizeof(leds)/sizeof(leds[0]); i++){
         leds[i].output();
         leds[i]= 0;
     }
