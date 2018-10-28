@@ -53,9 +53,7 @@ StepTicker::StepTicker()
 #define UNSTEP_TIME 100    
 #else
     TIM2->CR1 = TIM_CR1_URS;    // int on overflow
-    TIM2->DIER = TIM_DIER_UIE;  // update interrupt en
     TIM5->CR1 = TIM_CR1_URS | TIM_CR1_OPM;  // int on overflow, one-shot mode
-    TIM5->DIER = TIM_DIER_UIE;              // update interrupt en
 #define UNSTEP_TIME 5    
 #endif
     // Default start values
@@ -86,10 +84,17 @@ void StepTicker::start()
     NVIC_EnableIRQ(TIMER0_IRQn);     // Enable interrupt handler
     NVIC_EnableIRQ(TIMER1_IRQn);     // Enable interrupt handler
 #else
+    TIM2->DIER = TIM_DIER_UIE;     // update interrupt en
+    TIM5->DIER = TIM_DIER_UIE;     // update interrupt en
     NVIC_EnableIRQ(TIM5_IRQn);     // Enable interrupt handler
     NVIC_EnableIRQ(TIM2_IRQn);     // Enable interrupt handler
 #endif
+
     current_tick= 0;
+
+#ifdef __STM32F4__
+    TIM2->CR1 |= TIM_CR1_CEN;      // start step timer
+#endif
 }
 
 // Set the base stepping frequency
@@ -102,9 +107,7 @@ void StepTicker::set_frequency( float frequency )
     LPC_TIM0->TCR = 3;  // Reset
     LPC_TIM0->TCR = 1;  // start
 #else
-    TIM2->CR1 &= ~TIM_CR1_CEN; // disable
     TIM2->ARR = this->period;
-    TIM2->CR1 |= TIM_CR1_CEN;  // start    
 #endif
 }
 

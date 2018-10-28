@@ -62,8 +62,4 @@ protected:
     volatile int flag_1s_flag;
 };
 
-
-
-
-
 #endif

@@ -27,10 +27,14 @@ SlowTicker::SlowTicker(){
     // ISP button FIXME: WHy is this here?
     ispbtn.from_string("2.10")->as_input()->pull_up();
 
+#ifndef __STM32F4__
     LPC_SC->PCONP |= (1 << 22);     // Power Ticker ON
     LPC_TIM2->MCR = 3;              // Match on MR0, reset on MR0
     // do not enable interrupt until setup is complete
     LPC_TIM2->TCR = 0;              // Disable interrupt
+#else
+    TIM3->CR1 = TIM_CR1_URS;    // int on overflow
+#endif
 
     max_frequency = 5;  // initial max frequency is set to 5Hz
     set_frequency(max_frequency);
@@ -39,8 +43,14 @@ SlowTicker::SlowTicker(){
 
 void SlowTicker::start()
 {
+#ifndef __STM32F4__
     LPC_TIM2->TCR = 1;              // Enable interrupt
     NVIC_EnableIRQ(TIMER2_IRQn);    // Enable interrupt handler
+#else
+    TIM3->DIER = TIM_DIER_UIE;      // update interrupt en
+    NVIC_EnableIRQ(TIM3_IRQn);      // Enable interrupt handler
+    TIM3->CR1 |= TIM_CR1_CEN;       // start
+#endif
 }
 
 void SlowTicker::on_module_loaded(){
@@ -50,9 +60,13 @@ void SlowTicker::on_module_loaded(){
 // Set the base frequency we use for all sub-frequencies
 void SlowTicker::set_frequency( int frequency ){
     this->interval = (SystemCoreClock >> 2) / frequency;   // SystemCoreClock/4 = Timer increments in a second
+#ifndef __STM32F4__
     LPC_TIM2->MR0 = this->interval;
     LPC_TIM2->TCR = 3;  // Reset
     LPC_TIM2->TCR = 1;  // Reset
+#else
+    TIM3->ARR = this->interval;
+#endif
     flag_1s_count= SystemCoreClock>>2;
 }
 
@@ -112,8 +126,13 @@ void SlowTicker::on_idle(void*)
 {
     static uint16_t ledcnt= 0;
     if(THEKERNEL->is_using_leds()) {
+#ifndef __STM32F4__
         // flash led 3 to show we are alive
         leds[2]= (ledcnt++ & 0x1000) ? 1 : 0;
+#else
+        // TODO(ghent360): fix the leds
+        leds[0]= (ledcnt++ & 0x1000) ? 1 : 0;
+#endif
     }
 
     // if interrupt has set the 1 second flag
@@ -122,10 +141,16 @@ void SlowTicker::on_idle(void*)
         THEKERNEL->call_event(ON_SECOND_TICK);
 }
 
+#ifndef __STM32F4__
 extern "C" void TIMER2_IRQHandler (void){
     if((LPC_TIM2->IR >> 0) & 1){  // If interrupt register set for MR0
         LPC_TIM2->IR |= 1 << 0;   // Reset it
     }
     global_slow_ticker->tick();
 }
-
+#else
+extern "C" void TIM3_IRQHandler (void){
+    TIM3->SR = ~TIM_SR_UIF;
+    global_slow_ticker->tick();
+}
+#endif
