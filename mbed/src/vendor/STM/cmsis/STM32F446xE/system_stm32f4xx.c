@@ -332,12 +332,6 @@ void SystemCoreClockUpdate(void)
   SystemCoreClock >>= tmp;
 }
 
-// disable systick and its interrupts for now
-HAL_StatusTypeDef HAL_InitTick (uint32_t TickPriority)
-{
-    return 0;
-}
-
 #if defined (DATA_IN_ExtSRAM) || defined (DATA_IN_ExtSDRAM)
 /**
   * @brief  Setup the external memory controller.
