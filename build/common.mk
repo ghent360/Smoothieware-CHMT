@@ -86,7 +86,10 @@ CSRCS2 = $(CSRCS1)
 endif
 
 ifeq "$(DISABLEMSD)" "1"
-DEFINES += -DDISABLEMSD
+DEFINES += -DDISABLEMSD=1
+endif
+ifeq "$(DISABLEUSB)" "1"
+DEFINES += -DDISABLEUSB=1
 endif
 
 ASRCS =  $(wildcard $(SRC)/*.S $(SRC)/*/*.S $(SRC)/*/*/*.S $(SRC)/*/*/*/*.S $(SRC)/*/*/*/*/*.S)
