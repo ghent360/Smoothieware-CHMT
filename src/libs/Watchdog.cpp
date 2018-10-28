@@ -35,7 +35,7 @@ Watchdog::Watchdog(uint32_t timeout, WDT_ACTION action)
     m_wdt_handle.Init.Prescaler   = WWDG_CFR_WDGTB0 | WWDG_CFR_WDGTB1; // prescale /8
     m_wdt_handle.Init.Window      = WWDG_CFR_W; // load max values, still timeout ~ 100ms
     m_wdt_handle.Init.Counter     = WWDG_CR_T;  // TODO rewrite to use IWDG for longer timeouts
-    m_wdt_handle.Init.EWIMode     = (action == WDT_MRI) ? WWDG_SR_EWIF : 0;
+    //m_wdt_handle.Init.EWIMode     = (action == WDT_MRI) ? WWDG_SR_EWIF : 0;
 
     HAL_WWDG_Init(&m_wdt_handle);
     feed();
@@ -52,7 +52,7 @@ void Watchdog::feed()
 #ifndef __STM32F4__
     WDT_Feed();
 #else
-    HAL_WWDG_Refresh(&m_wdt_handle);
+    HAL_WWDG_Refresh(&m_wdt_handle, WWDG_CR_T);
 #endif
 }
 
@@ -96,7 +96,7 @@ extern "C" void WWDG_IRQHandler(void)
         //leds[3]= 1;
     }
     HAL_WWDG_IRQHandler(&m_wdt_handle); // clears int flag
-    HAL_WWDG_Refresh(&m_wdt_handle);
+    HAL_WWDG_Refresh(&m_wdt_handle, WWDG_CR_T);
     __debugbreak();
 }
 #endif // __STM32F4__
