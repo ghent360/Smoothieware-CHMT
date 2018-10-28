@@ -124,6 +124,7 @@ unsigned int Adc::read(Pin *pin)
 // Convert a smoothie Pin into a mBed Pin
 PinName Adc::_pin_to_pinname(Pin *pin)
 {
+#ifndef __STM32F4__    
     if( pin->port == LPC_GPIO0 && pin->pin == 23 ) {
         return p15;
     } else if( pin->port == LPC_GPIO0 && pin->pin == 24 ) {
@@ -140,5 +141,21 @@ PinName Adc::_pin_to_pinname(Pin *pin)
         //TODO: Error
         return NC;
     }
+#else
+    uint32_t pin_name = STM_PINNAME(pin->port_number, pin->pin);
+    switch (pin_name) {
+        case PF_3: case PF_4: case PF_5: case PF_6:
+        case PF_7: case PF_8: case PF_9: case PF_10:
+        case PC_0: case PC_1: case PC_2: case PC_3:
+        case PA_0: case PA_1: case PA_2: case PA_3:
+        case PA_4: case PA_5: case PA_6: case PA_7:
+        case PC_4: case PC_5: case PB_0: case PB_1:
+            return (PinName)pin_name;
+            break;
+
+        default:
+            return NC;
+            break;
+#endif    
 }
 

@@ -1,13 +1,19 @@
 #include "gpio.h"
 
+#ifndef __STM32F4__
 #include "LPC17xx.h"
 #include "lpc17xx_pinsel.h"
 #include "lpc17xx_gpio.h"
+#endif
 
 GPIO::GPIO(PinName pin) {
+#ifndef __STM32F4__	
     this->port = (pin >> 5) & 7;
     this->pin = pin & 0x1F;
-
+#else
+    this->port = STM_PORT(pin);
+	this->pin = STM_PIN(pin);
+#endif
     setup();
 }
 

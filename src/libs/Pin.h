@@ -52,9 +52,9 @@ class Pin {
         }
 
         Pin* as_open_drain(void);
-
+#ifndef __STM32F4__
         Pin* as_repeater(void);
-
+#endif
         Pin* pull_up(void);
 
         Pin* pull_down(void);

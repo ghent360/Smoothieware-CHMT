@@ -67,6 +67,7 @@ extern "C" {
 // Low nibble  = pin number
 #define STM_PORT(X) (((uint32_t)(X) >> 4) & 0xF)
 #define STM_PIN(X)  ((uint32_t)(X) & 0xF)
+#define STM_PINNAME(port, pin)  (((port & 0xF) << 4) | (pin & 0xF))
 
 typedef enum {
     PIN_INPUT,
