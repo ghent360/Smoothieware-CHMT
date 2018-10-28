@@ -16,6 +16,10 @@
 
 #include <mri.h>
 
+#ifdef __STM32F4__
+extern "C" void TIM3_IRQHandler(void);
+#endif
+
 // This module uses a Timer to periodically call hooks
 // Modules register with a function ( callback ) and a frequency, and we then call that function at the given frequency.
 
@@ -34,6 +38,7 @@ SlowTicker::SlowTicker(){
     LPC_TIM2->TCR = 0;              // Disable interrupt
 #else
     __TIM3_CLK_ENABLE();
+    NVIC_SetVector(TIM3_IRQn, (uint32_t)TIM3_IRQHandler);
     TIM3->CR1 = TIM_CR1_URS;    // int on overflow
 #endif
 

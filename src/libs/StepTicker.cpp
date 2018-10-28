@@ -18,6 +18,8 @@
 
 #ifdef __STM32F4__
 #include "system_stm32f4xx.h"
+extern "C" void TIM2_IRQHandler(void);
+extern "C" void TIM5_IRQHandler(void);
 #else
 #include "system_LPC17xx.h" // mbed.h lib
 #endif
@@ -54,6 +56,8 @@ StepTicker::StepTicker()
 #else
     __TIM2_CLK_ENABLE();
     __TIM5_CLK_ENABLE();
+    NVIC_SetVector(TIM2_IRQn, (uint32_t)TIM2_IRQHandler);
+    NVIC_SetVector(TIM5_IRQn, (uint32_t)TIM5_IRQHandler);
     TIM2->CR1 = TIM_CR1_URS;    // int on overflow
     TIM5->CR1 = TIM_CR1_URS | TIM_CR1_OPM;  // int on overflow, one-shot mode
 #define UNSTEP_TIME 5    
