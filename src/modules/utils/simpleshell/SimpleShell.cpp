@@ -45,8 +45,8 @@
 #include "system_stm32f4xx.h"
 #else
 #include "system_LPC17xx.h"
+#include "LPC17xx.h"
 #endif
-//#include "LPC17xx.h"
 
 #include "mbed.h" // for wait_ms()
 
@@ -605,6 +605,7 @@ void SimpleShell::mem_command( string parameters, StreamOutput *stream)
     stream->printf("Block size: %u bytes, Tickinfo size: %u bytes\n", sizeof(Block), sizeof(Block::tickinfo_t) * Block::n_actuators);
 }
 
+#ifndef __STM32F4__
 static uint32_t getDeviceType()
 {
 #define IAP_LOCATION 0x1FFF1FF1
@@ -622,6 +623,7 @@ static uint32_t getDeviceType()
 
     return result[1];
 }
+#endif
 
 // get network config
 void SimpleShell::net_command( string parameters, StreamOutput *stream)
@@ -642,8 +644,13 @@ void SimpleShell::net_command( string parameters, StreamOutput *stream)
 void SimpleShell::version_command( string parameters, StreamOutput *stream)
 {
     Version vers;
+#ifndef __STM32F4__
     uint32_t dev = getDeviceType();
     const char *mcu = (dev & 0x00100000) ? "LPC1769" : "LPC1768";
+#else
+    const uint32_t *mcu_idcode = (const uint32_t *)DBGMCU_BASE;
+    const char *mcu = ((*mcu_idcode & 0x0FFF) == 0x413) ? "STM32F4" : "Unknown";
+#endif
     stream->printf("Build version: %s, Build date: %s, MCU: %s, System Clock: %ldMHz\r\n", vers.get_build(), vers.get_build_date(), mcu, SystemCoreClock / 1000000);
     #ifdef CNC
     stream->printf("  CNC Build ");
