@@ -34,7 +34,7 @@
 #include "us_ticker_api.h"
 #include "PeripheralNames.h"
 
-#define TIM_MST TIM5
+#define TIM_MST TIM2
 
 static TIM_HandleTypeDef TimMasterHandle;
 static int us_ticker_inited = 0;
