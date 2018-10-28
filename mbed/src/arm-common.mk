@@ -60,6 +60,9 @@ LD_DEST=$(RELEASE_DROP)/$(LD_FILE)
 # Copy headers to device drop directory.
 DEVICE_HEADER_SRCS =$(notdir $(wildcard $(VENDOR_CAPI_DEVICE_SRC)/*.h))
 DEVICE_HEADER_SRCS+=$(notdir $(wildcard $(VENDOR_CMSIS_SRC)/*.h))
+ifeq "$(VENDOR)" "STM"
+DEVICE_HEADER_SRCS+=$(notdir $(wildcard $(VENDOR_CMSIS_SRC)/hal/*.h))
+endif
 DEVICE_HEADERS     =$(patsubst %.h,$(DEVICE_DROP)/%.h,$(DEVICE_HEADER_SRCS))
 
 
@@ -254,3 +257,10 @@ $(DEVICE_DROP)/%.h : $(VENDOR_CMSIS_SRC)/%.h
 	@echo Deploying $? to drop
 	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
 	$(Q) $(COPY) $(call convert-slash,$?) $(call convert-slash,$@) $(NOSTDOUT)
+
+ifeq "$(VENDOR)" "STM"
+$(DEVICE_DROP)/%.h : $(VENDOR_CMSIS_SRC)/hal/%.h
+	@echo Deploying $? to drop
+	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+	$(Q) $(COPY) $(call convert-slash,$?) $(call convert-slash,$@) $(NOSTDOUT)
+endif
