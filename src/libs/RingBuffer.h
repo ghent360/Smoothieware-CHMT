@@ -31,7 +31,9 @@ template<class kind, int length> class RingBuffer {
         volatile int          head;
 };
 
-//#include "sLPC17xx.h"
+#ifndef __STM32F4__
+#include "sLPC17xx.h"
+#endif
 
 template<class kind, int length> RingBuffer<kind, length>::RingBuffer(){
     this->tail = this->head = 0;

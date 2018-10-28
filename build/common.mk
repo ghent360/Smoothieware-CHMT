@@ -187,8 +187,7 @@ ifeq "$(MRI_ENABLE)" "1"
 LIBS += $(MRI_DIR)/mri.ar
 endif
 
-# ghent360: remove mbed lib to see what breaks.
-#LIBS += $(MBED_LIBS)
+LIBS += $(MBED_LIBS)
 LIBS += $(SYS_LIBS)
 LIBS += $(LIBS_SUFFIX)
 

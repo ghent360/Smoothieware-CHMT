@@ -20,7 +20,9 @@
 #define CIRCBUFFER_H
 
 #include <stdlib.h>
-//#include "sLPC17xx.h"
+#ifndef __STM32F4__
+#include "sLPC17xx.h"
+#endif
 #include "platform_memory.h"
 
 template <class T>
