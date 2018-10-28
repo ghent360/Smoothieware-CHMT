@@ -148,11 +148,13 @@ string get_arguments( const string& possible_command )
 bool file_exists( const string file_name )
 {
     bool exists = false;
+#ifndef DISABLEMSD
     FILE *lp = fopen(file_name.c_str(), "r");
     if(lp) {
         exists = true;
     }
     fclose(lp);
+#endif
     return exists;
 }
 
