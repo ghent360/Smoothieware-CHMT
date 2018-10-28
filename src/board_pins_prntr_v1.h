@@ -6,6 +6,17 @@
 #define SD_SCK  PA_0
 #define SD_CS   PA_0
 
+#define EXT_MOSI PA_0
+#define EXT_MISO PA_0
+#define EXT_SCK  PA_0
+
+#define TEMP_MOSI PA_0
+#define TEMP_MISO PA_0
+#define TEMP_SCK  PA_0
+
+#define I2C_SDA PA_0
+#define I2C_SCK PA_0
+
 #define LED1    PA_0
 #define LED2    PA_0
 #define LED3    PA_0

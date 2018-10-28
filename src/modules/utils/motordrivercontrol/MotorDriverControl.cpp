@@ -20,6 +20,8 @@
 
 #include <string>
 
+#include "board_pins.h"
+
 #define motor_driver_control_checksum  CHECKSUM("motor_driver_control")
 #define enable_checksum                CHECKSUM("enable")
 #define chip_checksum                  CHECKSUM("chip")
@@ -124,9 +126,9 @@ bool MotorDriverControl::config_module(uint16_t cs)
     // select SPI channel to use
     PinName mosi, miso, sclk;
     if(spi_channel == 0) {
-        mosi = P0_18; miso = P0_17; sclk = P0_15;
+        mosi = EXT_MOSI; miso = EXT_MISO; sclk = EXT_SCK;
     } else if(spi_channel == 1) {
-        mosi = P0_9; miso = P0_8; sclk = P0_7;
+        mosi = SD_MOSI; miso = SD_MISO; sclk = SD_SCK;
     } else {
         THEKERNEL->streams->printf("MotorDriverControl %c ERROR: Unknown SPI Channel: %d\n", axis, spi_channel);
         return false;

@@ -15,7 +15,9 @@
 #include "max31855.h"
 
 #include "MRI_Hooks.h"
-
+#ifdef __STM32F4__
+#include "board_pins.h"
+#endif
 #define chip_select_checksum CHECKSUM("chip_select_pin")
 #define spi_channel_checksum CHECKSUM("spi_channel")
 
@@ -43,6 +45,7 @@ void Max31855::UpdateConfig(uint16_t module_checksum, uint16_t name_checksum)
     PinName miso;
     PinName mosi;
     PinName sclk;
+#ifndef __STM32F4__
     if(spi_channel == 0) {
         // Channel 0
         mosi=P0_18; miso=P0_17; sclk=P0_15;
@@ -50,7 +53,11 @@ void Max31855::UpdateConfig(uint16_t module_checksum, uint16_t name_checksum)
         // Channel 1
         mosi=P0_9; miso=P0_8; sclk=P0_7;
     }
-
+#else
+    miso = TEMP_MISO;
+    mosi = TEMP_MOSI;
+    sclk = TEMP_SCK;
+#endif
     delete spi;
     spi = new mbed::SPI(mosi, miso, sclk);
 

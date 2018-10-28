@@ -39,6 +39,7 @@
 
 // for parse_pins in mbed
 #include "pinmap.h"
+#include "board_pins.h"
 
 #define panel_checksum             CHECKSUM("panel")
 #define enable_checksum            CHECKSUM("enable")
@@ -672,9 +673,9 @@ bool Panel::mount_external_sd(bool on)
         if(this->sd == nullptr) {
             PinName mosi, miso, sclk, cs= this->extsd_spi_cs;
             if(extsd_spi_channel == 0) {
-                mosi = P0_18; miso = P0_17; sclk = P0_15;
+                mosi = EXT_MOSI; miso = EXT_MISO; sclk = EXT_SCK;
             } else if(extsd_spi_channel == 1) {
-                mosi = P0_9; miso = P0_8; sclk = P0_7;
+                mosi = SD_MOSI; miso = SD_MISO; sclk = SD_SCK;
             } else{
                 this->external_sd_enable= false;
                 THEKERNEL->streams->printf("Bad SPI channel for external SDCard\n");
