@@ -40,6 +40,7 @@ StepTicker::StepTicker()
 {
     instance = this; // setup the Singleton instance of the stepticker
 
+#ifndef __STM32F4__
     // Configure the timer
     LPC_TIM0->MR0 = 10000000;       // Initial dummy value for Match Register
     LPC_TIM0->MCR = 3;              // Match on MR0, reset on MR0
@@ -49,10 +50,17 @@ StepTicker::StepTicker()
     LPC_TIM1->MR0 = 1000000;
     LPC_TIM1->MCR = 5;              // match on Mr0, stop on match
     LPC_TIM1->TCR = 0;              // Disable interrupt
-
+#define UNSTEP_TIME 100    
+#else
+    TIM2->CR1 = TIM_CR1_URS;    // int on overflow
+    TIM2->DIER = TIM_DIER_UIE;  // update interrupt en
+    TIM5->CR1 = TIM_CR1_URS | TIM_CR1_OPM;  // int on overflow, one-shot mode
+    TIM5->DIER = TIM_DIER_UIE;              // update interrupt en
+#define UNSTEP_TIME 5    
+#endif
     // Default start values
     this->set_frequency(100000);
-    this->set_unstep_time(100);
+    this->set_unstep_time(UNSTEP_TIME);
 
     this->unstep.reset();
     this->num_motors = 0;
@@ -74,8 +82,13 @@ StepTicker::~StepTicker()
 //called when everything is setup and interrupts can start
 void StepTicker::start()
 {
+#ifndef __STM32F4__
     NVIC_EnableIRQ(TIMER0_IRQn);     // Enable interrupt handler
     NVIC_EnableIRQ(TIMER1_IRQn);     // Enable interrupt handler
+#else
+    NVIC_EnableIRQ(TIM5_IRQn);     // Enable interrupt handler
+    NVIC_EnableIRQ(TIM2_IRQn);     // Enable interrupt handler
+#endif
     current_tick= 0;
 }
 
@@ -84,17 +97,26 @@ void StepTicker::set_frequency( float frequency )
 {
     this->frequency = frequency;
     this->period = floorf((SystemCoreClock / 4.0F) / frequency); // SystemCoreClock/4 = Timer increments in a second
+#ifndef __STM32F4__
     LPC_TIM0->MR0 = this->period;
     LPC_TIM0->TCR = 3;  // Reset
     LPC_TIM0->TCR = 1;  // start
+#else
+    TIM2->CR1 &= ~TIM_CR1_CEN; // disable
+    TIM2->ARR = this->period;
+    TIM2->CR1 |= TIM_CR1_CEN;  // start    
+#endif
 }
 
 // Set the reset delay, must be called after set_frequency
 void StepTicker::set_unstep_time( float microseconds )
 {
     uint32_t delay = floorf((SystemCoreClock / 4.0F) * (microseconds / 1000000.0F)); // SystemCoreClock/4 = Timer increments in a second
+#ifndef __STM32F4__
     LPC_TIM1->MR0 = delay;
-
+#else
+    TIM5->ARR = delay;
+#endif
     // TODO check that the unstep time is less than the step period, if not slow down step ticker
 }
 
@@ -109,6 +131,7 @@ void StepTicker::unstep_tick()
     this->unstep.reset();
 }
 
+#ifndef __STM32F4__
 extern "C" void TIMER1_IRQHandler (void)
 {
     LPC_TIM1->IR |= 1 << 0;
@@ -122,6 +145,20 @@ extern "C" void TIMER0_IRQHandler (void)
     LPC_TIM0->IR |= 1 << 0;
     StepTicker::getInstance()->step_tick();
 }
+#else
+extern "C" void TIM5_IRQHandler (void)
+{
+    TIM5->SR = ~TIM_SR_UIF;
+    StepTicker::getInstance()->unstep_tick();
+}
+
+extern "C" void TIM2_IRQHandler (void)
+{
+    // Reset interrupt register
+    TIM2->SR = ~TIM_SR_UIF;
+    StepTicker::getInstance()->step_tick();
+}
+#endif
 
 extern "C" void PendSV_Handler(void)
 {
@@ -218,8 +255,13 @@ void StepTicker::step_tick (void)
     // right now it takes about 3-4us but if the unstep were near 10uS or greater it would be an issue
     // also it takes at least 2us to get here so even when set to 1us pulse width it will still be about 3us
     if( unstep.any()) {
+#ifndef __STM32F4__
         LPC_TIM1->TCR = 3;
         LPC_TIM1->TCR = 1;
+#else
+        // CEN should have cleared by one-shot mode
+        TIM5->CR1 |= TIM_CR1_CEN;
+#endif
     }
 
 
