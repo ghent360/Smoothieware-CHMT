@@ -11,6 +11,7 @@
 #define MAX_PIN 32
 #else
 #define MAX_PIN 16
+extern uint32_t Set_GPIO_Clock(uint32_t port_idx);
 #endif
 
 Pin::Pin(){
@@ -60,6 +61,9 @@ Pin* Pin::from_string(std::string value){
     }
     // if cn > cs then strtol read at least one digit
     if ((cn > cs) && (port_number < (sizeof(gpios)/sizeof(gpios[0])))){
+#ifdef __STM32F4__
+        Set_GPIO_Clock(port_number); // enable clock domain
+#endif
         // translate port index into something useful
         this->port = gpios[(unsigned int) this->port_number];
         // if the char after the first integer is a . then we should expect a pin index next
@@ -72,7 +76,7 @@ Pin* Pin::from_string(std::string value){
 
             // if strtol read some numbers, cn will point to the first non-digit
             if ((cn > cs) && (pin < MAX_PIN)){
-#ifndef __STM32F4__            
+#ifndef __STM32F4__
                 this->port->FIOMASK &= ~(1 << this->pin);
 #endif
                 // now check for modifiers:-

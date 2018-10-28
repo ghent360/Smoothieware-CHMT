@@ -16,6 +16,8 @@ static GPIO_TypeDef* const gpios[] = {
 	, GPIOI
 #endif
 	};
+
+extern uint32_t Set_GPIO_Clock(uint32_t port_idx);
 #endif
 
 GPIO::GPIO(PinName pin) {
@@ -56,6 +58,7 @@ void GPIO::setup() {
 	PinCfg.Pinnum = GPIO::pin;
 	PINSEL_ConfigPin(&PinCfg);
 #else
+	Set_GPIO_Clock(port);
 	gpios[port]->OTYPER &= ~(1 << pin);
     gpios[port]->PUPDR &= ~(0x3 << (2*pin));    
 #endif	
