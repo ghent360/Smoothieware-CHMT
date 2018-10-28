@@ -60,7 +60,9 @@ endif
 
 
 # Make rules.
-all: $(COMMON_HEADERS) $(DEVICES)
+# ghent360: disable copying crap to the drop directory.
+#all: $(COMMON_HEADERS) $(DEVICES)
+all: $(DEVICES)
 
 clean: $(DEVICESCLEAN) clean_drop
 

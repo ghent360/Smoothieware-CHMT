@@ -29,7 +29,9 @@
 #include "modules/utils/killbutton/KillButton.h"
 #include "modules/utils/PlayLed/PlayLed.h"
 #include "modules/utils/panel/Panel.h"
-#include "libs/Network/uip/Network.h"
+#ifndef NONETWORK
+//#include "libs/Network/uip/Network.h"
+#endif
 #include "Config.h"
 #include "checksumm.h"
 #include "ConfigValue.h"
@@ -56,7 +58,11 @@
 #include "libs/Watchdog.h"
 
 #include "version.h"
+#ifdef __STM32F4__
+#include "system_stm32f4xx.h"
+#else
 #include "system_LPC17xx.h"
+#endif
 #include "platform_memory.h"
 
 #include "mbed.h"

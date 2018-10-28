@@ -20,7 +20,7 @@
 #define CIRCBUFFER_H
 
 #include <stdlib.h>
-#include "sLPC17xx.h"
+//#include "sLPC17xx.h"
 #include "platform_memory.h"
 
 template <class T>

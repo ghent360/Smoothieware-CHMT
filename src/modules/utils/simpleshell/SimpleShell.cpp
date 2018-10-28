@@ -41,8 +41,12 @@
 #include "utils.h"
 #include "AutoPushPop.h"
 
+#ifdef __STM32F4__
+#include "system_stm32f4xx.h"
+#else
 #include "system_LPC17xx.h"
-#include "LPC17xx.h"
+#endif
+//#include "LPC17xx.h"
 
 #include "mbed.h" // for wait_ms()
 

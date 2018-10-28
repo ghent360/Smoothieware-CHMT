@@ -156,7 +156,13 @@ MRI_DIR  = $(BUILD_DIR)/../mri
 # Include path which points to external library headers and to subdirectories of this project which contain headers.
 SUBDIRS = $(wildcard $(SRC)/* $(SRC)/*/* $(SRC)/*/*/* $(SRC)/*/*/*/* $(SRC)/*/*/*/*/* $(SRC)/*/*/*/*/*/*)
 PROJINCS = $(sort $(dir $(SUBDIRS)))
-INCDIRS += $(SRC) $(PROJINCS) $(MRI_DIR) $(MBED_DIR) $(MBED_DIR)/$(DEVICE)
+# ghent360: exclude the LPC17XX filder from libs. Seems device dependent.
+ifeq "$(GHENT360)" "1"
+PROJINCS2 = $(filter-out $(SRC)/libs/LPC17xx/%,$(PROJINCS))
+else
+PROJINCS2 = $(PROJINCS)
+endif
+INCDIRS += $(SRC) $(PROJINCS2) $(MRI_DIR) $(MBED_DIR) $(MBED_DIR)/$(DEVICE)
 
 # DEFINEs to be used when building C/C++ code
 DEFINES += -DTARGET_$(DEVICE)

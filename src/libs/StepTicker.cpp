@@ -16,7 +16,12 @@
 #include "Block.h"
 #include "Conveyor.h"
 
+#ifdef __STM32F4__
+#include "system_stm32f4xx.h"
+#else
 #include "system_LPC17xx.h" // mbed.h lib
+#endif
+
 #include <math.h>
 #include <mri.h>
 
