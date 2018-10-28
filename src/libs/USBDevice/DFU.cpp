@@ -1,7 +1,9 @@
 #include "DFU.h"
 
-// #include <LPC17xx.h>
+#ifndef __STM32F4__
+#include <LPC17xx.h>
 #include "lpc17xx_wdt.h"
+#endif
 
 #include <stdio.h>
 #include <mri.h>
@@ -52,8 +54,12 @@ bool DFU::USBEvent_Request(CONTROL_TRANSFER &control)
         {
 //             usb->disconnect();
             prep_for_detach = 128;
+#ifndef __STM32F4__
             WDT_Init(WDT_CLKSRC_IRC, WDT_MODE_RESET);
             WDT_Start(250000); // 0.25 seconds
+#else
+            // TODO(ghent360): we should reset somehow?
+#endif
             //             for (;;);
             return true;
         }

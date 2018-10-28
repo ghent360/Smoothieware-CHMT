@@ -119,8 +119,10 @@ endif
 
 # ghent360: exclude the LPC17XX filder from libs. Seems device dependent.
 ifeq "$(GHENT360)" "1"
-	CPPSRCS22 = $(filter-out $(SRC)/libs/LPC17xx/%,$(CPPSRCS21))
-	CSRCS22 = $(filter-out $(SRC)/libs/LPC17xx/%,$(CSRCS2))
+	CPPSRCS221 = $(filter-out $(SRC)/libs/LPC17xx/%,$(CPPSRCS21))
+	CSRCS221 = $(filter-out $(SRC)/libs/LPC17xx/%,$(CSRCS2))
+	CPPSRCS22 = $(filter-out $(SRC)/libs/USBDevice/%,$(CPPSRCS221))
+	CSRCS22 = $(filter-out $(SRC)/libs/USBDevice/%,$(CSRCS221))
 else
 	CPPSRCS22 = $(CPPSRCS21)
 	CSRCS22 = $(CSRCS2)

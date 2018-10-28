@@ -33,6 +33,8 @@ template<class kind, int length> class RingBuffer {
 
 #ifndef __STM32F4__
 #include "sLPC17xx.h"
+#else
+#include "cmsis.h"
 #endif
 
 template<class kind, int length> RingBuffer<kind, length>::RingBuffer(){

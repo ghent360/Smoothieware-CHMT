@@ -2,6 +2,7 @@
  * Copyright (c) 2010, sblandford
  * released under MIT license http://mbed.org/licence/mit
  */
+#ifndef __STM32F4__
 #include "mbed.h"
 #include "adc.h"
 
@@ -437,3 +438,4 @@ int ADC::actual_adc_clock(void) {
 int ADC::actual_sample_rate(void) {
     return(_adc_clk_freq / CLKS_PER_SAMPLE);
 }
+#endif // __STM32F4__
