@@ -20,7 +20,14 @@ extern "C" {
     static GPIO_TypeDef* io;
 
     static GPIO_TypeDef* const gpios[] = {
-        GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH, GPIOI};
+        GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG
+#ifdef GPIOH        
+        , GPIOH
+#endif
+#ifdef GPIOI
+        , GPIOI
+#endif
+    };
 
     #define GPIO_PORT_COUNT     (sizeof(gpios)/sizeof(gpios[0]))
     #define GPIO_PIN_MAX        16
@@ -29,7 +36,7 @@ extern "C" {
     static uint32_t _set_low_on_debug[GPIO_PORT_COUNT]  = {0};
     static uint32_t _previous_state[GPIO_PORT_COUNT];
 
-    static int i;
+    static unsigned i;
 
     void __mriPlatform_EnteringDebuggerHook()
     {
@@ -47,7 +54,7 @@ extern "C" {
             io          = gpios[i];
             _previous_state[i] = io->IDR;
             io->BSRR    = _set_high_on_debug[i];
-            io->BSRR    = (_set_low_on_debug[i] << GPIO_BSRR_BR0_Pos);
+            io->BSRR    = (_set_low_on_debug[i] << 16);
 #endif
         }
     }
@@ -64,25 +71,25 @@ extern "C" {
 #else
             io       = gpios[i];
             io->BSRR = _previous_state[i]  & (_set_high_on_debug[i] | _set_low_on_debug[i]);
-            io->BSRR = ((~_previous_state[i]) & (_set_high_on_debug[i] | _set_low_on_debug[i])) << GPIO_BSRR_BR0_Pos;
+            io->BSRR = ((~_previous_state[i]) & (_set_high_on_debug[i] | _set_low_on_debug[i])) << 16;
 #endif
         }
     }
 
     void set_high_on_debug(int port, int pin)
     {
-        if ((port >= GPIO_PORT_COUNT) || (port < 0))
+        if ((port >= (int)GPIO_PORT_COUNT) || (port < 0))
             return;
-        if ((pin >= MAX_PIN) || (pin < 0))
+        if ((pin >= GPIO_PIN_MAX) || (pin < 0))
             return;
         _set_high_on_debug[port] |= (1<<pin);
     }
 
     void set_low_on_debug(int port, int pin)
     {
-        if ((port >= GPIO_PORT_COUNT) || (port < 0))
+        if ((port >= (int)GPIO_PORT_COUNT) || (port < 0))
             return;
-        if ((pin >= MAX_PIN) || (pin < 0))
+        if ((pin >= GPIO_PIN_MAX) || (pin < 0))
             return;
         _set_low_on_debug[port] |= (1<<pin);
     }

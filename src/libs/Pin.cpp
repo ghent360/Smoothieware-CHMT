@@ -32,7 +32,14 @@ Pin* Pin::from_string(std::string value){
         LPC_GPIO0, LPC_GPIO1, LPC_GPIO2, LPC_GPIO3, LPC_GPIO4};
 #else
     static GPIO_TypeDef* const gpios[] = {
-        GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH, GPIOI};
+        GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF
+#ifdef GPIOH
+        , GPIOH
+#endif
+#ifdef GPIOI
+        , GPIOI
+#endif
+    };
 #endif
     // cs is the current position in the string
     const char* cs = value.c_str();
@@ -44,10 +51,10 @@ Pin* Pin::from_string(std::string value){
     char port_letter = *cs;
     if (port_letter >= 'a' && port_letter <= 'i') {
         this->port_number = port_letter - 'a';
-        cn = (char*)cs + 1;
+        cn = const_cast<char*>(cs) + 1;
     } else if (port_letter >= 'A' && port_letter <= 'I') {
         this->port_number = port_letter - 'A';
-        cn = (char*)cs + 1;
+        cn = const_cast<char*>(cs) + 1;
     } else {
         this->port_number = strtol(cs, &cn, 10);
     }
@@ -92,9 +99,11 @@ Pin* Pin::from_string(std::string value){
                         case '-':
                             pull_none();
                             break;
+#ifndef __STM32F4__
                         case '@':
                             as_repeater();
                             break;
+#endif
                         default:
                             // skip any whitespace following the pin index
                             if (!is_whitespace(*cn))
@@ -255,5 +264,6 @@ mbed::InterruptIn* Pin::interrupt_pin()
     }
 #else
     // TODO(ghent360): implement HW PWM
+    return nullptr;
 #endif    
 }

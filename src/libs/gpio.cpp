@@ -8,7 +8,14 @@
 #include "stm32f4xx.h"
 
 static GPIO_TypeDef* const gpios[] = {
-	GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH, GPIOI};
+	GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG
+#ifdef GPIOH
+	, GPIOH
+#endif
+#ifdef GPIOI
+	, GPIOI
+#endif
+	};
 #endif
 
 GPIO::GPIO(PinName pin) {
