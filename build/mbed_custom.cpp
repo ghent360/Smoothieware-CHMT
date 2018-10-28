@@ -65,6 +65,7 @@ extern "C" void _start(void)
             __debugbreak();
     }
 #ifdef __STM32F4__
+    SetSysClock();
     mbed_sdk_init();
 #endif
     // MemoryPool stuff - needs to be initialised before __libc_init_array
