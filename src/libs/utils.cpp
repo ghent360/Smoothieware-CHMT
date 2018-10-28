@@ -159,6 +159,8 @@ bool file_exists( const string file_name )
 // Prepares and executes a watchdog reset for dfu or reboot
 void system_reset( bool dfu )
 {
+#ifndef __STM32F4__
+//TODO(ghent360): do we need this at all?
     if(dfu) {
         LPC_WDT->WDCLKSEL = 0x1;                // Set CLK src to PCLK
         uint32_t clk = SystemCoreClock / 16;    // WD has a fixed /4 prescaler, PCLK default is /4
@@ -169,6 +171,9 @@ void system_reset( bool dfu )
     } else {
         NVIC_SystemReset();
     }
+#else
+    NVIC_SystemReset();
+#endif
 }
 
 // Convert a path indication ( absolute or relative ) into a path ( absolute )
