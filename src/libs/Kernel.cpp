@@ -89,6 +89,8 @@ Kernel::Kernel()
         case 0:
             this->serial = new(AHB0) SerialConsole(USBTX, USBRX, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
             break;
+#ifndef __STM32F4__
+// TODO(ghent360): add more serial ports for the STM32F446
         case 1:
             this->serial = new(AHB0) SerialConsole(  p13,   p14, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
             break;
@@ -98,6 +100,7 @@ Kernel::Kernel()
         case 3:
             this->serial = new(AHB0) SerialConsole(   p9,   p10, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
             break;
+#endif
     }
 #endif
     // default
@@ -130,15 +133,25 @@ Kernel::Kernel()
     // TODO : These should go into platform-specific files
     // LPC17xx-specific
     NVIC_SetPriorityGrouping(0);
+#ifndef __STM32F4__
     NVIC_SetPriority(TIMER0_IRQn, 2);
     NVIC_SetPriority(TIMER1_IRQn, 1);
     NVIC_SetPriority(TIMER2_IRQn, 4);
+#else
+    NVIC_SetPriority(TIM2_IRQn, 2);
+    NVIC_SetPriority(TIM3_IRQn, 1);
+    NVIC_SetPriority(TIM4_IRQn, 4);
+#endif    
     NVIC_SetPriority(PendSV_IRQn, 3);
 
     // Set other priorities lower than the timers
     NVIC_SetPriority(ADC_IRQn, 5);
+#ifndef __STM32F4__
     NVIC_SetPriority(USB_IRQn, 5);
-
+#else
+    NVIC_SetPriority(OTG_HS_IRQn, 5);
+#endif
+#ifndef __STM32F4__
     // If MRI is enabled
     if( MRI_ENABLE ) {
         if( NVIC_GetPriority(UART0_IRQn) > 0 ) { NVIC_SetPriority(UART0_IRQn, 5); }
@@ -151,7 +164,20 @@ Kernel::Kernel()
         NVIC_SetPriority(UART2_IRQn, 5);
         NVIC_SetPriority(UART3_IRQn, 5);
     }
-
+#else
+    // If MRI is enabled
+    if( MRI_ENABLE ) {
+        if( NVIC_GetPriority(USART1_IRQn) > 0 ) { NVIC_SetPriority(USART1_IRQn, 5); }
+        if( NVIC_GetPriority(USART2_IRQn) > 0 ) { NVIC_SetPriority(USART2_IRQn, 5); }
+        if( NVIC_GetPriority(USART3_IRQn) > 0 ) { NVIC_SetPriority(USART3_IRQn, 5); }
+        if( NVIC_GetPriority(UART4_IRQn) > 0 ) { NVIC_SetPriority(UART4_IRQn, 5); }
+    } else {
+        NVIC_SetPriority(USART1_IRQn, 5);
+        NVIC_SetPriority(USART2_IRQn, 5);
+        NVIC_SetPriority(USART3_IRQn, 5);
+        NVIC_SetPriority(UART4_IRQn, 5);
+    }
+#endif
     // Configure the step ticker
     this->base_stepping_frequency = this->config->value(base_stepping_frequency_checksum)->by_default(100000)->as_number();
     float microseconds_per_step_pulse = this->config->value(microseconds_per_step_pulse_checksum)->by_default(1)->as_number();

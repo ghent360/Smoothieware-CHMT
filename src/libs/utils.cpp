@@ -7,8 +7,10 @@
 
 #include "libs/Kernel.h"
 #include "libs/utils.h"
+#ifndef __STM32F4__
 #include "system_LPC17xx.h"
 #include "LPC17xx.h"
+#endif
 #include "utils.h"
 
 #include <string>
