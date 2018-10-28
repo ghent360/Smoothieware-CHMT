@@ -55,7 +55,7 @@ uint32_t us_ticker_read()
     return TIM_MST->CNT;
 }
 
-void us_ticker_set_interrupt(timestamp_t timestamp)
+void us_ticker_set_interrupt(unsigned int timestamp)
 {
     // Set new output compare value
     __HAL_TIM_SetCompare(&TimMasterHandle, TIM_CHANNEL_1, (uint32_t)timestamp);
