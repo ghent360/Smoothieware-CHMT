@@ -21,8 +21,8 @@ endif
 
 # Set build customizations for this device.
 DEVICE=STM32F446xE
-ARCHITECTURE=armv7-m
-DEVICE_FLAGS=-mcpu=cortex-m3 -mthumb
+ARCHITECTURE=armv7e-m
+DEVICE_FLAGS=-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 DEVICE_CFLAGS=$(DEVICE_FLAGS) -mthumb-interwork
 NO_FLOAT_SCANF?=0
 NO_FLOAT_PRINTF?=0
