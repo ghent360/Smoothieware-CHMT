@@ -334,7 +334,7 @@ $(OUTDIR)/%.o : %.s makefile
 	$(Q) $(AS) $(AS_FLAGS) -o $@ $<
 
 # Added config_sedaulf.s assembly file which would compile properly
-#$(OUTDIR)/configdefault.o : config.default
+$(OUTDIR)/configdefault.o : config.default
 #	$(Q) $(OBJCOPY) -I binary -O elf32-littlearm -B arm --readonly-text --rename-section .data=.rodata.configdefault $< $@
 
 #########################################################################
