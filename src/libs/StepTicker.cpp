@@ -20,8 +20,10 @@
 #include "system_stm32f4xx.h"
 extern "C" void TIM2_IRQHandler(void);
 extern "C" void TIM5_IRQHandler(void);
+#define SYSTEM_CLOCK_DIVIDER    2.0f
 #else
 #include "system_LPC17xx.h" // mbed.h lib
+#define SYSTEM_CLOCK_DIVIDER    4.0f
 #endif
 
 #include <math.h>
@@ -107,7 +109,8 @@ void StepTicker::start()
 void StepTicker::set_frequency( float frequency )
 {
     this->frequency = frequency;
-    this->period = floorf((SystemCoreClock / 4.0F) / frequency); // SystemCoreClock/4 = Timer increments in a second
+    // SystemCoreClock/4 = Timer increments in a second
+    this->period = floorf((SystemCoreClock / SYSTEM_CLOCK_DIVIDER) / frequency);
 #ifndef __STM32F4__
     LPC_TIM0->MR0 = this->period;
     LPC_TIM0->TCR = 3;  // Reset
@@ -120,7 +123,7 @@ void StepTicker::set_frequency( float frequency )
 // Set the reset delay, must be called after set_frequency
 void StepTicker::set_unstep_time( float microseconds )
 {
-    uint32_t delay = floorf((SystemCoreClock / 4.0F) * (microseconds / 1000000.0F)); // SystemCoreClock/4 = Timer increments in a second
+    uint32_t delay = floorf((SystemCoreClock / SYSTEM_CLOCK_DIVIDER) * (microseconds / 1000000.0F));
 #ifndef __STM32F4__
     LPC_TIM1->MR0 = delay;
 #else

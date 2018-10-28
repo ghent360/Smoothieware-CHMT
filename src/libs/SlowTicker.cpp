@@ -18,9 +18,13 @@
 
 #ifdef __STM32F4__
 extern "C" void TIM3_IRQHandler(void);
-#define SLOWTICKER_PRESCALER    (1 << 13)
+#define SLOWTICKER_PRESCALER    (1 << 14)
+// Divide by 2
+#define SYSTEM_CLOCK_DIVIDER    1
 #else
 #define SLOWTICKER_PRESCALER    1
+// Divide by 4
+#define SYSTEM_CLOCK_DIVIDER    2
 #endif
 
 // This module uses a Timer to periodically call hooks
@@ -68,7 +72,9 @@ void SlowTicker::on_module_loaded(){
 
 // Set the base frequency we use for all sub-frequencies
 void SlowTicker::set_frequency( int frequency ){
-    this->interval = ((SystemCoreClock >> 2) / SLOWTICKER_PRESCALER) / frequency;   // SystemCoreClock/4 = Timer increments in a second
+    // SystemCoreClock/4 = Timer increments in a second
+    this->interval = 
+        ((SystemCoreClock >> SYSTEM_CLOCK_DIVIDER) / SLOWTICKER_PRESCALER) / frequency;
 #ifndef __STM32F4__
     LPC_TIM2->MR0 = this->interval;
     LPC_TIM2->TCR = 3;  // Reset
@@ -77,7 +83,7 @@ void SlowTicker::set_frequency( int frequency ){
     TIM3->PSC = SLOWTICKER_PRESCALER - 1;
     TIM3->ARR = this->interval;
 #endif
-    flag_1s_count= (SystemCoreClock>>2) / SLOWTICKER_PRESCALER;
+    flag_1s_count= (SystemCoreClock >> SYSTEM_CLOCK_DIVIDER) / SLOWTICKER_PRESCALER;
 }
 
 // The actual interrupt being called by the timer, this is where work is done
@@ -99,7 +105,7 @@ void SlowTicker::tick(){
     if (flag_1s_count < 0)
     {
         // add a second to our counter
-        flag_1s_count += (SystemCoreClock >> 2) / SLOWTICKER_PRESCALER;
+        flag_1s_count += (SystemCoreClock >> SYSTEM_CLOCK_DIVIDER) / SLOWTICKER_PRESCALER;
         // and set a flag for idle event to pick up
         flag_1s_flag++;
     }
