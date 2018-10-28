@@ -18,11 +18,13 @@
 
 #ifdef __STM32F4__
 #include "system_stm32f4xx.h"
-extern "C" void TIM2_IRQHandler(void);
+extern "C" void TIM4_IRQHandler(void);
 extern "C" void TIM5_IRQHandler(void);
+#define TIM4_PRESCALER          15
 #define SYSTEM_CLOCK_DIVIDER    2.0f
 #else
 #include "system_LPC17xx.h" // mbed.h lib
+#define TIM4_PRESCALER          1
 #define SYSTEM_CLOCK_DIVIDER    4.0f
 #endif
 
@@ -56,11 +58,11 @@ StepTicker::StepTicker()
     LPC_TIM1->TCR = 0;              // Disable interrupt
 #define UNSTEP_TIME 100    
 #else
-    __TIM2_CLK_ENABLE();
+    __TIM4_CLK_ENABLE();
     __TIM5_CLK_ENABLE();
-    NVIC_SetVector(TIM2_IRQn, (uint32_t)TIM2_IRQHandler);
+    NVIC_SetVector(TIM4_IRQn, (uint32_t)TIM4_IRQHandler);
     NVIC_SetVector(TIM5_IRQn, (uint32_t)TIM5_IRQHandler);
-    TIM2->CR1 = TIM_CR1_URS;    // int on overflow
+    TIM4->CR1 = TIM_CR1_URS;    // int on overflow
     TIM5->CR1 = TIM_CR1_URS | TIM_CR1_OPM;  // int on overflow, one-shot mode
 #define UNSTEP_TIME 5    
 #endif
@@ -92,16 +94,16 @@ void StepTicker::start()
     NVIC_EnableIRQ(TIMER0_IRQn);     // Enable interrupt handler
     NVIC_EnableIRQ(TIMER1_IRQn);     // Enable interrupt handler
 #else
-    TIM2->DIER = TIM_DIER_UIE;     // update interrupt en
+    TIM4->DIER = TIM_DIER_UIE;     // update interrupt en
     TIM5->DIER = TIM_DIER_UIE;     // update interrupt en
     NVIC_EnableIRQ(TIM5_IRQn);     // Enable interrupt handler
-    NVIC_EnableIRQ(TIM2_IRQn);     // Enable interrupt handler
+    NVIC_EnableIRQ(TIM4_IRQn);     // Enable interrupt handler
 #endif
 
     current_tick= 0;
 
 #ifdef __STM32F4__
-    TIM2->CR1 |= TIM_CR1_CEN;      // start step timer
+    TIM4->CR1 |= TIM_CR1_CEN;      // start step timer
 #endif
 }
 
@@ -110,13 +112,14 @@ void StepTicker::set_frequency( float frequency )
 {
     this->frequency = frequency;
     // SystemCoreClock/4 = Timer increments in a second
-    this->period = floorf((SystemCoreClock / SYSTEM_CLOCK_DIVIDER) / frequency);
+    this->period = floorf((SystemCoreClock / SYSTEM_CLOCK_DIVIDER) / TIM4_PRESCALER / frequency);
 #ifndef __STM32F4__
     LPC_TIM0->MR0 = this->period;
     LPC_TIM0->TCR = 3;  // Reset
     LPC_TIM0->TCR = 1;  // start
 #else
-    TIM2->ARR = this->period;
+    TIM4->PSC = TIM4_PRESCALER-1;
+    TIM4->ARR = this->period;
 #endif
 }
 
@@ -164,10 +167,10 @@ extern "C" void TIM5_IRQHandler (void)
     StepTicker::getInstance()->unstep_tick();
 }
 
-extern "C" void TIM2_IRQHandler (void)
+extern "C" void TIM4_IRQHandler (void)
 {
     // Reset interrupt register
-    TIM2->SR = ~TIM_SR_UIF;
+    TIM4->SR = ~TIM_SR_UIF;
     StepTicker::getInstance()->step_tick();
 }
 #endif

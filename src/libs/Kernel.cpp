@@ -138,7 +138,7 @@ Kernel::Kernel()
     NVIC_SetPriority(TIMER1_IRQn, 1);
     NVIC_SetPriority(TIMER2_IRQn, 4);
 #else
-    NVIC_SetPriority(TIM2_IRQn, 2);
+    NVIC_SetPriority(TIM4_IRQn, 2);
     NVIC_SetPriority(TIM5_IRQn, 1);
     NVIC_SetPriority(TIM3_IRQn, 4);
 #endif    
