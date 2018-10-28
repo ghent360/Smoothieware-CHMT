@@ -329,11 +329,15 @@ void SimpleShell::ls_command( string parameters, StreamOutput *stream )
     }
 }
 
+#ifndef DISABLEMSD
 extern SDFAT mounter;
+#endif
 
 void SimpleShell::remount_command( string parameters, StreamOutput *stream )
 {
+#ifndef DISABLEMSD
     mounter.remount();
+#endif
     stream->printf("remounted\r\n");
 }
 
