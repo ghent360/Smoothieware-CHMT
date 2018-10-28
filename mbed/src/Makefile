@@ -1,6 +1,6 @@
 #!/usr/bin/make
 
-DEVICES      =mbed-lpc1768.mk mbed-lpc11u24.mk
+DEVICES      =mbed-lpc1768.mk mbed-lpc11u24.mk mbed-stm32f446.mk
 DEVICESCLEAN =$(addsuffix .clean,$(DEVICES))
 
 
@@ -60,9 +60,7 @@ endif
 
 
 # Make rules.
-# ghent360: disable copying crap to the drop directory.
-#all: $(COMMON_HEADERS) $(DEVICES)
-all: $(DEVICES)
+all: $(COMMON_HEADERS) $(DEVICES)
 
 clean: $(DEVICESCLEAN) clean_drop
 

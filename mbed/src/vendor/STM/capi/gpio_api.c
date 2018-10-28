@@ -47,7 +47,7 @@ uint32_t gpio_set(PinName pin)
     return (uint32_t)(1 << ((uint32_t)pin & 0xF)); // Return the pin mask
 }
 
-void gpio_init(gpio_t *obj, PinName pin)
+void gpio_init(gpio_t *obj, PinName pin, PinDirection direction)
 {
     obj->pin = pin;
     if (pin == (PinName)NC)
@@ -63,6 +63,7 @@ void gpio_init(gpio_t *obj, PinName pin)
     obj->mask        = gpio_set(pin);
     obj->reg_in      = &gpio->IDR;
     obj->reg_set_clr = &gpio->BSRR;
+    gpio_dir(obj, direction);
 }
 
 void gpio_mode(gpio_t *obj, PinMode mode)
