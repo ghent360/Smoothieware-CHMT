@@ -33,6 +33,7 @@ SlowTicker::SlowTicker(){
     // do not enable interrupt until setup is complete
     LPC_TIM2->TCR = 0;              // Disable interrupt
 #else
+    __TIM3_CLK_ENABLE();
     TIM3->CR1 = TIM_CR1_URS;    // int on overflow
 #endif
 

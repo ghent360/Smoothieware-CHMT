@@ -52,6 +52,8 @@ StepTicker::StepTicker()
     LPC_TIM1->TCR = 0;              // Disable interrupt
 #define UNSTEP_TIME 100    
 #else
+    __TIM2_CLK_ENABLE();
+    __TIM5_CLK_ENABLE();
     TIM2->CR1 = TIM_CR1_URS;    // int on overflow
     TIM5->CR1 = TIM_CR1_URS | TIM_CR1_OPM;  // int on overflow, one-shot mode
 #define UNSTEP_TIME 5    
