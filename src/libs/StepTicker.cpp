@@ -20,6 +20,7 @@
 #include "system_stm32f4xx.h"
 extern "C" void TIM4_IRQHandler(void);
 extern "C" void TIM5_IRQHandler(void);
+extern "C" void PendSV_Handler(void);
 #define TIM4_PRESCALER          15
 #define SYSTEM_CLOCK_DIVIDER    2.0f
 #else
@@ -62,6 +63,7 @@ StepTicker::StepTicker()
     __TIM5_CLK_ENABLE();
     NVIC_SetVector(TIM4_IRQn, (uint32_t)TIM4_IRQHandler);
     NVIC_SetVector(TIM5_IRQn, (uint32_t)TIM5_IRQHandler);
+    NVIC_SetVector(PendSV_IRQn, (uint32_t)PendSV_Handler);
     TIM4->CR1 = TIM_CR1_URS;    // int on overflow
     TIM5->CR1 = TIM_CR1_URS | TIM_CR1_OPM;  // int on overflow, one-shot mode
 #define UNSTEP_TIME 5    
@@ -96,8 +98,9 @@ void StepTicker::start()
 #else
     TIM4->DIER = TIM_DIER_UIE;     // update interrupt en
     TIM5->DIER = TIM_DIER_UIE;     // update interrupt en
-    NVIC_EnableIRQ(TIM5_IRQn);     // Enable interrupt handler
-    NVIC_EnableIRQ(TIM4_IRQn);     // Enable interrupt handler
+    NVIC_EnableIRQ(TIM5_IRQn);     // enable interrupt handler
+    NVIC_EnableIRQ(TIM4_IRQn);     // enable interrupt handler
+    NVIC_EnableIRQ(PendSV_IRQn);   // enable interrupt handler
 #endif
 
     current_tick= 0;
@@ -301,8 +304,11 @@ void StepTicker::step_tick (void)
 
         // all moves finished
         // we delegate the slow stuff to the pendsv handler which will run as soon as this interrupt exits
-        //NVIC_SetPendingIRQ(PendSV_IRQn); this doesn't work
+        //NVIC_SetPendingIRQ(PendSV_IRQn); //this doesn't work
         //SCB->ICSR = 0x10000000; // SCB_ICSR_PENDSVSET_Msk;
+#ifdef __STM32F4__
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+#endif
     }
 }
 
