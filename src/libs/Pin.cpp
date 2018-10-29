@@ -270,8 +270,10 @@ mbed::InterruptIn* Pin::interrupt_pin()
         this->valid= false;
         return nullptr;
     }
-#else
-    // TODO(ghent360): implement HW PWM
     return nullptr;
+#else
+    // all pins support interrupts on stm32
+    PinName pinname = port_pin((PortName)port_number, pin);
+    return new mbed::InterruptIn(pinname);    // TODO(ghent360): implement HW PWM
 #endif    
 }
