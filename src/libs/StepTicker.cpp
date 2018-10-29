@@ -19,7 +19,7 @@
 #ifdef __STM32F4__
 #include "system_stm32f4xx.h"
 extern "C" void TIM7_IRQHandler(void);
-extern "C" void TIM5_IRQHandler(void);
+extern "C" void TIM8_TRG_COM_TIM14_IRQHandler(void);
 extern "C" void PendSV_Handler(void);
 #define TIM7_PRESCALER          15
 #define SYSTEM_CLOCK_DIVIDER    2.0f
@@ -60,12 +60,12 @@ StepTicker::StepTicker()
 #define UNSTEP_TIME 100    
 #else
     __TIM7_CLK_ENABLE();
-    __TIM5_CLK_ENABLE();
+    __TIM8_CLK_ENABLE();
     NVIC_SetVector(TIM7_IRQn, (uint32_t)TIM7_IRQHandler);
-    NVIC_SetVector(TIM5_IRQn, (uint32_t)TIM5_IRQHandler);
+    NVIC_SetVector(TIM8_TRG_COM_TIM14_IRQn, (uint32_t)TIM8_TRG_COM_TIM14_IRQHandler);
     NVIC_SetVector(PendSV_IRQn, (uint32_t)PendSV_Handler);
     TIM7->CR1 = TIM_CR1_URS;    // int on overflow
-    TIM5->CR1 = TIM_CR1_URS | TIM_CR1_OPM;  // int on overflow, one-shot mode
+    TIM8->CR1 = TIM_CR1_URS | TIM_CR1_OPM;  // int on overflow, one-shot mode
 #define UNSTEP_TIME 5    
 #endif
     // Default start values
@@ -97,8 +97,8 @@ void StepTicker::start()
     NVIC_EnableIRQ(TIMER1_IRQn);     // Enable interrupt handler
 #else
     TIM7->DIER = TIM_DIER_UIE;     // update interrupt en
-    TIM5->DIER = TIM_DIER_UIE;     // update interrupt en
-    NVIC_EnableIRQ(TIM5_IRQn);     // enable interrupt handler
+    TIM8->DIER = TIM_DIER_UIE;     // update interrupt en
+    NVIC_EnableIRQ(TIM8_TRG_COM_TIM14_IRQn);     // enable interrupt handler
     NVIC_EnableIRQ(TIM7_IRQn);     // enable interrupt handler
     NVIC_EnableIRQ(PendSV_IRQn);   // enable interrupt handler
 #endif
@@ -133,7 +133,7 @@ void StepTicker::set_unstep_time( float microseconds )
 #ifndef __STM32F4__
     LPC_TIM1->MR0 = delay;
 #else
-    TIM5->ARR = delay;
+    TIM8->ARR = delay;
 #endif
     // TODO check that the unstep time is less than the step period, if not slow down step ticker
 }
@@ -164,9 +164,9 @@ extern "C" void TIMER0_IRQHandler (void)
     StepTicker::getInstance()->step_tick();
 }
 #else
-extern "C" void TIM5_IRQHandler (void)
+extern "C" void TIM8_TRG_COM_TIM14_IRQHandler (void)
 {
-    TIM5->SR = ~TIM_SR_UIF;
+    TIM8->SR = ~TIM_SR_UIF;
     StepTicker::getInstance()->unstep_tick();
 }
 
@@ -278,7 +278,7 @@ void StepTicker::step_tick (void)
         LPC_TIM1->TCR = 1;
 #else
         // CEN should have cleared by one-shot mode
-        TIM5->CR1 |= TIM_CR1_CEN;
+        TIM8->CR1 |= TIM_CR1_CEN;
 #endif
     }
 
