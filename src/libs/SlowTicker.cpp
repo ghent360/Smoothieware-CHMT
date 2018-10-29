@@ -17,7 +17,7 @@
 #include <mri.h>
 
 #ifdef __STM32F4__
-extern "C" void TIM3_IRQHandler(void);
+extern "C" void TIM6_DAC_IRQHandler(void);
 #define SLOWTICKER_PRESCALER    (1 << 14)
 // Divide by 2
 #define SYSTEM_CLOCK_DIVIDER    1
@@ -44,9 +44,9 @@ SlowTicker::SlowTicker(){
     // do not enable interrupt until setup is complete
     LPC_TIM2->TCR = 0;              // Disable interrupt
 #else
-    __TIM3_CLK_ENABLE();
-    NVIC_SetVector(TIM3_IRQn, (uint32_t)TIM3_IRQHandler);
-    TIM3->CR1 = TIM_CR1_URS;    // int on overflow
+    __TIM6_CLK_ENABLE();
+    NVIC_SetVector(TIM6_DAC_IRQn, (uint32_t)TIM6_DAC_IRQHandler);
+    TIM6->CR1 = TIM_CR1_URS;    // int on overflow
 #endif
 
     max_frequency = 5;  // initial max frequency is set to 5Hz
@@ -60,9 +60,9 @@ void SlowTicker::start()
     LPC_TIM2->TCR = 1;              // Enable interrupt
     NVIC_EnableIRQ(TIMER2_IRQn);    // Enable interrupt handler
 #else
-    TIM3->DIER = TIM_DIER_UIE;      // update interrupt en
-    NVIC_EnableIRQ(TIM3_IRQn);      // Enable interrupt handler
-    TIM3->CR1 |= TIM_CR1_CEN;       // start
+    TIM6->DIER = TIM_DIER_UIE;      // update interrupt en
+    NVIC_EnableIRQ(TIM6_DAC_IRQn);      // Enable interrupt handler
+    TIM6->CR1 |= TIM_CR1_CEN;       // start
 #endif
 }
 
@@ -80,8 +80,8 @@ void SlowTicker::set_frequency( int frequency ){
     LPC_TIM2->TCR = 3;  // Reset
     LPC_TIM2->TCR = 1;  // Reset
 #else
-    TIM3->PSC = SLOWTICKER_PRESCALER - 1;
-    TIM3->ARR = this->interval;
+    TIM6->PSC = SLOWTICKER_PRESCALER - 1;
+    TIM6->ARR = this->interval;
 #endif
     flag_1s_count= (SystemCoreClock >> SYSTEM_CLOCK_DIVIDER) / SLOWTICKER_PRESCALER;
 }
@@ -165,8 +165,8 @@ extern "C" void TIMER2_IRQHandler (void){
     global_slow_ticker->tick();
 }
 #else
-extern "C" void TIM3_IRQHandler (void){
-    TIM3->SR = ~TIM_SR_UIF;
+extern "C" void TIM6_DAC_IRQHandler (void){
+    TIM6->SR = ~TIM_SR_UIF;
     global_slow_ticker->tick();
 }
 #endif

@@ -140,7 +140,7 @@ Kernel::Kernel()
 #else
     NVIC_SetPriority(TIM4_IRQn, 2);
     NVIC_SetPriority(TIM5_IRQn, 1);
-    NVIC_SetPriority(TIM3_IRQn, 4);
+    NVIC_SetPriority(TIM6_DAC_IRQn, 4);
 #endif    
     NVIC_SetPriority(PendSV_IRQn, 3);
 
