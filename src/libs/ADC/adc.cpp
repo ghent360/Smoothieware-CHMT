@@ -11,9 +11,7 @@ using namespace mbed;
 
 ADC *ADC::instance;
 
-ADC::ADC(int sample_rate, int cclk_div)
-    {
-
+ADC::ADC(int sample_rate, int cclk_div){
     int i, adc_clk_freq, pclk, clock_div, max_div=1;
 
     //Work out CCLK
@@ -79,9 +77,7 @@ ADC::ADC(int sample_rate, int cclk_div)
     //Initialize arrays
     for (i=7; i>=0; i--) {
         _adc_data[i] = 0;
-        _adc_isr[i] = NULL;
     }
-
 
     //* Attach IRQ
     instance = this;
@@ -89,7 +85,6 @@ ADC::ADC(int sample_rate, int cclk_div)
 
     //Disable global interrupt
     LPC_ADC->ADINTEN &= ~0x100;
-
 };
 
 void ADC::_adcisr(void)
@@ -117,8 +112,6 @@ void ADC::adcisr(void)
     // Channel that triggered interrupt
     chan = (LPC_ADC->ADGDR >> 24) & 0x07;
     //User defined interrupt handlers
-    if (_adc_isr[chan] != NULL)
-        _adc_isr[chan](_adc_data[chan]);
     if (_adc_g_isr != NULL)
         _adc_g_isr(chan, _adc_data[chan]);
     return;
