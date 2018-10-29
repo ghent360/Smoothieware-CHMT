@@ -304,10 +304,8 @@ ADC::ADC(int sample_rate, int cclk_div) {
     STM_ADC->CR1 = ADC_CR1_OVRIE | ADC_CR1_SCAN | ADC_CR1_EOCIE;
 
     // interrupt after every conversion
-    STM_ADC->CR2 = ADC_CR2_EOCS;
-
     // turn on adc
-    STM_ADC->CR2 |= ADC_CR2_ADON;
+    STM_ADC->CR2 |= ADC_CR2_EOCS | ADC_CR2_ADON;
 
     NVIC_SetVector(ADC_IRQn, (uint32_t)&_adcisr);
     NVIC_EnableIRQ(ADC_IRQn);
@@ -373,10 +371,9 @@ void ADC::interrupt_state(PinName pin, int state) {
 
 void ADC::adcisr(void)
 {
-    uint16_t data;
-    
+    // dr read clears eoc bit
     // must read data before checking overflow bit
-    data = STM_ADC->DR; // to be sure we are valid
+    uint16_t data = STM_ADC->DR; // to be sure we are valid
 
     if (STM_ADC->SR & ADC_SR_OVR) {
         // conversion was clobbered by overflow, clear its flag too, clear strt so we restart
@@ -385,9 +382,8 @@ void ADC::adcisr(void)
         // overrun will abort scan sequence, next start will resume from beginning
         scan_index = 0;
         __debugbreak();
-    } else if (STM_ADC->SR & ADC_SR_EOC) {
-        STM_ADC->SR &= ~ADC_SR_EOC;
-
+    } else {
+        // don't clear EOC flag, it could have popped after we read dr, and dr may have new valid data
         if (_adc_g_isr != NULL && (interrupt_mask & (1 << scan_index)))
             _adc_g_isr(scan_index, data);
 
