@@ -59,15 +59,15 @@ endif
 
 ifeq "$(BUILD_TYPE)" "Debug"
 OPTIMIZATION = 0
-MRI_ENABLE ?= 1
-MRI_SEMIHOST_STDIO ?= 1
+MRI_ENABLE = 0
+#MRI_SEMIHOST_STDIO ?= 1
 endif
 
 
 ifeq "$(BUILD_TYPE)" "Checked"
 OPTIMIZATION ?= 2
-MRI_ENABLE = 1
-MRI_SEMIHOST_STDIO ?= 1
+MRI_ENABLE = 0
+#MRI_SEMIHOST_STDIO ?= 1
 endif
 
 MRI_INIT_PARAMETERS=$(MRI_UART)
@@ -186,7 +186,8 @@ SYS_LIBS = -specs=nano.specs -lstdc++ -lsupc++ -lm -lgcc -lc -lnosys
 LIBS = $(LIBS_PREFIX)
 
 ifeq "$(MRI_ENABLE)" "1"
-LIBS += $(MRI_DIR)/mri.ar
+#TODO(ghent360): re-enable
+#LIBS += $(MRI_DIR)/mri.ar
 endif
 
 LIBS += $(MBED_LIBS)

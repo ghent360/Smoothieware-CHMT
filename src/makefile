@@ -13,7 +13,7 @@ BOARD=PRNTR_V1
 #  Checked - Optimizations enabled with MRI debug monitor support. (Recommended Type)
 #  Release - Optimizations enabled.
 #  Debug - Optimization disabled with MRI debug monitor support.
-BUILD_TYPE=Release
+BUILD_TYPE=Debug
 
 # Set to 1 to tag each heap allocation with the caller's return address.
 # NOTE: Can't be enabled with latest build as not compatible with newlib nano.
