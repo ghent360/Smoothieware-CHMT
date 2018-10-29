@@ -1,5 +1,43 @@
 Current build status: {{https://travis-ci.org/Smoothieware/Smoothieware.svg?branch=edge}}
 
+==STM32/CHMT Notes
+
+To build, follow normal smoothie build process to get setup.  Then checkout chmt branch and rebuild.
+
+===Port Status:
+* mbed hooks - Added, compiles, tested
+* stm32f4xx libs - Added, compiles, tested
+* timers - Ported, compiles, tested
+* wdt - Ported, compiles, tested
+* gpio - Ported, compiles, tested
+* adc - Ported, compiles, tested
+* pwm - Ported, compiles, tested
+* build scripts - Added, project builds successfully
+
+===CHMT Status:
+* config file - Rough file for testing in nucleo-144 branch
+* pin map - Not Started
+* operation/verfication - Not Started
+* machine testing - Not Started
+
+===TODO:
+* DONE: Target initialization and board bringup (clocks, mpu, etc)
+* DONE: Verification of ported peripherals (step generation, watchdog, gpios)
+* DONE: Debug/Comm uart setup
+* Not Started: CHMT controller specific configuration
+
+===Notes/Caveats/Gotchas:
+* smoothie mbed was ancient, so the oldest stm32 mbed available was integrated to reduce friction -- incompatibilities, and bugs from dated mbed may have been introduced
+* MRI (gdb over serial) is not supported on stm32, use SWD/JTAG
+* config file must be hardcoded into firmware build
+
+===Next Steps/Priority
+* CHMT Pinout Reversing
+* CHMT Config File Development
+* CHMT Machine Testing
+
+=Smoothie
+
 ==Overview
 Smoothie is a free, opensource, high performance G-code interpreter and CNC controller written in Object-Oriented C++ for the LPC17xx micro-controller ( ARM Cortex M3 architecture ). It will run on a mBed, a LPCXpresso, a SmoothieBoard, R2C2 or any other LPC17xx-based board. The motion control part is a port of the awesome grbl.
 
