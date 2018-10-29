@@ -10,7 +10,11 @@
 #define XTAL_FREQ       12000000
 #define MAX_ADC_CLOCK   13000000
 #define CLKS_PER_SAMPLE 64
+#ifdef __STM32F4__
 #define ADC_CHANNEL_COUNT   16
+#else
+#define ADC_CHANNEL_COUNT   6
+#endif
 
 namespace mbed {
 class ADC {
@@ -51,8 +55,13 @@ private:
     uint32_t _adc_data[8];
     int _adc_clk_freq;
 #else
+    //Callback for attaching to slowticker as scan start timer 
+    uint32_t on_tick(uint32_t dummy);
+
+    uint8_t attached;
     uint8_t scan_chan_lut[ADC_CHANNEL_COUNT];
-    uint8_t scan_count;
+    uint8_t scan_count_active;
+    uint8_t scan_count_next;
     uint8_t scan_index;
     uint32_t interrupt_mask;
 #endif

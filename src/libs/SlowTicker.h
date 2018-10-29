@@ -17,7 +17,7 @@
 
 #ifdef __STM32F4__
 #include "system_stm32f4xx.h"
-#define SLOWTICKER_PRESCALER    (1 << 14)
+#define SLOWTICKER_PRESCALER    (1 << 13)
 #define SYSTEM_CLOCK_DIVIDER    2
 #else
 #include "system_LPC17xx.h" // for SystemCoreClock
