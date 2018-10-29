@@ -11,7 +11,7 @@
 #define MAX_PIN 32
 #else
 #define MAX_PIN 16
-extern uint32_t Set_GPIO_Clock(uint32_t port_idx);
+extern "C" uint32_t Set_GPIO_Clock(uint32_t port_idx);
 #endif
 
 Pin::Pin(){

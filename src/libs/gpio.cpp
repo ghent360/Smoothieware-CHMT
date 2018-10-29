@@ -17,7 +17,7 @@ static GPIO_TypeDef* const gpios[] = {
 #endif
 	};
 
-extern uint32_t Set_GPIO_Clock(uint32_t port_idx);
+extern "C" uint32_t Set_GPIO_Clock(uint32_t port_idx);
 #endif
 
 GPIO::GPIO(PinName pin) {
