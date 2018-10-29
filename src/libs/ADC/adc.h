@@ -10,6 +10,7 @@
 #define XTAL_FREQ       12000000
 #define MAX_ADC_CLOCK   13000000
 #define CLKS_PER_SAMPLE 64
+#define ADC_CHANNEL_COUNT   16
 
 namespace mbed {
 class ADC {
@@ -41,13 +42,19 @@ public:
 
     int _pin_to_channel(PinName pin);
 private:
-    int _adc_clk_freq;
     void adcisr(void);
     static void _adcisr(void);
     static ADC *instance;
 
-    uint32_t _adc_data[8];
     void(*_adc_g_isr)(int chan, uint32_t value);
+#ifndef __STM32F4__    
+    uint32_t _adc_data[8];
+    int _adc_clk_freq;
+#else
+    uint8_t scan_chan_lut[ADC_CHANNEL_COUNT];
+    uint8_t scan_count;
+    uint8_t scan_index;
+#endif
 };
 }
 

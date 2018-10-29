@@ -5,12 +5,20 @@
 #include "mbed.h"
 #undef ADC
 #include "adc.h"
-#ifndef __STM32F4__
+
+#ifdef __STM32F4__
+#include "pinmap.h"
+#include "PeripheralPins.h"
+#include "mri.h"
+
+#define STM_ADC ADC1
+#endif
 
 using namespace mbed;
 
 ADC *ADC::instance;
 
+#ifndef __STM32F4__
 ADC::ADC(int sample_rate, int cclk_div){
     int i, adc_clk_freq, pclk, clock_div, max_div=1;
 
@@ -268,17 +276,61 @@ void ADC::interrupt_state(PinName pin, int state) {
     }
 }
 
-//Unappend global interrupt handler to function isr
-void ADC::append(void(*fptr)(int chan, uint32_t value)) {
-    _adc_g_isr = fptr;
-}
-
 #else
 // TODO(ghent360): fix the ADC
-ADC::ADC(int sample_rate, int cclk_div) {}
-int ADC::_pin_to_channel(PinName pin) { return 0; }
-void ADC::append(void(*fptr)(int chan, uint32_t value)) {}
+ADC::ADC(int sample_rate, int cclk_div) {
+    scan_count = 0;
+    scan_index = 0;
+
+    memset(scan_chan_lut, 0xFF, sizeof(scan_chan_lut));
+}
+
+int ADC::_pin_to_channel(PinName pin) {
+    uint32_t function = pinmap_function(pin, PinMap_ADC);
+    uint8_t chan = 0xFF;
+
+    if (function != (uint32_t)NC)
+        chan = scan_chan_lut[STM_PIN_CHANNEL(function)];
+
+    return chan;
+}
+
 void ADC::burst(int state) {}
 void ADC::setup(PinName pin, int state) {}
 void ADC::interrupt_state(PinName pin, int state) {}
+
+void ADC::adcisr(void)
+{
+    uint16_t data;
+    
+    // must read data before checking overflow bit
+    data = STM_ADC->DR; // to be sure we are valid
+
+    if (STM_ADC->SR & ADC_SR_OVR) {
+        // conversion was clobbered by overflow, clear its flag too
+        STM_ADC->SR &= ~(ADC_SR_OVR | ADC_SR_EOC);
+
+        // overrun will abort scan sequence, next start will resume from beginning
+        scan_index = 0;
+        __debugbreak();
+    } else if (STM_ADC->SR & ADC_SR_EOC) {
+        STM_ADC->SR &= ~ADC_SR_EOC;
+
+        if (_adc_g_isr != NULL)
+            _adc_g_isr(scan_index++, data);
+        
+        if (scan_index >= scan_count)
+            scan_index = 0;
+    }
+}
 #endif // __STM32F4__
+
+void ADC::_adcisr(void)
+{
+    instance->adcisr();
+}
+
+//append global interrupt handler to function isr
+void ADC::append(void(*fptr)(int chan, uint32_t value)) {
+    _adc_g_isr = fptr;
+}
