@@ -65,7 +65,6 @@ DEVICE_HEADER_SRCS+=$(notdir $(wildcard $(VENDOR_CMSIS_SRC)/hal/*.h))
 endif
 DEVICE_HEADERS     =$(patsubst %.h,$(DEVICE_DROP)/%.h,$(DEVICE_HEADER_SRCS))
 
-
 # Build up list of all C, C++, and Assembly Language files to be compiled/assembled.
 CAPI_SRCS     =$(wildcard $(VENDOR_CAPI_SRC)/*.c)
 CAPI_SRCS    +=$(wildcard $(VENDOR_CAPI_DEVICE_SRC)/*.c)
@@ -73,7 +72,11 @@ CMSIS_SRCS    =$(wildcard $(VENDOR_CMSIS_SRC)/*.c)
 ifeq "$(VENDOR)" "STM"
 CMSIS_SRCS   +=$(wildcard $(VENDOR_CMSIS_SRC)/hal/*.c)
 endif
+ifeq "$(VENDOR)" "STM"
+CMSIS_ASM_SRCS=$(wildcard $(VENDOR_CMSIS_GCC_SRC)/*.S)
+else
 CMSIS_ASM_SRCS=$(wildcard $(VENDOR_CMSIS_GCC_SRC)/*.s)
+endif
 MBED_CAPI_SRCS=$(wildcard $(MBED_CAPI_SRC)/*.c)
 MBED_CPP_SRCS =$(wildcard $(MBED_CPP_SRC)/*.cpp)
 
@@ -83,7 +86,11 @@ MBED_CPP_SRCS =$(wildcard $(MBED_CPP_SRC)/*.cpp)
 CAPI_OBJECTS  =$(patsubst %.c,__Output__/%.o,$(CAPI_SRCS))
 CAPI_OBJECTS+=$(patsubst %.c,__Output__/%.o,$(CMSIS_SRCS))
 CAPI_OBJECTS+=$(patsubst %.c,__Output__/%.o,$(MBED_CAPI_SRCS))
+ifeq "$(VENDOR)" "STM"
+CAPI_OBJECTS+=$(patsubst %.S,__Output__/%.o,$(CMSIS_ASM_SRCS))
+else
 CAPI_OBJECTS+=$(patsubst %.s,__Output__/%.o,$(CMSIS_ASM_SRCS))
+endif
 
 DEBUG_CAPI_OBJECTS  =$(patsubst __Output__%,$(DEBUG_OBJDIR)%,$(CAPI_OBJECTS))
 RELEASE_CAPI_OBJECTS=$(patsubst __Output__%,$(RELEASE_OBJDIR)%,$(CAPI_OBJECTS))
@@ -248,6 +255,16 @@ $(DEBUG_OBJDIR)/%.o : %.s
 	$(Q) $(GCC) $(AS_FLAGS) -c $< -o $@
 
 $(RELEASE_OBJDIR)/%.o : %.s
+	@echo Assembling $<
+	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+	$(Q) $(GCC) $(AS_FLAGS) -c $< -o $@
+
+$(DEBUG_OBJDIR)/%.o : %.S
+	@echo Assembling $<
+	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+	$(Q) $(GCC) $(AS_FLAGS) -c $< -o $@
+
+$(RELEASE_OBJDIR)/%.o : %.S
 	@echo Assembling $<
 	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
 	$(Q) $(GCC) $(AS_FLAGS) -c $< -o $@
