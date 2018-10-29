@@ -15,6 +15,7 @@
 #include "Kernel.h"
 
 #define STM_ADC ADC1
+extern "C" uint32_t Set_GPIO_Clock(uint32_t port);
 #endif
 
 using namespace mbed;
@@ -341,7 +342,11 @@ void ADC::setup(PinName pin, int state) {
     // we don't support dealloc for now, exit early if all channels full or pin doesn't support adc
     if (!state || scan_count_next >= ADC_CHANNEL_COUNT || function == (uint32_t)NC) 
         return;
-    
+
+    // set analog mode for gpio (b11)
+    GPIO_TypeDef *gpio = (GPIO_TypeDef *) Set_GPIO_Clock(STM_PORT(pin));
+    gpio->MODER |= (0x3 << (2*STM_PIN(pin)));
+
     stm_chan = STM_PIN_CHANNEL(function);
     chan = scan_count_next++;
 
