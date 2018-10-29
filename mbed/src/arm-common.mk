@@ -68,6 +68,7 @@ DEVICE_HEADERS     =$(patsubst %.h,$(DEVICE_DROP)/%.h,$(DEVICE_HEADER_SRCS))
 
 # Build up list of all C, C++, and Assembly Language files to be compiled/assembled.
 CAPI_SRCS     =$(wildcard $(VENDOR_CAPI_SRC)/*.c)
+CAPI_SRCS    +=$(wildcard $(VENDOR_CAPI_DEVICE_SRC)/*.c)
 CMSIS_SRCS    =$(wildcard $(VENDOR_CMSIS_SRC)/*.c)
 ifeq "$(VENDOR)" "STM"
 CMSIS_SRCS   +=$(wildcard $(VENDOR_CMSIS_SRC)/hal/*.c)
