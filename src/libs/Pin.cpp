@@ -5,11 +5,13 @@
 #include "PwmOut.h"
 #include "InterruptIn.h"
 #include "PinNames.h"
+#include "pinmap.h"
 #include "port_api.h"
 
 #ifndef __STM32F4__
 #define MAX_PIN 32
 #else
+#include "PeripheralPins.h"
 #define MAX_PIN 16
 extern "C" uint32_t Set_GPIO_Clock(uint32_t port_idx);
 #endif
@@ -245,7 +247,9 @@ mbed::PwmOut* Pin::hardware_pwm()
         if (pin == 26) { return new mbed::PwmOut(P3_26); }
     }
 #else
-    // TODO(ghent360): implement HW PWM
+    PinName pin = port_pin((PortName)this->port_number, this->pin);
+    if (pinmap_peripheral(pin, PinMap_PWM) != (uint32_t)NC)
+        return new mbed::PwmOut(pin);
 #endif    
     return nullptr;
 }
