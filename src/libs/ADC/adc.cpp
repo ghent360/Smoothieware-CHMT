@@ -284,6 +284,33 @@ ADC::ADC(int sample_rate, int cclk_div) {
     interrupt_mask = 0;
 
     memset(scan_chan_lut, 0xFF, sizeof(scan_chan_lut));
+
+    __HAL_RCC_ADC1_CLK_ENABLE();
+
+    // adcclk /8 prescaler
+    ((ADC_Common_TypeDef *) ADC_BASE)->CCR |= ADC_CCR_ADCPRE;
+
+    // use long sampling time to reduce isr call freq, to reduce chance of overflow
+    // 168 Mhz / 2 (APB CLK) / 8 (ADCCLK) / (480+15) = ~47 us conversion
+    // for max 16 scan channels, thats max sampling rate of ~1.3 kHz
+    STM_ADC->SMPR1 = ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 | ADC_SMPR1_SMP13 | 
+                     ADC_SMPR1_SMP14 | ADC_SMPR1_SMP15 | ADC_SMPR1_SMP16 | ADC_SMPR1_SMP17 | 
+                     ADC_SMPR1_SMP18;
+
+    STM_ADC->SMPR2 = ADC_SMPR2_SMP0 | ADC_SMPR2_SMP1 | ADC_SMPR2_SMP2 | ADC_SMPR2_SMP3 | 
+                     ADC_SMPR2_SMP4 | ADC_SMPR2_SMP5 | ADC_SMPR2_SMP6 | ADC_SMPR2_SMP7 | 
+                     ADC_SMPR2_SMP8 | ADC_SMPR2_SMP9;
+ 
+    // overrun ie, scan mode, end of conv. ie
+    STM_ADC->CR1 = ADC_CR1_OVRIE | ADC_CR1_SCAN | ADC_CR1_EOCIE;
+
+    // interrupt after every conversion
+    STM_ADC->CR2 = ADC_CR2_EOCS;
+
+    NVIC_SetVector(ADC_IRQn, (uint32_t)&_adcisr);
+    
+    _adc_g_isr = NULL;
+    instance = this;
 }
 
 int ADC::_pin_to_channel(PinName pin) {
