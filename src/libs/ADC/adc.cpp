@@ -16,6 +16,9 @@
 
 #define STM_ADC ADC1
 extern "C" uint32_t Set_GPIO_Clock(uint32_t port);
+#define ADC_SQR3_SQ2_Pos          (5U)                                         
+#define ADC_SQR2_SQ8_Pos          (5U)                                         
+#define ADC_SQR1_SQ14_Pos         (5U)                                         
 #endif
 
 using namespace mbed;
@@ -353,12 +356,12 @@ void ADC::setup(PinName pin, int state) {
     scan_chan_lut[stm_chan] = chan;
 
     // configure adc scan channel
-    if (chan <= 5) {
-        STM_ADC->SQR3 |= (stm_chan << chan);
-    } else if (chan <= 11) {
-        STM_ADC->SQR2 |= (stm_chan << (chan - 6));
-    } else if (chan <= 15) {
-        STM_ADC->SQR1 |= (stm_chan << (chan - 12));
+    if (chan < 6) {
+        STM_ADC->SQR3 |= (stm_chan << (ADC_SQR3_SQ2_Pos*chan));
+    } else if (chan < 12) {
+        STM_ADC->SQR2 |= (stm_chan << (ADC_SQR2_SQ8_Pos*(chan - 6)));
+    } else if (chan < 16) {
+        STM_ADC->SQR1 |= (stm_chan << (ADC_SQR1_SQ14_Pos*(chan - 12)));
     }
 }
 
