@@ -95,11 +95,6 @@ ADC::ADC(int sample_rate, int cclk_div){
     LPC_ADC->ADINTEN &= ~0x100;
 };
 
-void ADC::_adcisr(void)
-{
-    instance->adcisr();
-}
-
 void ADC::adcisr(void)
 {
     uint32_t stat;
