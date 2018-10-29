@@ -144,8 +144,9 @@ Kernel::Kernel()
 #endif    
     NVIC_SetPriority(PendSV_IRQn, 3);
     
+#ifdef __STM32F4__
     NVIC_SetPriority(WWDG_IRQn, 1);
-
+#endif
     // Set other priorities lower than the timers
     NVIC_SetPriority(ADC_IRQn, 5);
 #ifndef __STM32F4__
