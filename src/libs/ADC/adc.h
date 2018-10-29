@@ -54,6 +54,7 @@ private:
     uint8_t scan_chan_lut[ADC_CHANNEL_COUNT];
     uint8_t scan_count;
     uint8_t scan_index;
+    uint32_t interrupt_mask;
 #endif
 };
 }

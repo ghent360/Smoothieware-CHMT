@@ -281,6 +281,7 @@ void ADC::interrupt_state(PinName pin, int state) {
 ADC::ADC(int sample_rate, int cclk_div) {
     scan_count = 0;
     scan_index = 0;
+    interrupt_mask = 0;
 
     memset(scan_chan_lut, 0xFF, sizeof(scan_chan_lut));
 }
@@ -297,7 +298,23 @@ int ADC::_pin_to_channel(PinName pin) {
 
 void ADC::burst(int state) {}
 void ADC::setup(PinName pin, int state) {}
-void ADC::interrupt_state(PinName pin, int state) {}
+
+void ADC::interrupt_state(PinName pin, int state) {
+    int chan = _pin_to_channel(pin);
+
+    if (chan < ADC_CHANNEL_COUNT) {
+        if (state)
+            interrupt_mask |= (1 << chan);
+        else
+            interrupt_mask &= ~(1 << chan);
+
+        // should we set/clear ie bits here too?
+        if (interrupt_mask)
+            NVIC_EnableIRQ(ADC_IRQn);
+        else
+            NVIC_DisableIRQ(ADC_IRQn);
+     }    
+}
 
 void ADC::adcisr(void)
 {
