@@ -18,6 +18,11 @@
 
 #include "mbed.h"
 
+#ifdef __STM32F4__
+#include "pinmap.h"
+#include "PeripheralPins.h"
+#endif
+
 // This is an interface to the mbed.org ADC library you can find in libs/ADC/adc.h
 // TODO : Having the same name is confusing, should change that
 
@@ -148,21 +153,11 @@ PinName Adc::_pin_to_pinname(Pin *pin)
         return NC;
     }
 #else
-    uint32_t pin_name = STM_PINNAME(pin->port_number, pin->pin);
-    switch (pin_name) {
-        //case PF_3: case PF_4: case PF_5: case PF_6:
-        //case PF_7: case PF_8: case PF_9: case PF_10:
-        case PC_0: case PC_1: case PC_2: case PC_3:
-        case PA_0: case PA_1: case PA_2: case PA_3:
-        case PA_4: case PA_5: case PA_6: case PA_7:
-        case PC_4: case PC_5: case PB_0: case PB_1:
-            return (PinName)pin_name;
-            break;
+    PinName pinname = port_pin((PortName)pin->port_number, pin->pin);
+    if (pinmap_peripheral(pinname, PinMap_ADC) != (uint32_t)NC)
+        return pinname; 
 
-        default:
-            return NC;
-            break;
-    }
+    return NC;    
 #endif    
 }
 
