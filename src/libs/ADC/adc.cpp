@@ -276,8 +276,8 @@ void ADC::interrupt_state(PinName pin, int state) {
     }
 }
 
-#else
-// TODO(ghent360): fix the ADC
+#else  // defined(__STM32F4__)
+
 ADC::ADC(int sample_rate, int cclk_div) {
     scan_count = 0;
     scan_index = 0;
@@ -296,9 +296,41 @@ int ADC::_pin_to_channel(PinName pin) {
     return chan;
 }
 
-void ADC::burst(int state) {}
-void ADC::setup(PinName pin, int state) {}
+// enable or disable burst mode
+void ADC::burst(int state) {
+    // this is the only mode we support, do nothing as we were 
+    // configured in the constructor
+}
 
+// enable or disable an ADC pin
+void ADC::setup(PinName pin, int state) {
+    uint32_t function = pinmap_function(pin, PinMap_ADC);
+    uint8_t stm_chan = 0xFF;
+    uint8_t chan = 0xFF;
+
+    // we don't support dealloc for now, exit early if all channels full or pin doesn't support adc
+    if (!state || scan_count >= ADC_CHANNEL_COUNT || function == (uint32_t)NC) 
+        return;
+    
+    stm_chan = STM_PIN_CHANNEL(function);
+    chan = scan_count++;
+
+    scan_chan_lut[stm_chan] = chan;
+
+    // configure adc scan channel
+    if (chan <= 5) {
+        STM_ADC->SQR3 |= (stm_chan << chan);
+    } else if (chan <= 11) {
+        STM_ADC->SQR2 |= (stm_chan << (chan - 6));
+    } else if (chan <= 15) {
+        STM_ADC->SQR1 |= (stm_chan << (chan - 12));
+    }
+
+    // increase scan count
+    STM_ADC->SQR1 = (STM_ADC->SQR1 & (~ADC_SQR1_L)) | (chan << 20);
+}
+
+// set interrupt enable/disable for pin to state
 void ADC::interrupt_state(PinName pin, int state) {
     int chan = _pin_to_channel(pin);
 
@@ -333,10 +365,10 @@ void ADC::adcisr(void)
     } else if (STM_ADC->SR & ADC_SR_EOC) {
         STM_ADC->SR &= ~ADC_SR_EOC;
 
-        if (_adc_g_isr != NULL)
-            _adc_g_isr(scan_index++, data);
-        
-        if (scan_index >= scan_count)
+        if (_adc_g_isr != NULL && (interrupt_mask & (1 << scan_index)))
+            _adc_g_isr(scan_index, data);
+
+        if (++scan_index >= scan_count)
             scan_index = 0;
     }
 }
