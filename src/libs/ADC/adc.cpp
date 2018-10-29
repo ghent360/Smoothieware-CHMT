@@ -2,9 +2,10 @@
  * Copyright (c) 2010, sblandford
  * released under MIT license http://mbed.org/licence/mit
  */
-#ifndef __STM32F4__
 #include "mbed.h"
+#undef ADC
 #include "adc.h"
+#ifndef __STM32F4__
 
 using namespace mbed;
 
@@ -438,4 +439,12 @@ int ADC::actual_adc_clock(void) {
 int ADC::actual_sample_rate(void) {
     return(_adc_clk_freq / CLKS_PER_SAMPLE);
 }
+#else
+// TODO(ghent360): fix the ADC
+ADC::ADC(int sample_rate, int cclk_div) {}
+int ADC::_pin_to_channel(PinName pin) { return 0; }
+void ADC::append(void(*fptr)(int chan, uint32_t value)) {}
+void ADC::burst(int state) {}
+void ADC::setup(PinName pin, int state) {}
+void ADC::interrupt_state(PinName pin, int state) {}
 #endif // __STM32F4__

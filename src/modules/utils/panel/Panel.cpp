@@ -135,6 +135,7 @@ void Panel::on_module_loaded()
         return;
     }
 
+#ifndef DISABLEMSD
     // external sd
     if(THEKERNEL->config->value( panel_checksum, ext_sd_checksum )->by_default(false)->as_bool()) {
         this->external_sd_enable= true;
@@ -146,6 +147,7 @@ void Panel::on_module_loaded()
         this->extsd_spi_cs= parse_pins(s.c_str());
         this->register_for_event(ON_SECOND_TICK);
     }
+#endif
 
     // these need to be called here as they need the config cache loaded as they enumerate modules
     this->custom_screen= new CustomScreen();
@@ -668,6 +670,7 @@ void  Panel::set_playing_file(string f)
 
 bool Panel::mount_external_sd(bool on)
 {
+#ifndef DISABLEMSD
     // now setup the external sdcard if we have one and mount it
     if(on) {
         if(this->sd == nullptr) {
@@ -698,6 +701,7 @@ bool Panel::mount_external_sd(bool on)
         this->extmounter= nullptr;
         THEKERNEL->streams->printf("External SDcard unmounted\n");
     }
+#endif
     return true;
 }
 
