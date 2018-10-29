@@ -143,6 +143,8 @@ Kernel::Kernel()
     NVIC_SetPriority(TIM6_DAC_IRQn, 4);
 #endif    
     NVIC_SetPriority(PendSV_IRQn, 3);
+    
+    NVIC_SetPriority(WWDG_IRQn, 1);
 
     // Set other priorities lower than the timers
     NVIC_SetPriority(ADC_IRQn, 5);
