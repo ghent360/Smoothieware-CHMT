@@ -53,6 +53,7 @@ private:
 #endif
     // buffers storing the last num_samples readings for each channel
     uint16_t sample_buffers[num_channels][num_samples];
+    uint16_t sample_indexs[num_channels];
 };
 
 #endif
