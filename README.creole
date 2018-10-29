@@ -1,4 +1,8 @@
-Current build status: {{https://travis-ci.org/Smoothieware/Smoothieware.svg?branch=edge}}
+This is a port of Smoothieware V1 for the STM32F4 series of processors.
+This code is based on the great work from Matt Baker, who started the port.
+
+Matt's original work can me located here:
+https://github.com/mattthebaker/Smoothieware-CHMT
 
 ==STM32/CHMT Notes
 
