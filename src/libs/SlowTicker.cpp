@@ -35,10 +35,10 @@ SlowTicker* global_slow_ticker;
 SlowTicker::SlowTicker(){
     global_slow_ticker = this;
 
+#ifndef __STM32F4__
     // ISP button FIXME: WHy is this here?
     ispbtn.from_string("2.10")->as_input()->pull_up();
 
-#ifndef __STM32F4__
     LPC_SC->PCONP |= (1 << 22);     // Power Ticker ON
     LPC_TIM2->MCR = 3;              // Match on MR0, reset on MR0
     // do not enable interrupt until setup is complete
@@ -110,11 +110,12 @@ void SlowTicker::tick(){
         flag_1s_flag++;
     }
 
+#ifndef __STM32F4__
     // Enter MRI mode if the ISP button is pressed
     // TODO: This should have it's own module
     if (ispbtn.get() == 0)
         __debugbreak();
-
+#endif
 }
 
 bool SlowTicker::flag_1s(){
