@@ -2,9 +2,7 @@
   ******************************************************************************
   * @file      startup_stm32f446xx.s
   * @author    MCD Application Team
-  * @version   V2.3.0
-  * @date      02-March-2015
-  * @brief     STM32F446xx Devices vector table for Atollic TrueSTUDIO toolchain. 
+  * @brief     STM32F446xx Devices vector table for GCC based toolchains. 
   *            This module performs:
   *                - Set the initial SP
   *                - Set the initial PC == Reset_Handler,
@@ -16,7 +14,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -42,11 +40,6 @@
   *
   ******************************************************************************
   */
-
-/*
- * Source: %mbedmicro%/libraries/mbed/targets/cmsis/TARGET_STM/TARGET_STM32F4/TARGET_NUCLEO_F446RE/TOOLCHAIN_GCC_ARM
- */
-
     
   .syntax unified
   .cpu cortex-m4
