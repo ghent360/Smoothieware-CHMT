@@ -2,6 +2,8 @@
   ******************************************************************************
   * @file    stm32f4xx_hal_crc.c
   * @author  MCD Application Team
+  * @version V1.3.2
+  * @date    26-June-2015
   * @brief   CRC HAL module driver.
   *          This file provides firmware functions to manage the following 
   *          functionalities of the Cyclic Redundancy Check (CRC) peripheral:
@@ -30,7 +32,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -103,7 +105,7 @@
 /**
   * @brief  Initializes the CRC according to the specified
   *         parameters in the CRC_InitTypeDef and creates the associated handle.
-  * @param  hcrc pointer to a CRC_HandleTypeDef structure that contains
+  * @param  hcrc: pointer to a CRC_HandleTypeDef structure that contains
   *         the configuration information for CRC
   * @retval HAL status
   */
@@ -138,7 +140,7 @@ HAL_StatusTypeDef HAL_CRC_Init(CRC_HandleTypeDef *hcrc)
 
 /**
   * @brief  DeInitializes the CRC peripheral.
-  * @param  hcrc pointer to a CRC_HandleTypeDef structure that contains
+  * @param  hcrc: pointer to a CRC_HandleTypeDef structure that contains
   *         the configuration information for CRC
   * @retval HAL status
   */
@@ -171,14 +173,12 @@ HAL_StatusTypeDef HAL_CRC_DeInit(CRC_HandleTypeDef *hcrc)
 
 /**
   * @brief  Initializes the CRC MSP.
-  * @param  hcrc pointer to a CRC_HandleTypeDef structure that contains
+  * @param  hcrc: pointer to a CRC_HandleTypeDef structure that contains
   *         the configuration information for CRC
   * @retval None
   */
 __weak void HAL_CRC_MspInit(CRC_HandleTypeDef *hcrc)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hcrc);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_CRC_MspInit could be implemented in the user file
    */
@@ -186,14 +186,12 @@ __weak void HAL_CRC_MspInit(CRC_HandleTypeDef *hcrc)
 
 /**
   * @brief  DeInitializes the CRC MSP.
-  * @param  hcrc pointer to a CRC_HandleTypeDef structure that contains
+  * @param  hcrc: pointer to a CRC_HandleTypeDef structure that contains
   *         the configuration information for CRC
   * @retval None
   */
 __weak void HAL_CRC_MspDeInit(CRC_HandleTypeDef *hcrc)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hcrc);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_CRC_MspDeInit could be implemented in the user file
    */
@@ -223,15 +221,15 @@ __weak void HAL_CRC_MspDeInit(CRC_HandleTypeDef *hcrc)
 /**
   * @brief  Computes the 32-bit CRC of 32-bit data buffer using combination
   *         of the previous CRC value and the new one.
-  * @param  hcrc pointer to a CRC_HandleTypeDef structure that contains
+  * @param  hcrc: pointer to a CRC_HandleTypeDef structure that contains
   *         the configuration information for CRC
-  * @param  pBuffer pointer to the buffer containing the data to be computed
-  * @param  BufferLength length of the buffer to be computed
+  * @param  pBuffer: pointer to the buffer containing the data to be computed
+  * @param  BufferLength: length of the buffer to be computed
   * @retval 32-bit CRC
   */
 uint32_t HAL_CRC_Accumulate(CRC_HandleTypeDef *hcrc, uint32_t pBuffer[], uint32_t BufferLength)
 {
-  uint32_t index = 0U;
+  uint32_t index = 0;
 
   /* Process Locked */
   __HAL_LOCK(hcrc);
@@ -240,7 +238,7 @@ uint32_t HAL_CRC_Accumulate(CRC_HandleTypeDef *hcrc, uint32_t pBuffer[], uint32_
   hcrc->State = HAL_CRC_STATE_BUSY;
 
   /* Enter Data to the CRC calculator */
-  for(index = 0U; index < BufferLength; index++)
+  for(index = 0; index < BufferLength; index++)
   {
     hcrc->Instance->DR = pBuffer[index];
   }
@@ -258,15 +256,15 @@ uint32_t HAL_CRC_Accumulate(CRC_HandleTypeDef *hcrc, uint32_t pBuffer[], uint32_
 /**
   * @brief  Computes the 32-bit CRC of 32-bit data buffer independently
   *         of the previous CRC value.
-  * @param  hcrc pointer to a CRC_HandleTypeDef structure that contains
+  * @param  hcrc: pointer to a CRC_HandleTypeDef structure that contains
   *         the configuration information for CRC
-  * @param  pBuffer Pointer to the buffer containing the data to be computed
-  * @param  BufferLength Length of the buffer to be computed
+  * @param  pBuffer: Pointer to the buffer containing the data to be computed
+  * @param  BufferLength: Length of the buffer to be computed
   * @retval 32-bit CRC
   */
 uint32_t HAL_CRC_Calculate(CRC_HandleTypeDef *hcrc, uint32_t pBuffer[], uint32_t BufferLength)
 {
-  uint32_t index = 0U;
+  uint32_t index = 0;
 
   /* Process Locked */
   __HAL_LOCK(hcrc); 
@@ -278,7 +276,7 @@ uint32_t HAL_CRC_Calculate(CRC_HandleTypeDef *hcrc, uint32_t pBuffer[], uint32_t
   __HAL_CRC_DR_RESET(hcrc);
 
   /* Enter Data to the CRC calculator */
-  for(index = 0U; index < BufferLength; index++)
+  for(index = 0; index < BufferLength; index++)
   {
     hcrc->Instance->DR = pBuffer[index];
   }
@@ -315,7 +313,7 @@ uint32_t HAL_CRC_Calculate(CRC_HandleTypeDef *hcrc, uint32_t pBuffer[], uint32_t
 
 /**
   * @brief  Returns the CRC state.
-  * @param  hcrc pointer to a CRC_HandleTypeDef structure that contains
+  * @param  hcrc: pointer to a CRC_HandleTypeDef structure that contains
   *         the configuration information for CRC
   * @retval HAL state
   */

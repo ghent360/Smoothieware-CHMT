@@ -2,6 +2,8 @@
   ******************************************************************************
   * @file    system_stm32f4xx.c
   * @author  MCD Application Team
+  * @version V2.3.2
+  * @date    26-June-2015
   * @brief   CMSIS Cortex-M4 Device Peripheral Access Layer System Source File.
   *
   *   This file provides two functions and one global variable to be called from 
@@ -18,11 +20,27 @@
   *                                 be called whenever the core clock is changed
   *                                 during program execution.
   *
-  *
+  * This file configures the system clock as follows:
+  *-----------------------------------------------------------------------------
+  * System clock source                | 1- PLL_HSE_EXTC        | 3- PLL_HSI
+  *                                    | (external 8 MHz clock) | (internal 16 MHz)
+  *                                    | 2- PLL_HSE_XTAL        |
+  *                                    | (external 8 MHz xtal)  |
+  *-----------------------------------------------------------------------------
+  * SYSCLK(MHz)                        | 180                    | 180
+  *-----------------------------------------------------------------------------
+  * AHBCLK (MHz)                       | 180                    | 180
+  *-----------------------------------------------------------------------------
+  * APB1CLK (MHz)                      |  45                    |  45
+  *-----------------------------------------------------------------------------
+  * APB2CLK (MHz)                      |  90                    |  90
+  *-----------------------------------------------------------------------------
+  * USB capable (48 MHz precise clock) | YES                    |  NO
+  *-----------------------------------------------------------------------------  
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT 2017 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2015 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -49,6 +67,11 @@
   ******************************************************************************
   */
 
+/*
+ * Source: %mbedmicro%/libraries/mbed/targets/cmsis/TARGET_STM/TARGET_STM32F4/TARGET_NUCLEO_F446RE
+ */
+
+
 /** @addtogroup CMSIS
   * @{
   */
@@ -63,9 +86,10 @@
 
 
 #include "stm32f4xx.h"
+#include "hal_tick.h"
 
 #if !defined  (HSE_VALUE) 
-  #define HSE_VALUE    ((uint32_t)25000000) /*!< Default value of the External oscillator in Hz */
+  #define HSE_VALUE    ((uint32_t)8000000) /*!< Default value of the External oscillator in Hz */
 #endif /* HSE_VALUE */
 
 #if !defined  (HSI_VALUE)
@@ -90,22 +114,23 @@
 
 /************************* Miscellaneous Configuration ************************/
 /*!< Uncomment the following line if you need to use external SRAM or SDRAM as data memory  */
-#if defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx) || defined(STM32F417xx)\
- || defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx)\
- || defined(STM32F469xx) || defined(STM32F479xx) || defined(STM32F412Zx) || defined(STM32F412Vx)
+#if defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx) || defined(STM32F417xx) ||\
+    defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx)
 /* #define DATA_IN_ExtSRAM */
-#endif /* STM32F40xxx || STM32F41xxx || STM32F42xxx || STM32F43xxx || STM32F469xx || STM32F479xx ||\
-          STM32F412Zx || STM32F412Vx */
+#endif /* STM32F40xxx || STM32F41xxx || STM32F42xxx || STM32F43xxx */
  
-#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx)\
- || defined(STM32F446xx) || defined(STM32F469xx) || defined(STM32F479xx)
+#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx) ||\
+    defined(STM32F446xx)
 /* #define DATA_IN_ExtSDRAM */
-#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx || STM32F446xx || STM32F469xx ||\
-          STM32F479xx */
+#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx || STM32F446xx */
+
+#if defined(DATA_IN_ExtSRAM) && defined(DATA_IN_ExtSDRAM)
+ #error "Please select DATA_IN_ExtSRAM or DATA_IN_ExtSDRAM " 
+#endif /* DATA_IN_ExtSRAM && DATA_IN_ExtSDRAM */
 
 /*!< Uncomment the following line if you need to relocate your vector Table in
      Internal SRAM. */
-/* #define VECT_TAB_SRAM */
+#define VECT_TAB_SRAM
 #define VECT_TAB_OFFSET  0x00 /*!< Vector Table base offset field. 
                                    This value must be a multiple of 0x200. */
 /******************************************************************************/
@@ -117,6 +142,11 @@
 /** @addtogroup STM32F4xx_System_Private_Macros
   * @{
   */
+
+/* Select the clock sources (other than HSI) to start with (0=OFF, 1=ON) */
+#define USE_PLL_HSE_EXTC (1) /* Use external clock */
+#define USE_PLL_HSE_XTAL (0) /* Use external xtal */
+#define DEBUG_MCO        (1) // Output the MCO1/MCO2 on PA8/PC9 for debugging (0=OFF, 1=ON)
 
 /**
   * @}
@@ -135,7 +165,7 @@
   */
 uint32_t SystemCoreClock = 16000000;
 const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
-const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
+
 /**
   * @}
   */
@@ -148,6 +178,12 @@ const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
   static void SystemInit_ExtMemCtl(void); 
 #endif /* DATA_IN_ExtSRAM || DATA_IN_ExtSDRAM */
 
+#if (USE_PLL_HSE_XTAL != 0) || (USE_PLL_HSE_EXTC != 0)
+uint8_t SetSysClock_PLL_HSE(uint8_t bypass);
+#endif
+
+uint8_t SetSysClock_PLL_HSI(void);
+
 /**
   * @}
   */
@@ -155,10 +191,6 @@ const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
 /** @addtogroup STM32F4xx_System_Private_Functions
   * @{
   */
-
-/*+ MBED */
-#if 0
-/*- MBED */
 
 /**
   * @brief  Setup the microcontroller system
@@ -202,11 +234,19 @@ void SystemInit(void)
 #else
   SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
 #endif
-}
 
-/*+ MBED */
-#endif
-/*- MBED */
+  /* Configure the Cube driver */
+  SystemCoreClock = 18000000; // At this stage the HSI is used as system clock
+  HAL_Init();
+
+  /* Configure the System clock source, PLL Multiplier and Divider factors,
+     AHB/APBx prescalers and Flash settings */
+  SetSysClock();
+  
+  /* Reset the timer to avoid issues after the RAM initialization */
+  TIM_MST_RESET_ON;
+  TIM_MST_RESET_OFF;  
+}
 
 /**
    * @brief  Update SystemCoreClock variable according to Clock Register Values.
@@ -292,9 +332,7 @@ void SystemCoreClockUpdate(void)
   SystemCoreClock >>= tmp;
 }
 
-#if defined (DATA_IN_ExtSRAM) && defined (DATA_IN_ExtSDRAM)
-#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx)\
- || defined(STM32F469xx) || defined(STM32F479xx)
+#if defined (DATA_IN_ExtSRAM) || defined (DATA_IN_ExtSDRAM)
 /**
   * @brief  Setup the external memory controller.
   *         Called in startup_stm32f4xx.s before jump to main.
@@ -306,174 +344,10 @@ void SystemCoreClockUpdate(void)
 void SystemInit_ExtMemCtl(void)
 {
   __IO uint32_t tmp = 0x00;
-
-  register uint32_t tmpreg = 0, timeout = 0xFFFF;
-  register __IO uint32_t index;
-
-  /* Enable GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH and GPIOI interface clock */
-  RCC->AHB1ENR |= 0x000001F8;
-
-  /* Delay after an RCC peripheral clock enabling */
-  tmp = READ_BIT(RCC->AHB1ENR, RCC_AHB1ENR_GPIOCEN);
-  
-  /* Connect PDx pins to FMC Alternate function */
-  GPIOD->AFR[0]  = 0x00CCC0CC;
-  GPIOD->AFR[1]  = 0xCCCCCCCC;
-  /* Configure PDx pins in Alternate function mode */  
-  GPIOD->MODER   = 0xAAAA0A8A;
-  /* Configure PDx pins speed to 100 MHz */  
-  GPIOD->OSPEEDR = 0xFFFF0FCF;
-  /* Configure PDx pins Output type to push-pull */  
-  GPIOD->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PDx pins */ 
-  GPIOD->PUPDR   = 0x00000000;
-
-  /* Connect PEx pins to FMC Alternate function */
-  GPIOE->AFR[0]  = 0xC00CC0CC;
-  GPIOE->AFR[1]  = 0xCCCCCCCC;
-  /* Configure PEx pins in Alternate function mode */ 
-  GPIOE->MODER   = 0xAAAA828A;
-  /* Configure PEx pins speed to 100 MHz */ 
-  GPIOE->OSPEEDR = 0xFFFFC3CF;
-  /* Configure PEx pins Output type to push-pull */  
-  GPIOE->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PEx pins */ 
-  GPIOE->PUPDR   = 0x00000000;
-  
-  /* Connect PFx pins to FMC Alternate function */
-  GPIOF->AFR[0]  = 0xCCCCCCCC;
-  GPIOF->AFR[1]  = 0xCCCCCCCC;
-  /* Configure PFx pins in Alternate function mode */   
-  GPIOF->MODER   = 0xAA800AAA;
-  /* Configure PFx pins speed to 50 MHz */ 
-  GPIOF->OSPEEDR = 0xAA800AAA;
-  /* Configure PFx pins Output type to push-pull */  
-  GPIOF->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PFx pins */ 
-  GPIOF->PUPDR   = 0x00000000;
-
-  /* Connect PGx pins to FMC Alternate function */
-  GPIOG->AFR[0]  = 0xCCCCCCCC;
-  GPIOG->AFR[1]  = 0xCCCCCCCC;
-  /* Configure PGx pins in Alternate function mode */ 
-  GPIOG->MODER   = 0xAAAAAAAA;
-  /* Configure PGx pins speed to 50 MHz */ 
-  GPIOG->OSPEEDR = 0xAAAAAAAA;
-  /* Configure PGx pins Output type to push-pull */  
-  GPIOG->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PGx pins */ 
-  GPIOG->PUPDR   = 0x00000000;
-  
-  /* Connect PHx pins to FMC Alternate function */
-  GPIOH->AFR[0]  = 0x00C0CC00;
-  GPIOH->AFR[1]  = 0xCCCCCCCC;
-  /* Configure PHx pins in Alternate function mode */ 
-  GPIOH->MODER   = 0xAAAA08A0;
-  /* Configure PHx pins speed to 50 MHz */ 
-  GPIOH->OSPEEDR = 0xAAAA08A0;
-  /* Configure PHx pins Output type to push-pull */  
-  GPIOH->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PHx pins */ 
-  GPIOH->PUPDR   = 0x00000000;
-  
-  /* Connect PIx pins to FMC Alternate function */
-  GPIOI->AFR[0]  = 0xCCCCCCCC;
-  GPIOI->AFR[1]  = 0x00000CC0;
-  /* Configure PIx pins in Alternate function mode */ 
-  GPIOI->MODER   = 0x0028AAAA;
-  /* Configure PIx pins speed to 50 MHz */ 
-  GPIOI->OSPEEDR = 0x0028AAAA;
-  /* Configure PIx pins Output type to push-pull */  
-  GPIOI->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PIx pins */ 
-  GPIOI->PUPDR   = 0x00000000;
-  
-/*-- FMC Configuration -------------------------------------------------------*/
-  /* Enable the FMC interface clock */
-  RCC->AHB3ENR |= 0x00000001;
-  /* Delay after an RCC peripheral clock enabling */
-  tmp = READ_BIT(RCC->AHB3ENR, RCC_AHB3ENR_FMCEN);
-
-  FMC_Bank5_6->SDCR[0] = 0x000019E4;
-  FMC_Bank5_6->SDTR[0] = 0x01115351;      
-  
-  /* SDRAM initialization sequence */
-  /* Clock enable command */
-  FMC_Bank5_6->SDCMR = 0x00000011; 
-  tmpreg = FMC_Bank5_6->SDSR & 0x00000020; 
-  while((tmpreg != 0) && (timeout-- > 0))
-  {
-    tmpreg = FMC_Bank5_6->SDSR & 0x00000020; 
-  }
-
-  /* Delay */
-  for (index = 0; index<1000; index++);
-  
-  /* PALL command */
-  FMC_Bank5_6->SDCMR = 0x00000012;           
-  timeout = 0xFFFF;
-  while((tmpreg != 0) && (timeout-- > 0))
-  {
-    tmpreg = FMC_Bank5_6->SDSR & 0x00000020; 
-  }
-  
-  /* Auto refresh command */
-  FMC_Bank5_6->SDCMR = 0x00000073;
-  timeout = 0xFFFF;
-  while((tmpreg != 0) && (timeout-- > 0))
-  {
-    tmpreg = FMC_Bank5_6->SDSR & 0x00000020; 
-  }
- 
-  /* MRD register program */
-  FMC_Bank5_6->SDCMR = 0x00046014;
-  timeout = 0xFFFF;
-  while((tmpreg != 0) && (timeout-- > 0))
-  {
-    tmpreg = FMC_Bank5_6->SDSR & 0x00000020; 
-  } 
-  
-  /* Set refresh count */
-  tmpreg = FMC_Bank5_6->SDRTR;
-  FMC_Bank5_6->SDRTR = (tmpreg | (0x0000027C<<1));
-  
-  /* Disable write protection */
-  tmpreg = FMC_Bank5_6->SDCR[0]; 
-  FMC_Bank5_6->SDCR[0] = (tmpreg & 0xFFFFFDFF);
-
-#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx)
-  /* Configure and enable Bank1_SRAM2 */
-  FMC_Bank1->BTCR[2]  = 0x00001011;
-  FMC_Bank1->BTCR[3]  = 0x00000201;
-  FMC_Bank1E->BWTR[2] = 0x0fffffff;
-#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx */ 
-#if defined(STM32F469xx) || defined(STM32F479xx)
-  /* Configure and enable Bank1_SRAM2 */
-  FMC_Bank1->BTCR[2]  = 0x00001091;
-  FMC_Bank1->BTCR[3]  = 0x00110212;
-  FMC_Bank1E->BWTR[2] = 0x0fffffff;
-#endif /* STM32F469xx || STM32F479xx */
-
-  (void)(tmp); 
-}
-#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx || STM32F469xx || STM32F479xx */
-#elif defined (DATA_IN_ExtSRAM) || defined (DATA_IN_ExtSDRAM)
-/**
-  * @brief  Setup the external memory controller.
-  *         Called in startup_stm32f4xx.s before jump to main.
-  *         This function configures the external memories (SRAM/SDRAM)
-  *         This SRAM/SDRAM will be used as program data memory (including heap and stack).
-  * @param  None
-  * @retval None
-  */
-void SystemInit_ExtMemCtl(void)
-{
-  __IO uint32_t tmp = 0x00;
-#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx)\
- || defined(STM32F446xx) || defined(STM32F469xx) || defined(STM32F479xx)
+#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx) || defined(STM32F446xx)
 #if defined (DATA_IN_ExtSDRAM)
   register uint32_t tmpreg = 0, timeout = 0xFFFF;
-  register __IO uint32_t index;
+  register uint32_t index;
 
 #if defined(STM32F446xx)
   /* Enable GPIOA, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG interface
@@ -561,8 +435,7 @@ void SystemInit_ExtMemCtl(void)
   /* No pull-up, pull-down for PGx pins */ 
   GPIOG->PUPDR   = 0x00000000;
 
-#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx)\
- || defined(STM32F469xx) || defined(STM32F479xx)  
+#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx)  
   /* Connect PHx pins to FMC Alternate function */
   GPIOH->AFR[0]  = 0x00C0CC00;
   GPIOH->AFR[1]  = 0xCCCCCCCC;
@@ -586,7 +459,7 @@ void SystemInit_ExtMemCtl(void)
   GPIOI->OTYPER  = 0x00000000;
   /* No pull-up, pull-down for PIx pins */ 
   GPIOI->PUPDR   = 0x00000000;
-#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx || STM32F469xx || STM32F479xx */
+#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx */
   
 /*-- FMC Configuration -------------------------------------------------------*/
   /* Enable the FMC interface clock */
@@ -658,11 +531,10 @@ void SystemInit_ExtMemCtl(void)
   tmpreg = FMC_Bank5_6->SDCR[0]; 
   FMC_Bank5_6->SDCR[0] = (tmpreg & 0xFFFFFDFF);
 #endif /* DATA_IN_ExtSDRAM */
-#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx || STM32F446xx || STM32F469xx || STM32F479xx */
+#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx || STM32F446xx */
 
-#if defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx) || defined(STM32F417xx)\
- || defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx)\
- || defined(STM32F469xx) || defined(STM32F479xx) || defined(STM32F412Zx) || defined(STM32F412Vx)
+#if defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx) || defined(STM32F417xx) ||\
+    defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx)
 
 #if defined(DATA_IN_ExtSRAM)
 /*-- GPIOs Configuration -----------------------------------------------------*/
@@ -723,7 +595,7 @@ void SystemInit_ExtMemCtl(void)
   /* Enable the FMC/FSMC interface clock */
   RCC->AHB3ENR         |= 0x00000001;
 
-#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx)
+#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx)|| defined(STM32F439xx)
   /* Delay after an RCC peripheral clock enabling */
   tmp = READ_BIT(RCC->AHB3ENR, RCC_AHB3ENR_FMCEN);
   /* Configure and enable Bank1_SRAM2 */
@@ -731,30 +603,185 @@ void SystemInit_ExtMemCtl(void)
   FMC_Bank1->BTCR[3]  = 0x00000201;
   FMC_Bank1E->BWTR[2] = 0x0fffffff;
 #endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx */ 
-#if defined(STM32F469xx) || defined(STM32F479xx)
-  /* Delay after an RCC peripheral clock enabling */
-  tmp = READ_BIT(RCC->AHB3ENR, RCC_AHB3ENR_FMCEN);
-  /* Configure and enable Bank1_SRAM2 */
-  FMC_Bank1->BTCR[2]  = 0x00001091;
-  FMC_Bank1->BTCR[3]  = 0x00110212;
-  FMC_Bank1E->BWTR[2] = 0x0fffffff;
-#endif /* STM32F469xx || STM32F479xx */
-#if defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx)|| defined(STM32F417xx)\
-   || defined(STM32F412Zx) || defined(STM32F412Vx)
+
+#if defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx)|| defined(STM32F417xx)
   /* Delay after an RCC peripheral clock enabling */
   tmp = READ_BIT(RCC->AHB3ENR, RCC_AHB3ENR_FSMCEN);
   /* Configure and enable Bank1_SRAM2 */
   FSMC_Bank1->BTCR[2]  = 0x00001011;
   FSMC_Bank1->BTCR[3]  = 0x00000201;
   FSMC_Bank1E->BWTR[2] = 0x0FFFFFFF;
-#endif /* STM32F405xx || STM32F415xx || STM32F407xx || STM32F417xx || STM32F412Zx || STM32F412Vx */
+#endif /* STM32F405xx || STM32F415xx || STM32F407xx || STM32F417xx */
 
 #endif /* DATA_IN_ExtSRAM */
-#endif /* STM32F405xx || STM32F415xx || STM32F407xx || STM32F417xx || STM32F427xx || STM32F437xx ||\
-          STM32F429xx || STM32F439xx || STM32F469xx || STM32F479xx || STM32F412Zx || STM32F412Vx  */ 
+#endif /* STM32F405xx || STM32F415xx || STM32F407xx || STM32F417xx || STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx */
   (void)(tmp); 
 }
-#endif /* DATA_IN_ExtSRAM && DATA_IN_ExtSDRAM */
+#endif /* DATA_IN_ExtSRAM || DATA_IN_ExtSDRAM */
+
+/**
+  * @brief  Configures the System clock source, PLL Multiplier and Divider factors,
+  *               AHB/APBx prescalers and Flash settings
+  * @note   This function should be called only once the RCC clock configuration  
+  *         is reset to the default reset state (done in SystemInit() function).             
+  * @param  None
+  * @retval None
+  */
+void SetSysClock(void)
+{
+  /* 1- Try to start with HSE and external clock */
+#if USE_PLL_HSE_EXTC != 0
+  if (SetSysClock_PLL_HSE(1) == 0)
+#endif
+  {
+    /* 2- If fail try to start with HSE and external xtal */
+    #if USE_PLL_HSE_XTAL != 0
+    if (SetSysClock_PLL_HSE(0) == 0)
+    #endif
+    {
+      /* 3- If fail start with HSI clock */
+      if (SetSysClock_PLL_HSI() == 0)
+      {
+        while(1)
+        {
+          // [TODO] Put something here to tell the user that a problem occured...
+        }
+      }
+    }
+  }
+  
+  // Output clock on MCO2 pin(PC9) for debugging purpose
+#if DEBUG_MCO == 1
+  HAL_RCC_MCOConfig(RCC_MCO2, RCC_MCO2SOURCE_SYSCLK, RCC_MCODIV_4);
+#endif
+}
+
+#if (USE_PLL_HSE_XTAL != 0) || (USE_PLL_HSE_EXTC != 0)
+/******************************************************************************/
+/*            PLL (clocked by HSE) used as System clock source                */
+/******************************************************************************/
+uint8_t SetSysClock_PLL_HSE(uint8_t bypass)
+{
+  RCC_ClkInitTypeDef RCC_ClkInitStruct;
+  RCC_OscInitTypeDef RCC_OscInitStruct;
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
+  
+  /* The voltage scaling allows optimizing the power consumption when the device is 
+     clocked below the maximum system frequency, to update the voltage scaling value 
+     regarding system frequency refer to product datasheet. */
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  
+  // Enable HSE oscillator and activate PLL with HSE as source
+  RCC_OscInitStruct.OscillatorType      = RCC_OSCILLATORTYPE_HSE;
+  if (bypass == 0)
+  {
+    RCC_OscInitStruct.HSEState          = RCC_HSE_ON; // External 8 MHz xtal on OSC_IN/OSC_OUT
+  }
+  else
+  {
+    RCC_OscInitStruct.HSEState          = RCC_HSE_BYPASS; // External 8 MHz clock on OSC_IN
+  }
+  
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 8;             // VCO input clock = 1 MHz (8 MHz / 8)
+  RCC_OscInitStruct.PLL.PLLN = 360;           // VCO output clock = 360 MHz (1 MHz * 360)
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2; // PLLCLK = 180 MHz (360 MHz / 2)
+  RCC_OscInitStruct.PLL.PLLQ = 7;             // 
+  RCC_OscInitStruct.PLL.PLLR = 2;             // 
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    return 0; // FAIL
+  }
+
+  // Activate the OverDrive to reach the 180 MHz Frequency
+  if (HAL_PWREx_ActivateOverDrive() != HAL_OK)
+  {
+    return 0; // FAIL
+  }
+  
+  // Select PLLSAI output as USB clock source
+  PeriphClkInitStruct.PLLSAI.PLLSAIM = 8;
+  PeriphClkInitStruct.PLLSAI.PLLSAIN = 384;
+  PeriphClkInitStruct.PLLSAI.PLLSAIP = RCC_PLLSAIP_DIV8;
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_CK48;
+  PeriphClkInitStruct.Clk48ClockSelection = RCC_CK48CLKSOURCE_PLLSAIP;
+  HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
+  
+  // Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1; // 180 MHz
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;  //  45 MHz
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;  //  90 MHz
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+  {
+    return 0; // FAIL
+  }
+
+  // Output clock on MCO1 pin(PA8) for debugging purpose
+#if DEBUG_MCO == 1
+  if (bypass == 0)
+    HAL_RCC_MCOConfig(RCC_MCO1, RCC_MCO1SOURCE_HSE, RCC_MCODIV_2); // 4 MHz with xtal
+  else
+    HAL_RCC_MCOConfig(RCC_MCO1, RCC_MCO1SOURCE_HSE, RCC_MCODIV_1); // 8 MHz with external clock (MCO)
+#endif
+
+  return 1; // OK
+}
+#endif
+
+/******************************************************************************/
+/*            PLL (clocked by HSI) used as System clock source                */
+/******************************************************************************/
+uint8_t SetSysClock_PLL_HSI(void)
+{
+  RCC_ClkInitTypeDef RCC_ClkInitStruct;
+  RCC_OscInitTypeDef RCC_OscInitStruct;
+
+  /* The voltage scaling allows optimizing the power consumption when the device is 
+     clocked below the maximum system frequency, to update the voltage scaling value 
+     regarding system frequency refer to product datasheet. */
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+ 
+  // Enable HSI oscillator and activate PLL with HSI as source
+  RCC_OscInitStruct.OscillatorType      = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSIState            = RCC_HSI_ON;
+  RCC_OscInitStruct.HSEState            = RCC_HSE_OFF;
+  RCC_OscInitStruct.HSICalibrationValue = 16;
+  RCC_OscInitStruct.PLL.PLLState        = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource       = RCC_PLLSOURCE_HSI;   
+  RCC_OscInitStruct.PLL.PLLM            = 16;            // VCO input clock = 1 MHz (16 MHz / 16)
+  RCC_OscInitStruct.PLL.PLLN            = 360;           // VCO output clock = 360 MHz (1 MHz * 360)
+  RCC_OscInitStruct.PLL.PLLP            = RCC_PLLP_DIV2; // PLLCLK = 180 MHz (360 MHz / 2)
+  RCC_OscInitStruct.PLL.PLLQ            = 7;             //
+  RCC_OscInitStruct.PLL.PLLQ            = 6;             //
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    return 0; // FAIL
+  }
+ 
+  /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers */
+  RCC_ClkInitStruct.ClockType      = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+  RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK; // 180 MHz
+  RCC_ClkInitStruct.AHBCLKDivider  = RCC_SYSCLK_DIV1;         // 180 MHz
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;           //  45 MHz
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;           //  90 MHz
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+  {
+    return 0; // FAIL
+  }
+
+  // Output clock on MCO1 pin(PA8) for debugging purpose
+#if DEBUG_MCO == 1
+  HAL_RCC_MCOConfig(RCC_MCO1, RCC_MCO1SOURCE_HSI, RCC_MCODIV_1); // 16 MHz
+#endif
+
+  return 1; // OK
+}
+
 /**
   * @}
   */

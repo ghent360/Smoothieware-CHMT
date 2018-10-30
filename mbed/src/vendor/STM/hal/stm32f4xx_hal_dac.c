@@ -2,6 +2,8 @@
   ******************************************************************************
   * @file    stm32f4xx_hal_dac.c
   * @author  MCD Application Team
+  * @version V1.3.2
+  * @date    26-June-2015
   * @brief   DAC HAL module driver.
   *         This file provides firmware functions to manage the following 
   *         functionalities of the Digital to Analog Converter (DAC) peripheral:
@@ -18,7 +20,7 @@
     [..]        
       *** DAC Channels ***
       ====================  
-    [..]
+    [..]  
     The device integrates two 12-bit Digital Analog Converters that can 
     be used independently or simultaneously (dual mode):
       (#) DAC channel1 with DAC_OUT1 (PA4) as output
@@ -139,7 +141,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -183,8 +185,7 @@
 
 #if defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx) || defined(STM32F417xx) ||\
     defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx) ||\
-    defined(STM32F410Tx) || defined(STM32F410Cx) || defined(STM32F410Rx) || defined(STM32F446xx) ||\
-    defined(STM32F469xx) || defined(STM32F479xx) || defined(STM32F413xx) || defined(STM32F423xx)
+	  defined(STM32F446xx)
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -223,7 +224,7 @@ static void DAC_DMAHalfConvCpltCh1(DMA_HandleTypeDef *hdma);
 /**
   * @brief  Initializes the DAC peripheral according to the specified parameters
   *         in the DAC_InitStruct.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval HAL status
   */
@@ -260,7 +261,7 @@ HAL_StatusTypeDef HAL_DAC_Init(DAC_HandleTypeDef* hdac)
 
 /**
   * @brief  Deinitializes the DAC peripheral registers to their default reset values.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval HAL status
   */
@@ -296,14 +297,12 @@ HAL_StatusTypeDef HAL_DAC_DeInit(DAC_HandleTypeDef* hdac)
 
 /**
   * @brief  Initializes the DAC MSP.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval None
   */
 __weak void HAL_DAC_MspInit(DAC_HandleTypeDef* hdac)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdac);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_DAC_MspInit could be implemented in the user file
    */ 
@@ -311,14 +310,12 @@ __weak void HAL_DAC_MspInit(DAC_HandleTypeDef* hdac)
 
 /**
   * @brief  DeInitializes the DAC MSP.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.  
   * @retval None
   */
 __weak void HAL_DAC_MspDeInit(DAC_HandleTypeDef* hdac)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdac);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_DAC_MspDeInit could be implemented in the user file
    */ 
@@ -348,9 +345,9 @@ __weak void HAL_DAC_MspDeInit(DAC_HandleTypeDef* hdac)
 
 /**
   * @brief  Enables DAC and starts conversion of channel.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
-  * @param  Channel The selected DAC channel. 
+  * @param  Channel: The selected DAC channel. 
   *          This parameter can be one of the following values:
   *            @arg DAC_CHANNEL_1: DAC Channel1 selected
   *            @arg DAC_CHANNEL_2: DAC Channel2 selected
@@ -358,7 +355,7 @@ __weak void HAL_DAC_MspDeInit(DAC_HandleTypeDef* hdac)
   */
 HAL_StatusTypeDef HAL_DAC_Start(DAC_HandleTypeDef* hdac, uint32_t Channel)
 {
-  uint32_t tmp1 = 0U, tmp2 = 0U;
+  uint32_t tmp1 = 0, tmp2 = 0;
   
   /* Check the parameters */
   assert_param(IS_DAC_CHANNEL(Channel));
@@ -407,9 +404,9 @@ HAL_StatusTypeDef HAL_DAC_Start(DAC_HandleTypeDef* hdac, uint32_t Channel)
 
 /**
   * @brief  Disables DAC and stop conversion of channel.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
-  * @param  Channel The selected DAC channel. 
+  * @param  Channel: The selected DAC channel. 
   *          This parameter can be one of the following values:
   *            @arg DAC_CHANNEL_1: DAC Channel1 selected
   *            @arg DAC_CHANNEL_2: DAC Channel2 selected  
@@ -432,15 +429,15 @@ HAL_StatusTypeDef HAL_DAC_Stop(DAC_HandleTypeDef* hdac, uint32_t Channel)
 
 /**
   * @brief  Enables DAC and starts conversion of channel.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
-  * @param  Channel The selected DAC channel. 
+  * @param  Channel: The selected DAC channel. 
   *          This parameter can be one of the following values:
   *            @arg DAC_CHANNEL_1: DAC Channel1 selected
   *            @arg DAC_CHANNEL_2: DAC Channel2 selected
-  * @param  pData The destination peripheral Buffer address.
-  * @param  Length The length of data to be transferred from memory to DAC peripheral
-  * @param  Alignment Specifies the data alignment for DAC channel.
+  * @param  pData: The destination peripheral Buffer address.
+  * @param  Length: The length of data to be transferred from memory to DAC peripheral
+  * @param  Alignment: Specifies the data alignment for DAC channel.
   *          This parameter can be one of the following values:
   *            @arg DAC_ALIGN_8B_R: 8bit right data alignment selected
   *            @arg DAC_ALIGN_12B_L: 12bit left data alignment selected
@@ -449,7 +446,7 @@ HAL_StatusTypeDef HAL_DAC_Stop(DAC_HandleTypeDef* hdac, uint32_t Channel)
   */
 HAL_StatusTypeDef HAL_DAC_Start_DMA(DAC_HandleTypeDef* hdac, uint32_t Channel, uint32_t* pData, uint32_t Length, uint32_t Alignment)
 {
-  uint32_t tmpreg = 0U;
+  uint32_t tmpreg = 0;
     
   /* Check the parameters */
   assert_param(IS_DAC_CHANNEL(Channel));
@@ -558,9 +555,9 @@ HAL_StatusTypeDef HAL_DAC_Start_DMA(DAC_HandleTypeDef* hdac, uint32_t Channel, u
 
 /**
   * @brief  Disables DAC and stop conversion of channel.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
-  * @param  Channel The selected DAC channel. 
+  * @param  Channel: The selected DAC channel. 
   *          This parameter can be one of the following values:
   *            @arg DAC_CHANNEL_1: DAC Channel1 selected
   *            @arg DAC_CHANNEL_2: DAC Channel2 selected   
@@ -608,9 +605,9 @@ HAL_StatusTypeDef HAL_DAC_Stop_DMA(DAC_HandleTypeDef* hdac, uint32_t Channel)
 
 /**
   * @brief  Returns the last data output value of the selected DAC channel.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
-  * @param  Channel The selected DAC channel. 
+  * @param  Channel: The selected DAC channel. 
   *          This parameter can be one of the following values:
   *            @arg DAC_CHANNEL_1: DAC Channel1 selected
   *            @arg DAC_CHANNEL_2: DAC Channel2 selected
@@ -634,7 +631,7 @@ uint32_t HAL_DAC_GetValue(DAC_HandleTypeDef* hdac, uint32_t Channel)
 
 /**
   * @brief  Handles DAC interrupt request  
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval None
   */
@@ -680,14 +677,12 @@ void HAL_DAC_IRQHandler(DAC_HandleTypeDef* hdac)
 
 /**
   * @brief  Conversion complete callback in non blocking mode for Channel1 
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval None
   */
 __weak void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef* hdac)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdac);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_DAC_ConvCpltCallback could be implemented in the user file
    */
@@ -695,14 +690,12 @@ __weak void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef* hdac)
 
 /**
   * @brief  Conversion half DMA transfer callback in non blocking mode for Channel1 
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval None
   */
 __weak void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef* hdac)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdac);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_DAC_ConvHalfCpltCallbackCh1 could be implemented in the user file
    */
@@ -710,14 +703,12 @@ __weak void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef* hdac)
 
 /**
   * @brief  Error DAC callback for Channel1.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval None
   */
 __weak void HAL_DAC_ErrorCallbackCh1(DAC_HandleTypeDef *hdac)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdac);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_DAC_ErrorCallbackCh1 could be implemented in the user file
    */
@@ -725,14 +716,12 @@ __weak void HAL_DAC_ErrorCallbackCh1(DAC_HandleTypeDef *hdac)
 
 /**
   * @brief  DMA underrun DAC callback for channel1.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval None
   */
 __weak void HAL_DAC_DMAUnderrunCallbackCh1(DAC_HandleTypeDef *hdac)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdac);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_DAC_DMAUnderrunCallbackCh1 could be implemented in the user file
    */
@@ -759,10 +748,10 @@ __weak void HAL_DAC_DMAUnderrunCallbackCh1(DAC_HandleTypeDef *hdac)
 
 /**
   * @brief  Configures the selected DAC channel.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
-  * @param  sConfig DAC configuration structure.
-  * @param  Channel The selected DAC channel. 
+  * @param  sConfig: DAC configuration structure.
+  * @param  Channel: The selected DAC channel. 
   *          This parameter can be one of the following values:
   *            @arg DAC_CHANNEL_1: DAC Channel1 selected
   *            @arg DAC_CHANNEL_2: DAC Channel2 selected
@@ -770,7 +759,7 @@ __weak void HAL_DAC_DMAUnderrunCallbackCh1(DAC_HandleTypeDef *hdac)
   */
 HAL_StatusTypeDef HAL_DAC_ConfigChannel(DAC_HandleTypeDef* hdac, DAC_ChannelConfTypeDef* sConfig, uint32_t Channel)
 {
-  uint32_t tmpreg1 = 0U, tmpreg2 = 0U;
+  uint32_t tmpreg1 = 0, tmpreg2 = 0;
 
   /* Check the DAC parameters */
   assert_param(IS_DAC_TRIGGER(sConfig->DAC_Trigger));
@@ -810,23 +799,23 @@ HAL_StatusTypeDef HAL_DAC_ConfigChannel(DAC_HandleTypeDef* hdac, DAC_ChannelConf
 
 /**
   * @brief  Set the specified data holding register value for DAC channel.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
-  * @param  Channel The selected DAC channel. 
+  * @param  Channel: The selected DAC channel. 
   *          This parameter can be one of the following values:
   *            @arg DAC_CHANNEL_1: DAC Channel1 selected
   *            @arg DAC_CHANNEL_2: DAC Channel2 selected  
-  * @param  Alignment Specifies the data alignment.
+  * @param  Alignment: Specifies the data alignment.
   *          This parameter can be one of the following values:
   *            @arg DAC_ALIGN_8B_R: 8bit right data alignment selected
   *            @arg DAC_ALIGN_12B_L: 12bit left data alignment selected
   *            @arg DAC_ALIGN_12B_R: 12bit right data alignment selected
-  * @param  Data Data to be loaded in the selected data holding register.
+  * @param  Data: Data to be loaded in the selected data holding register.
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_DAC_SetValue(DAC_HandleTypeDef* hdac, uint32_t Channel, uint32_t Alignment, uint32_t Data)
 {  
-  __IO uint32_t tmp = 0U;
+  __IO uint32_t tmp = 0;
   
   /* Check the parameters */
   assert_param(IS_DAC_CHANNEL(Channel));
@@ -872,7 +861,7 @@ HAL_StatusTypeDef HAL_DAC_SetValue(DAC_HandleTypeDef* hdac, uint32_t Channel, ui
 
 /**
   * @brief  return the DAC state
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval HAL state
   */
@@ -885,7 +874,7 @@ HAL_DAC_StateTypeDef HAL_DAC_GetState(DAC_HandleTypeDef* hdac)
 
 /**
   * @brief  Return the DAC error code
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval DAC Error Code
   */
@@ -900,7 +889,7 @@ uint32_t HAL_DAC_GetError(DAC_HandleTypeDef *hdac)
 
 /**
   * @brief  DMA conversion complete callback. 
-  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
+  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
   *                the configuration information for the specified DMA module.
   * @retval None
   */
@@ -915,7 +904,7 @@ static void DAC_DMAConvCpltCh1(DMA_HandleTypeDef *hdma)
 
 /**
   * @brief  DMA half transfer complete callback. 
-  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
+  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
   *                the configuration information for the specified DMA module.
   * @retval None
   */
@@ -928,7 +917,7 @@ static void DAC_DMAHalfConvCpltCh1(DMA_HandleTypeDef *hdma)
 
 /**
   * @brief  DMA error callback 
-  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
+  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
   *                the configuration information for the specified DMA module.
   * @retval None
   */
@@ -949,8 +938,8 @@ static void DAC_DMAErrorCh1(DMA_HandleTypeDef *hdma)
   */
 #endif /* STM32F405xx || STM32F415xx || STM32F407xx || STM32F417xx ||\
           STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx ||\
-          STM32F410xx || STM32F446xx || STM32F469xx || STM32F479xx ||\
-		  STM32F413xx || STM32F423xx */
+          STM32F446xx 
+        */
 #endif /* HAL_DAC_MODULE_ENABLED */
 
 /**

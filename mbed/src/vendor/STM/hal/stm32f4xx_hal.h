@@ -2,12 +2,14 @@
   ******************************************************************************
   * @file    stm32f4xx_hal.h
   * @author  MCD Application Team
+  * @version V1.3.2
+  * @date    26-June-2015
   * @brief   This file contains all the functions prototypes for the HAL 
   *          module driver.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -55,29 +57,6 @@
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
-
-/** @defgroup HAL_Exported_Constants HAL Exported Constants
-  * @{
-  */
-
-/** @defgroup HAL_TICK_FREQ Tick Frequency
-  * @{
-  */
-typedef enum
-{
-  HAL_TICK_FREQ_10HZ         = 100U,
-  HAL_TICK_FREQ_100HZ        = 10U,
-  HAL_TICK_FREQ_1KHZ         = 1U,
-  HAL_TICK_FREQ_DEFAULT      = HAL_TICK_FREQ_1KHZ
-} HAL_TickFreqTypeDef;
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-   
 /* Exported macro ------------------------------------------------------------*/
 /** @defgroup HAL_Exported_Macros HAL Exported Macros
   * @{
@@ -155,8 +134,7 @@ typedef enum
                                                  }while(0);
 #endif /* STM32F405xx || STM32F415xx || STM32F407xx || STM32F417xx */
 
-#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx)|| defined(STM32F439xx) ||\
-    defined(STM32F469xx) || defined(STM32F479xx)
+#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx)|| defined(STM32F439xx) 
 /** @brief  FMC Bank1 (NOR/PSRAM 1 and 2) mapped at 0x00000000
   */
 #define __HAL_SYSCFG_REMAPMEMORY_FMC()       do {SYSCFG->MEMRMP &= ~(SYSCFG_MEMRMP_MEM_MODE);\
@@ -168,47 +146,7 @@ typedef enum
 #define __HAL_SYSCFG_REMAPMEMORY_FMC_SDRAM()       do {SYSCFG->MEMRMP &= ~(SYSCFG_MEMRMP_MEM_MODE);\
                                                        SYSCFG->MEMRMP |= (SYSCFG_MEMRMP_MEM_MODE_2);\
                                                       }while(0);
-#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx || STM32F469xx || STM32F479xx */ 
-
-#if defined(STM32F410Tx) || defined(STM32F410Cx) || defined(STM32F410Rx) || defined(STM32F413xx) || defined(STM32F423xx)
-/** @defgroup Cortex_Lockup_Enable Cortex Lockup Enable
-  * @{
-  */
-/** @brief  SYSCFG Break Lockup lock
-  *         Enables and locks the connection of Cortex-M4 LOCKUP (Hardfault) output to TIM1/8 input
-  * @note   The selected configuration is locked and can be unlocked by system reset
-  */
-#define __HAL_SYSCFG_BREAK_PVD_LOCK()      do {SYSCFG->CFGR2 &= ~(SYSCFG_CFGR2_PVD_LOCK); \
-                                               SYSCFG->CFGR2 |= SYSCFG_CFGR2_PVD_LOCK;    \
-                                              }while(0)
-/**
- * @}
- */
-
-/** @defgroup PVD_Lock_Enable PVD Lock
-  * @{
-  */
-/** @brief  SYSCFG Break PVD lock
-  *         Enables and locks the PVD connection with Timer1/8 Break Input, , as well as the PVDE and PLS[2:0] in the PWR_CR register
-  * @note   The selected configuration is locked and can be unlocked by system reset
-  */
-#define __HAL_SYSCFG_BREAK_LOCKUP_LOCK()     do {SYSCFG->CFGR2 &= ~(SYSCFG_CFGR2_LOCKUP_LOCK); \
-                                                 SYSCFG->CFGR2 |= SYSCFG_CFGR2_LOCKUP_LOCK;    \
-                                                }while(0)
-/**
- * @}
- */
-#endif /* STM32F410Tx || STM32F410Cx || STM32F410Rx || STM32F413xx || STM32F423xx */
-/**
-  * @}
-  */
-
-/** @defgroup HAL_Private_Macros HAL Private Macros
-  * @{
-  */
-#define IS_TICKFREQ(FREQ) (((FREQ) == HAL_TICK_FREQ_10HZ)  || \
-                           ((FREQ) == HAL_TICK_FREQ_100HZ) || \
-                           ((FREQ) == HAL_TICK_FREQ_1KHZ))
+#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx */ 
 /**
   * @}
   */
@@ -220,7 +158,7 @@ typedef enum
 /** @addtogroup HAL_Exported_Functions_Group1
   * @{
   */
-/* Initialization and Configuration functions  ******************************/
+/* Initialization and de-initialization functions  ******************************/
 HAL_StatusTypeDef HAL_Init(void);
 HAL_StatusTypeDef HAL_DeInit(void);
 void HAL_MspInit(void);
@@ -235,11 +173,8 @@ HAL_StatusTypeDef HAL_InitTick (uint32_t TickPriority);
   */
 /* Peripheral Control functions  ************************************************/
 void HAL_IncTick(void);
-void HAL_Delay(uint32_t Delay);
+void HAL_Delay(__IO uint32_t Delay);
 uint32_t HAL_GetTick(void);
-uint32_t HAL_GetTickPrio(void);
-HAL_StatusTypeDef HAL_SetTickFreq(HAL_TickFreqTypeDef Freq);
-HAL_TickFreqTypeDef HAL_GetTickFreq(void);
 void HAL_SuspendTick(void);
 void HAL_ResumeTick(void);
 uint32_t HAL_GetHalVersion(void);
@@ -253,12 +188,10 @@ void HAL_DBGMCU_EnableDBGStandbyMode(void);
 void HAL_DBGMCU_DisableDBGStandbyMode(void);
 void HAL_EnableCompensationCell(void);
 void HAL_DisableCompensationCell(void);
-void HAL_GetUID(uint32_t *UID);
-#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx)|| defined(STM32F439xx) ||\
-    defined(STM32F469xx) || defined(STM32F479xx)
+#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx)|| defined(STM32F439xx)
 void HAL_EnableMemorySwappingBank(void);
 void HAL_DisableMemorySwappingBank(void);
-#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx || STM32F469xx || STM32F479xx */ 
+#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx */ 
 /**
   * @}
   */

@@ -2,6 +2,8 @@
   ******************************************************************************
   * @file    stm32f4xx_hal_dac_ex.c
   * @author  MCD Application Team
+  * @version V1.3.2
+  * @date    26-June-2015
   * @brief   DAC HAL module driver.
   *         This file provides firmware functions to manage the following 
   *         functionalities of DAC extension peripheral:
@@ -23,7 +25,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -67,8 +69,7 @@
 
 #if defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx) || defined(STM32F417xx) ||\
     defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx) ||\
-    defined(STM32F410Tx) || defined(STM32F410Cx) || defined(STM32F410Rx) || defined(STM32F446xx) ||\
-    defined(STM32F469xx) || defined(STM32F479xx) || defined(STM32F413xx) || defined(STM32F423xx)
+	  defined(STM32F446xx)
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -101,17 +102,17 @@
 
 /**
   * @brief  Returns the last data output value of the selected DAC channel.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval The selected DAC channel data output value.
   */
 uint32_t HAL_DACEx_DualGetValue(DAC_HandleTypeDef* hdac)
 {
-  uint32_t tmp = 0U;
+  uint32_t tmp = 0;
   
   tmp |= hdac->Instance->DOR1;
   
-  tmp |= hdac->Instance->DOR2 << 16U;
+  tmp |= hdac->Instance->DOR2 << 16;
   
   /* Returns the DAC channel data output register value */
   return tmp;
@@ -119,12 +120,12 @@ uint32_t HAL_DACEx_DualGetValue(DAC_HandleTypeDef* hdac)
 
 /**
   * @brief  Enables or disables the selected DAC channel wave generation.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
-  * @param  Channel The selected DAC channel. 
+  * @param  Channel: The selected DAC channel. 
   *          This parameter can be one of the following values:
   *            DAC_CHANNEL_1 / DAC_CHANNEL_2
-  * @param  Amplitude Select max triangle amplitude. 
+  * @param  Amplitude: Select max triangle amplitude. 
   *          This parameter can be one of the following values:
   *            @arg DAC_TRIANGLEAMPLITUDE_1: Select max triangle amplitude of 1
   *            @arg DAC_TRIANGLEAMPLITUDE_3: Select max triangle amplitude of 3
@@ -167,12 +168,12 @@ HAL_StatusTypeDef HAL_DACEx_TriangleWaveGenerate(DAC_HandleTypeDef* hdac, uint32
 
 /**
   * @brief  Enables or disables the selected DAC channel wave generation.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC. 
-  * @param  Channel The selected DAC channel. 
+  * @param  Channel: The selected DAC channel. 
   *          This parameter can be one of the following values:
   *            DAC_CHANNEL_1 / DAC_CHANNEL_2
-  * @param  Amplitude Unmask DAC channel LFSR for noise wave generation. 
+  * @param  Amplitude: Unmask DAC channel LFSR for noise wave generation. 
   *          This parameter can be one of the following values: 
   *            @arg DAC_LFSRUNMASK_BIT0: Unmask DAC channel LFSR bit0 for noise wave generation
   *            @arg DAC_LFSRUNMASK_BITS1_0: Unmask DAC channel LFSR bit[1:0] for noise wave generation  
@@ -215,22 +216,22 @@ HAL_StatusTypeDef HAL_DACEx_NoiseWaveGenerate(DAC_HandleTypeDef* hdac, uint32_t 
 
 /**
   * @brief  Set the specified data holding register value for dual DAC channel.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *               the configuration information for the specified DAC.
-  * @param  Alignment Specifies the data alignment for dual channel DAC.
+  * @param  Alignment: Specifies the data alignment for dual channel DAC.
   *          This parameter can be one of the following values:
   *            DAC_ALIGN_8B_R: 8bit right data alignment selected
   *            DAC_ALIGN_12B_L: 12bit left data alignment selected
   *            DAC_ALIGN_12B_R: 12bit right data alignment selected
-  * @param  Data1 Data for DAC Channel2 to be loaded in the selected data holding register.
-  * @param  Data2 Data for DAC Channel1 to be loaded in the selected data  holding register.
+  * @param  Data1: Data for DAC Channel2 to be loaded in the selected data holding register.
+  * @param  Data2: Data for DAC Channel1 to be loaded in the selected data  holding register.
   * @note   In dual mode, a unique register access is required to write in both
   *          DAC channels at the same time.
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_DACEx_DualSetValue(DAC_HandleTypeDef* hdac, uint32_t Alignment, uint32_t Data1, uint32_t Data2)
 {  
-  uint32_t data = 0U, tmp = 0U;
+  uint32_t data = 0, tmp = 0;
   
   /* Check the parameters */
   assert_param(IS_DAC_ALIGN(Alignment));
@@ -240,11 +241,11 @@ HAL_StatusTypeDef HAL_DACEx_DualSetValue(DAC_HandleTypeDef* hdac, uint32_t Align
   /* Calculate and set dual DAC data holding register value */
   if (Alignment == DAC_ALIGN_8B_R)
   {
-    data = ((uint32_t)Data2 << 8U) | Data1; 
+    data = ((uint32_t)Data2 << 8) | Data1; 
   }
   else
   {
-    data = ((uint32_t)Data2 << 16U) | Data1;
+    data = ((uint32_t)Data2 << 16) | Data1;
   }
   
   tmp = (uint32_t)hdac->Instance;
@@ -263,14 +264,12 @@ HAL_StatusTypeDef HAL_DACEx_DualSetValue(DAC_HandleTypeDef* hdac, uint32_t Align
 
 /**
   * @brief  Conversion complete callback in non blocking mode for Channel2 
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval None
   */
 __weak void HAL_DACEx_ConvCpltCallbackCh2(DAC_HandleTypeDef* hdac)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdac);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_DAC_ConvCpltCallback could be implemented in the user file
    */
@@ -278,14 +277,12 @@ __weak void HAL_DACEx_ConvCpltCallbackCh2(DAC_HandleTypeDef* hdac)
 
 /**
   * @brief  Conversion half DMA transfer callback in non blocking mode for Channel2 
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval None
   */
 __weak void HAL_DACEx_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef* hdac)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdac);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_DAC_ConvHalfCpltCallbackCh2 could be implemented in the user file
    */
@@ -293,14 +290,12 @@ __weak void HAL_DACEx_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef* hdac)
 
 /**
   * @brief  Error DAC callback for Channel2.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval None
   */
 __weak void HAL_DACEx_ErrorCallbackCh2(DAC_HandleTypeDef *hdac)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdac);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_DAC_ErrorCallback could be implemented in the user file
    */
@@ -308,14 +303,12 @@ __weak void HAL_DACEx_ErrorCallbackCh2(DAC_HandleTypeDef *hdac)
 
 /**
   * @brief  DMA underrun DAC callback for channel2.
-  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
   *         the configuration information for the specified DAC.
   * @retval None
   */
 __weak void HAL_DACEx_DMAUnderrunCallbackCh2(DAC_HandleTypeDef *hdac)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdac);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_DAC_DMAUnderrunCallbackCh2 could be implemented in the user file
    */
@@ -323,7 +316,7 @@ __weak void HAL_DACEx_DMAUnderrunCallbackCh2(DAC_HandleTypeDef *hdac)
 
 /**
   * @brief  DMA conversion complete callback. 
-  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
+  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
   *                the configuration information for the specified DMA module.
   * @retval None
   */
@@ -338,7 +331,7 @@ void DAC_DMAConvCpltCh2(DMA_HandleTypeDef *hdma)
 
 /**
   * @brief  DMA half transfer complete callback. 
-  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
+  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
   *                the configuration information for the specified DMA module.
   * @retval None
   */
@@ -351,7 +344,7 @@ void DAC_DMAHalfConvCpltCh2(DMA_HandleTypeDef *hdma)
 
 /**
   * @brief  DMA error callback 
-  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
+  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
   *                the configuration information for the specified DMA module.
   * @retval None
   */
@@ -373,8 +366,8 @@ void DAC_DMAErrorCh2(DMA_HandleTypeDef *hdma)
 
 #endif /* STM32F405xx || STM32F415xx || STM32F407xx || STM32F417xx ||\
           STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx ||\
-          STM32F410xx || STM32F446xx || STM32F469xx || STM32F479xx ||\
-		  STM32F413xx || STM32F423xx */
+          STM32F446xx 
+        */
 
 #endif /* HAL_DAC_MODULE_ENABLED */
 
