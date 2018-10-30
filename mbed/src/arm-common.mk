@@ -32,6 +32,7 @@ ROOT_DIR              =..
 SRC_DIR               =.
 VENDOR_SRC            =$(SRC_DIR)/vendor/$(VENDOR)
 VENDOR_CAPI_SRC       =$(VENDOR_SRC)/capi
+VENDOR_HAL_SRC        =$(VENDOR_SRC)/hal
 VENDOR_CAPI_DEVICE_SRC=$(VENDOR_CAPI_SRC)/$(DEVICE)
 VENDOR_CMSIS_SRC      =$(VENDOR_SRC)/cmsis/$(DEVICE)
 VENDOR_CMSIS_GCC_SRC  =$(VENDOR_CMSIS_SRC)/GCC_ARM
@@ -61,7 +62,7 @@ LD_DEST=$(RELEASE_DROP)/$(LD_FILE)
 DEVICE_HEADER_SRCS =$(notdir $(wildcard $(VENDOR_CAPI_DEVICE_SRC)/*.h))
 DEVICE_HEADER_SRCS+=$(notdir $(wildcard $(VENDOR_CMSIS_SRC)/*.h))
 ifeq "$(VENDOR)" "STM"
-DEVICE_HEADER_SRCS+=$(notdir $(wildcard $(VENDOR_CMSIS_SRC)/hal/*.h))
+DEVICE_HEADER_SRCS+=$(notdir $(wildcard $(VENDOR_HAL_SRC)/*.h))
 endif
 DEVICE_HEADERS     =$(patsubst %.h,$(DEVICE_DROP)/%.h,$(DEVICE_HEADER_SRCS))
 
@@ -70,7 +71,7 @@ CAPI_SRCS     =$(wildcard $(VENDOR_CAPI_SRC)/*.c)
 CAPI_SRCS    +=$(wildcard $(VENDOR_CAPI_DEVICE_SRC)/*.c)
 CMSIS_SRCS    =$(wildcard $(VENDOR_CMSIS_SRC)/*.c)
 ifeq "$(VENDOR)" "STM"
-CMSIS_SRCS   +=$(wildcard $(VENDOR_CMSIS_SRC)/hal/*.c)
+CMSIS_SRCS   +=$(wildcard $(VENDOR_HAL_SRC)/*.c)
 endif
 ifeq "$(VENDOR)" "STM"
 CMSIS_ASM_SRCS=$(wildcard $(VENDOR_CMSIS_GCC_SRC)/*.S)
@@ -115,7 +116,9 @@ INCLUDE_DIRS =$(MBED_CPP_SRC)
 INCLUDE_DIRS =$(MBED_CAPI_SRC)
 INCLUDE_DIRS+=$(VENDOR_CAPI_DEVICE_SRC)
 INCLUDE_DIRS+=$(VENDOR_CMSIS_SRC)
-
+ifeq "$(VENDOR)" "STM"
+INCLUDE_DIRS+=$(VENDOR_HAL_SRC)
+endif
 
 # Optimization levels to be used for Debug and Release versions of the library.
 DEBUG_OPTIMIZATION=0
@@ -280,7 +283,7 @@ $(DEVICE_DROP)/%.h : $(VENDOR_CMSIS_SRC)/%.h
 	$(Q) $(COPY) $(call convert-slash,$?) $(call convert-slash,$@) $(NOSTDOUT)
 
 ifeq "$(VENDOR)" "STM"
-$(DEVICE_DROP)/%.h : $(VENDOR_CMSIS_SRC)/hal/%.h
+$(DEVICE_DROP)/%.h : $(VENDOR_HAL_SRC)/%.h
 	@echo Deploying $? to drop
 	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
 	$(Q) $(COPY) $(call convert-slash,$?) $(call convert-slash,$@) $(NOSTDOUT)
