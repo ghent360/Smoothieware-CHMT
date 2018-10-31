@@ -35,6 +35,7 @@ VENDOR_CAPI_SRC       =$(VENDOR_SRC)/capi
 VENDOR_CAPI_DEVICE_SRC=$(VENDOR_CAPI_SRC)/$(DEVICE)
 VENDOR_CMSIS_SRC      =$(VENDOR_SRC)/cmsis/$(DEVICE)
 VENDOR_CMSIS_GCC_SRC  =$(VENDOR_CMSIS_SRC)/GCC_ARM
+VENDOR_HAL_SRC        =$(SRC_DIR)/vendor/$(VENDOR)/hal
 MBED_CAPI_SRC         =$(SRC_DIR)/capi
 MBED_CPP_SRC          =$(SRC_DIR)/cpp
 DROP_DIR              =$(ROOT_DIR)/drop
@@ -60,13 +61,16 @@ LD_DEST=$(RELEASE_DROP)/$(LD_FILE)
 # Copy headers to device drop directory.
 DEVICE_HEADER_SRCS =$(notdir $(wildcard $(VENDOR_CAPI_DEVICE_SRC)/*.h))
 DEVICE_HEADER_SRCS+=$(notdir $(wildcard $(VENDOR_CMSIS_SRC)/*.h))
+DEVICE_HEADER_SRCS+=$(notdir $(wildcard $(VENDOR_HAL_SRC)/*.h))
 DEVICE_HEADERS     =$(patsubst %.h,$(DEVICE_DROP)/%.h,$(DEVICE_HEADER_SRCS))
 
 
 # Build up list of all C, C++, and Assembly Language files to be compiled/assembled.
 CAPI_SRCS     =$(wildcard $(VENDOR_CAPI_SRC)/*.c)
+CAPI_VENDOR_SRCS =$(wildcard $(VENDOR_CAPI_DEVICE_SRC)/*.c)
 CMSIS_SRCS    =$(wildcard $(VENDOR_CMSIS_SRC)/*.c)
 CMSIS_ASM_SRCS=$(wildcard $(VENDOR_CMSIS_GCC_SRC)/*.s)
+HAL_VENDOR_SRCS =$(wildcard $(VENDOR_HAL_SRC)/*.c)
 MBED_CAPI_SRCS=$(wildcard $(MBED_CAPI_SRC)/*.c)
 MBED_CPP_SRCS =$(wildcard $(MBED_CPP_SRC)/*.cpp)
 
@@ -74,7 +78,9 @@ MBED_CPP_SRCS =$(wildcard $(MBED_CPP_SRC)/*.cpp)
 # Convert list of source files to corresponding list of object files to be generated.
 # Debug and Release object files go into separate sub-directories.
 CAPI_OBJECTS  =$(patsubst %.c,__Output__/%.o,$(CAPI_SRCS))
+CAPI_OBJECTS+=$(patsubst %.c,__Output__/%.o,$(CAPI_VENDOR_SRCS))
 CAPI_OBJECTS+=$(patsubst %.c,__Output__/%.o,$(CMSIS_SRCS))
+CAPI_OBJECTS+=$(patsubst %.c,__Output__/%.o,$(HAL_VENDOR_SRCS))
 CAPI_OBJECTS+=$(patsubst %.c,__Output__/%.o,$(MBED_CAPI_SRCS))
 CAPI_OBJECTS+=$(patsubst %.s,__Output__/%.o,$(CMSIS_ASM_SRCS))
 
@@ -101,6 +107,7 @@ INCLUDE_DIRS =$(MBED_CPP_SRC)
 INCLUDE_DIRS =$(MBED_CAPI_SRC)
 INCLUDE_DIRS+=$(VENDOR_CAPI_DEVICE_SRC)
 INCLUDE_DIRS+=$(VENDOR_CMSIS_SRC)
+INCLUDE_DIRS+=$(VENDOR_HAL_SRC)
 
 
 # Optimization levels to be used for Debug and Release versions of the library.
@@ -251,6 +258,11 @@ $(DEVICE_DROP)/%.h : $(VENDOR_CAPI_DEVICE_SRC)/%.h
 	$(Q) $(COPY) $(call convert-slash,$?) $(call convert-slash,$@) $(NOSTDOUT)
 
 $(DEVICE_DROP)/%.h : $(VENDOR_CMSIS_SRC)/%.h
+	@echo Deploying $? to drop
+	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+	$(Q) $(COPY) $(call convert-slash,$?) $(call convert-slash,$@) $(NOSTDOUT)
+
+$(DEVICE_DROP)/%.h : $(VENDOR_HAL_SRC)/%.h
 	@echo Deploying $? to drop
 	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
 	$(Q) $(COPY) $(call convert-slash,$?) $(call convert-slash,$@) $(NOSTDOUT)
