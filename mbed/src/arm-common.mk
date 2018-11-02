@@ -34,6 +34,7 @@ VENDOR_SRC            =$(SRC_DIR)/vendor/$(VENDOR)
 VENDOR_CAPI_SRC       =$(VENDOR_SRC)/capi
 VENDOR_HAL_SRC        =$(VENDOR_SRC)/hal
 VENDOR_CAPI_DEVICE_SRC=$(VENDOR_CAPI_SRC)/$(DEVICE)
+VENDOR_COMMON_SRC     =$(VENDOR_SRC)/cmsis/common
 VENDOR_CMSIS_SRC      =$(VENDOR_SRC)/cmsis/$(DEVICE)
 VENDOR_CMSIS_GCC_SRC  =$(VENDOR_CMSIS_SRC)/GCC_ARM
 MBED_CAPI_SRC         =$(SRC_DIR)/capi
@@ -63,6 +64,7 @@ DEVICE_HEADER_SRCS =$(notdir $(wildcard $(VENDOR_CAPI_DEVICE_SRC)/*.h))
 DEVICE_HEADER_SRCS+=$(notdir $(wildcard $(VENDOR_CMSIS_SRC)/*.h))
 ifeq "$(VENDOR)" "STM"
 DEVICE_HEADER_SRCS+=$(notdir $(wildcard $(VENDOR_HAL_SRC)/*.h))
+DEVICE_HEADER_SRCS+=$(notdir $(wildcard $(VENDOR_COMMON_SRC)/*.h))
 endif
 DEVICE_HEADERS     =$(patsubst %.h,$(DEVICE_DROP)/%.h,$(DEVICE_HEADER_SRCS))
 
@@ -284,6 +286,11 @@ $(DEVICE_DROP)/%.h : $(VENDOR_CMSIS_SRC)/%.h
 
 ifeq "$(VENDOR)" "STM"
 $(DEVICE_DROP)/%.h : $(VENDOR_HAL_SRC)/%.h
+	@echo Deploying $? to drop
+	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+	$(Q) $(COPY) $(call convert-slash,$?) $(call convert-slash,$@) $(NOSTDOUT)
+
+$(DEVICE_DROP)/%.h : $(VENDOR_COMMON_SRC)/%.h
 	@echo Deploying $? to drop
 	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
 	$(Q) $(COPY) $(call convert-slash,$?) $(call convert-slash,$@) $(NOSTDOUT)

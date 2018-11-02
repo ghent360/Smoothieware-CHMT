@@ -3,7 +3,7 @@
 #ifndef __STM32F4__
 #include <sLPC17xx.h>
 #else
-#include <stm32f446xx.h>
+#include <cmsis_device.h>
 #endif
 #include <mri.h>
 
