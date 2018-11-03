@@ -89,9 +89,11 @@ Panel::Panel()
     this->idle_time = 0;
     this->start_up = true;
     this->current_screen = NULL;
+#ifndef DISABLESD
     this->sd= nullptr;
     this->extmounter= nullptr;
     this->external_sd_enable= false;
+#endif
     this->in_idle= false;
     this->display_extruder= false;
     strcpy(this->playing_file, "Playing file");
@@ -100,8 +102,10 @@ Panel::Panel()
 Panel::~Panel()
 {
     delete this->lcd;
+#ifndef DISABLESD
     delete this->extmounter;
     delete this->sd;
+#endif
 }
 
 void Panel::on_module_loaded()
@@ -135,7 +139,7 @@ void Panel::on_module_loaded()
         return;
     }
 
-#ifndef DISABLEMSD
+#ifndef DISABLESD
     // external sd
     if(THEKERNEL->config->value( panel_checksum, ext_sd_checksum )->by_default(false)->as_bool()) {
         this->external_sd_enable= true;
@@ -670,7 +674,7 @@ void  Panel::set_playing_file(string f)
 
 bool Panel::mount_external_sd(bool on)
 {
-#ifndef DISABLEMSD
+#ifndef DISABLESD
     // now setup the external sdcard if we have one and mount it
     if(on) {
         if(this->sd == nullptr) {
@@ -707,6 +711,7 @@ bool Panel::mount_external_sd(bool on)
 
 void Panel::on_second_tick(void *arg)
 {
+#ifndef DISABLESD
     if(!this->external_sd_enable || this->start_up) return;
 
     // sd insert detect, mount sdcard if inserted, unmount if removed
@@ -725,4 +730,5 @@ void Panel::on_second_tick(void *arg)
     }else{
         // TODO for panels with no sd card detect we need to poll to see if card is inserted - or not
     }
+#endif
 }

@@ -102,11 +102,12 @@ class Panel : public Module {
         void idle_processing();
         // external SD card
         bool mount_external_sd(bool on);
+#ifndef DISABLESD
         Pin sdcd_pin;
         PinName extsd_spi_cs;
         SDCard *sd;
         SDFAT *extmounter;
-
+#endif
         // Menu
         int menu_selected_line;
         int menu_start_line;
