@@ -87,20 +87,17 @@ Kernel::Kernel()
 #if MRI_ENABLE != 0
     switch( __mriPlatform_CommUartIndex() ) {
         case 0:
-            this->serial = new(AHB0) SerialConsole(USBTX, USBRX, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
+            this->serial = new(AHB0) SerialConsole(SERIAL0_TX, SERIAL0_RX, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
             break;
-#ifndef __STM32F4__
-// TODO(ghent360): add more serial ports for the STM32F446
         case 1:
-            this->serial = new(AHB0) SerialConsole(  p13,   p14, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
+            this->serial = new(AHB0) SerialConsole(SERIAL1_TX, SERIAL1_RX, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
             break;
         case 2:
-            this->serial = new(AHB0) SerialConsole(  p28,   p27, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
+            this->serial = new(AHB0) SerialConsole(SERIAL2_TX, SERIAL2_RX, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
             break;
         case 3:
-            this->serial = new(AHB0) SerialConsole(   p9,   p10, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
+            this->serial = new(AHB0) SerialConsole(SERIAL3_TX, SERIAL3_TX, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
             break;
-#endif
     }
 #endif
     // default
