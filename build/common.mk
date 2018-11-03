@@ -59,15 +59,25 @@ endif
 
 ifeq "$(BUILD_TYPE)" "Debug"
 OPTIMIZATION = 0
+ifneq "$(DISABLEMRI)" "1"
+MRI_ENABLE ?= 1
+MRI_SEMIHOST_STDIO ?= 1
+else
 MRI_ENABLE = 0
-#MRI_SEMIHOST_STDIO ?= 1
+MRI_SEMIHOST_STDIO ?= 0
+endif
 endif
 
 
 ifeq "$(BUILD_TYPE)" "Checked"
 OPTIMIZATION ?= 2
+ifneq "$(DISABLEMRI)" "1"
+MRI_ENABLE = 1
+MRI_SEMIHOST_STDIO ?= 1
+else
 MRI_ENABLE = 0
-#MRI_SEMIHOST_STDIO ?= 1
+MRI_SEMIHOST_STDIO ?= 0
+endif
 endif
 
 MRI_INIT_PARAMETERS=$(MRI_UART)
@@ -87,6 +97,9 @@ endif
 
 ifeq "$(DISABLEMSD)" "1"
 DEFINES += -DDISABLEMSD=1
+endif
+ifeq "$(DISABLESD)" "1"
+DEFINES += -DDISABLESD=1
 endif
 ifeq "$(DISABLEUSB)" "1"
 DEFINES += -DDISABLEUSB=1
@@ -117,15 +130,20 @@ else
 	CPPSRCS21 = $(filter-out $(SRC)/modules/utils/panel/screens/cnc/%,$(CPPSRCS2))
 endif
 
-# ghent360: exclude the LPC17XX filder from libs. Seems device dependent.
-ifeq "$(GHENT360)" "1"
+ifneq "$(DEVICE)" "LPC1768"
 	CPPSRCS221 = $(filter-out $(SRC)/libs/LPC17xx/%,$(CPPSRCS21))
 	CSRCS221 = $(filter-out $(SRC)/libs/LPC17xx/%,$(CSRCS2))
+else
+	CPPSRCS221 = $(CPPSRCS21)
+	CSRCS221 = $(CSRCS2)
+endif
+
+ifeq "$(NOUSBDEVICE)" "1"
 	CPPSRCS22 = $(filter-out $(SRC)/libs/USBDevice/%,$(CPPSRCS221))
 	CSRCS22 = $(filter-out $(SRC)/libs/USBDevice/%,$(CSRCS221))
 else
-	CPPSRCS22 = $(CPPSRCS21)
-	CSRCS22 = $(CSRCS2)
+	CPPSRCS22 = $(CPPSRCS221)
+	CSRCS22 = $(CSRCS221)
 endif
 
 # Totally exclude any modules listed in EXCLUDE_MODULES
@@ -162,7 +180,7 @@ MRI_DIR  = $(BUILD_DIR)/../mri
 SUBDIRS = $(wildcard $(SRC)/* $(SRC)/*/* $(SRC)/*/*/* $(SRC)/*/*/*/* $(SRC)/*/*/*/*/* $(SRC)/*/*/*/*/*/*)
 PROJINCS = $(sort $(dir $(SUBDIRS)))
 # ghent360: exclude the LPC17XX filder from libs. Seems device dependent.
-ifeq "$(GHENT360)" "1"
+ifneq "$(DEVICE)" "LPC1768"
 PROJINCS2 = $(filter-out $(SRC)/libs/LPC17xx/%,$(PROJINCS))
 else
 PROJINCS2 = $(PROJINCS)
@@ -186,8 +204,7 @@ SYS_LIBS = -specs=nano.specs -lstdc++ -lsupc++ -lm -lgcc -lc -lnosys
 LIBS = $(LIBS_PREFIX)
 
 ifeq "$(MRI_ENABLE)" "1"
-#TODO(ghent360): re-enable
-#LIBS += $(MRI_DIR)/mri.ar
+LIBS += $(MRI_DIR)/mri.ar
 endif
 
 LIBS += $(MBED_LIBS)
