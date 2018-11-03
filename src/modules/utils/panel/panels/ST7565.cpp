@@ -81,11 +81,11 @@ ST7565::ST7565(uint8_t variant)
     int spi_channel = THEKERNEL->config->value(panel_checksum, spi_channel_checksum)->by_default(0)->as_number();
     PinName mosi, miso, sclk;
     if(spi_channel == 0) {
-        mosi = EXT_MOSI; miso = EXT_MISO; sclk = EXT_SCK;
+        mosi = SPI1_MOSI; miso = SPI1_MISO; sclk = SPI1_SCK;
     } else if(spi_channel == 1) {
-        mosi = SD_MOSI; miso = SD_MISO; sclk = SD_SCK;
+        mosi = SPI2_MOSI; miso = SPI2_MISO; sclk = SPI2_SCK;
     } else {
-        mosi = EXT_MOSI; miso = EXT_MISO; sclk = EXT_SCK;
+        mosi = SPI1_MOSI; miso = SPI1_MISO; sclk = SPI1_SCK;
     }
 
     this->spi = new mbed::SPI(mosi, miso, sclk);

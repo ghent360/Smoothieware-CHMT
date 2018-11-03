@@ -75,7 +75,7 @@
 
 
 #ifndef DISABLESD
-SDCard sd  __attribute__ ((section ("AHBSRAM0"))) (SD_MOSI, SD_MISO, SD_SCK, SD_CS);      // this selects SPI1 as the sdcard as it is on Smoothieboard
+SDCard sd  __attribute__ ((section ("AHBSRAM0"))) (SPI2_MOSI, SPI2_MISO, SPI2_SCK, SDCARD_CS);      // this selects SPI1 as the sdcard as it is on Smoothieboard
 //SDCard sd(P0_18, P0_17, P0_15, P0_16); // this selects SPI0 as the sdcard
 //SDCard sd(P0_18, P0_17, P0_15, P2_8);  // this selects SPI0 as the sdcard witrh a different sd select
 #endif

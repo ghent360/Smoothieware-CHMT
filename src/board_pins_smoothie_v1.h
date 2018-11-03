@@ -1,14 +1,14 @@
 #ifndef __BOARD_PINS_SMOOTHIE_V1_H__
 #define __BOARD_PINS_SMOOTHIE_V1_H__
 
-#define SD_MOSI P0_9
-#define SD_MISO P0_8
-#define SD_SCK  P0_7
-#define SD_CS   P0_6
+#define SPI2_MOSI P0_9
+#define SPI2_MISO P0_8
+#define SPI2_SCK  P0_7
+#define SDCARD_CS P0_6
 
-#define EXT_MOSI P0_18
-#define EXT_MISO P0_17
-#define EXT_SCK  P0_15
+#define SPI1_MOSI P0_18
+#define SPI1_MISO P0_17
+#define SPI1_SCK  P0_15
 
 #define LED1    P1_18
 #define LED2    P1_19
