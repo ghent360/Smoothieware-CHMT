@@ -1,14 +1,14 @@
 PROJECT=main
 BUILD_DIR=../build
-DEVICES=stm32f446
-GHENT360=1
-NONETWORK=1
-DISABLEMSD=1
-DISABLEUSB=1
-BOARD=PRNTR_V1
-AXIS=6
-#DEVICES=lpc1768
-#BOARD=SMOOTHIE_V1
+#DEVICES=stm32f446
+#GHENT360=1
+#NONETWORK=1
+#DISABLEMSD=1
+#DISABLEUSB=1
+#BOARD=PRNTR_V1
+#AXIS=6
+DEVICES=lpc1768
+BOARD=SMOOTHIE_V1
 
 # BUILD_TYPE can be set to the following values:
 #  Checked - Optimizations enabled with MRI debug monitor support. (Recommended Type)
