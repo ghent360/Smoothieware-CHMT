@@ -2,6 +2,7 @@
 
 #include "platform_memory.h"
 #include "StreamOutputPool.h"
+#include "board_pins.h"
 
 static const uint8_t font5x8[] = {
     // 5x8 font each byte is consecutive x bits left aligned then each subsequent byte is Y 8 bytes per character
@@ -150,11 +151,11 @@ static const uint8_t font5x8[] = {
 RrdGlcd::RrdGlcd(int spi_channel, Pin cs) {
     PinName mosi, miso, sclk;
     if(spi_channel == 0) {
-        mosi = P0_18; miso = P0_17; sclk = P0_15;
+        mosi = EXT_MOSI; miso = EXT_MISO; sclk = EXT_SCK;
     } else if(spi_channel == 1) {
-        mosi = P0_9; miso = P0_8; sclk = P0_7;
+        mosi = SD_MOSI; miso = SD_MISO; sclk = SD_SCK;
     } else {
-        mosi = P0_18; miso = P0_17; sclk = P0_15;
+        mosi = EXT_MOSI; miso = EXT_MISO; sclk = EXT_SCK;
     }
 
     this->spi = new mbed::SPI(mosi, miso, sclk);

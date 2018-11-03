@@ -11,7 +11,7 @@
 class AD5206 : public DigipotBase {
     public:
         AD5206(){
-            this->spi= new mbed::SPI(P0_9,P0_8,P0_7); //should be able to set those pins in config
+            this->spi= new mbed::SPI(SD_MOSI,SD_MISO,SD_SCK); //should be able to set those pins in config
             cs.from_string("4.29")->as_output(); //this also should be configurable
             cs.set(1);
             for (int i = 0; i < 6; i++) currents[i] = -1;

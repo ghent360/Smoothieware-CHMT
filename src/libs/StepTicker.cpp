@@ -16,7 +16,19 @@
 #include "Block.h"
 #include "Conveyor.h"
 
+#ifdef __STM32F4__
+#include "system_stm32f4xx.h"
+extern "C" void TIM7_IRQHandler(void);
+extern "C" void TIM8_TRG_COM_TIM14_IRQHandler(void);
+extern "C" void PendSV_Handler(void);
+#define TIM7_PRESCALER          15
+#define SYSTEM_CLOCK_DIVIDER    2.0f
+#else
 #include "system_LPC17xx.h" // mbed.h lib
+#define TIM7_PRESCALER          1
+#define SYSTEM_CLOCK_DIVIDER    4.0f
+#endif
+
 #include <math.h>
 #include <mri.h>
 
@@ -35,6 +47,7 @@ StepTicker::StepTicker()
 {
     instance = this; // setup the Singleton instance of the stepticker
 
+#ifndef __STM32F4__
     // Configure the timer
     LPC_TIM0->MR0 = 10000000;       // Initial dummy value for Match Register
     LPC_TIM0->MCR = 3;              // Match on MR0, reset on MR0
@@ -44,10 +57,20 @@ StepTicker::StepTicker()
     LPC_TIM1->MR0 = 1000000;
     LPC_TIM1->MCR = 5;              // match on Mr0, stop on match
     LPC_TIM1->TCR = 0;              // Disable interrupt
-
+#define UNSTEP_TIME 100    
+#else
+    __TIM7_CLK_ENABLE();
+    __TIM8_CLK_ENABLE();
+    NVIC_SetVector(TIM7_IRQn, (uint32_t)TIM7_IRQHandler);
+    NVIC_SetVector(TIM8_TRG_COM_TIM14_IRQn, (uint32_t)TIM8_TRG_COM_TIM14_IRQHandler);
+    NVIC_SetVector(PendSV_IRQn, (uint32_t)PendSV_Handler);
+    TIM7->CR1 = TIM_CR1_URS;    // int on overflow
+    TIM8->CR1 = TIM_CR1_URS | TIM_CR1_OPM;  // int on overflow, one-shot mode
+#define UNSTEP_TIME 5    
+#endif
     // Default start values
     this->set_frequency(100000);
-    this->set_unstep_time(100);
+    this->set_unstep_time(UNSTEP_TIME);
 
     this->unstep.reset();
     this->num_motors = 0;
@@ -69,27 +92,49 @@ StepTicker::~StepTicker()
 //called when everything is setup and interrupts can start
 void StepTicker::start()
 {
+#ifndef __STM32F4__
     NVIC_EnableIRQ(TIMER0_IRQn);     // Enable interrupt handler
     NVIC_EnableIRQ(TIMER1_IRQn);     // Enable interrupt handler
+#else
+    TIM7->DIER = TIM_DIER_UIE;     // update interrupt en
+    TIM8->DIER = TIM_DIER_UIE;     // update interrupt en
+    NVIC_EnableIRQ(TIM8_TRG_COM_TIM14_IRQn);     // enable interrupt handler
+    NVIC_EnableIRQ(TIM7_IRQn);     // enable interrupt handler
+    NVIC_EnableIRQ(PendSV_IRQn);   // enable interrupt handler
+#endif
+
     current_tick= 0;
+
+#ifdef __STM32F4__
+    TIM7->CR1 |= TIM_CR1_CEN;      // start step timer
+#endif
 }
 
 // Set the base stepping frequency
 void StepTicker::set_frequency( float frequency )
 {
     this->frequency = frequency;
-    this->period = floorf((SystemCoreClock / 4.0F) / frequency); // SystemCoreClock/4 = Timer increments in a second
+    // SystemCoreClock/4 = Timer increments in a second
+    this->period = floorf((SystemCoreClock / SYSTEM_CLOCK_DIVIDER) / TIM7_PRESCALER / frequency);
+#ifndef __STM32F4__
     LPC_TIM0->MR0 = this->period;
     LPC_TIM0->TCR = 3;  // Reset
     LPC_TIM0->TCR = 1;  // start
+#else
+    TIM7->PSC = TIM7_PRESCALER-1;
+    TIM7->ARR = this->period;
+#endif
 }
 
 // Set the reset delay, must be called after set_frequency
 void StepTicker::set_unstep_time( float microseconds )
 {
-    uint32_t delay = floorf((SystemCoreClock / 4.0F) * (microseconds / 1000000.0F)); // SystemCoreClock/4 = Timer increments in a second
+    uint32_t delay = floorf((SystemCoreClock / SYSTEM_CLOCK_DIVIDER) * (microseconds / 1000000.0F));
+#ifndef __STM32F4__
     LPC_TIM1->MR0 = delay;
-
+#else
+    TIM8->ARR = delay;
+#endif
     // TODO check that the unstep time is less than the step period, if not slow down step ticker
 }
 
@@ -104,6 +149,7 @@ void StepTicker::unstep_tick()
     this->unstep.reset();
 }
 
+#ifndef __STM32F4__
 extern "C" void TIMER1_IRQHandler (void)
 {
     LPC_TIM1->IR |= 1 << 0;
@@ -117,6 +163,20 @@ extern "C" void TIMER0_IRQHandler (void)
     LPC_TIM0->IR |= 1 << 0;
     StepTicker::getInstance()->step_tick();
 }
+#else
+extern "C" void TIM8_TRG_COM_TIM14_IRQHandler (void)
+{
+    TIM8->SR = ~TIM_SR_UIF;
+    StepTicker::getInstance()->unstep_tick();
+}
+
+extern "C" void TIM7_IRQHandler (void)
+{
+    // Reset interrupt register
+    TIM7->SR = ~TIM_SR_UIF;
+    StepTicker::getInstance()->step_tick();
+}
+#endif
 
 extern "C" void PendSV_Handler(void)
 {
@@ -213,8 +273,13 @@ void StepTicker::step_tick (void)
     // right now it takes about 3-4us but if the unstep were near 10uS or greater it would be an issue
     // also it takes at least 2us to get here so even when set to 1us pulse width it will still be about 3us
     if( unstep.any()) {
+#ifndef __STM32F4__
         LPC_TIM1->TCR = 3;
         LPC_TIM1->TCR = 1;
+#else
+        // CEN should have cleared by one-shot mode
+        TIM8->CR1 |= TIM_CR1_CEN;
+#endif
     }
 
 
@@ -239,8 +304,11 @@ void StepTicker::step_tick (void)
 
         // all moves finished
         // we delegate the slow stuff to the pendsv handler which will run as soon as this interrupt exits
-        //NVIC_SetPendingIRQ(PendSV_IRQn); this doesn't work
+        //NVIC_SetPendingIRQ(PendSV_IRQn); //this doesn't work
         //SCB->ICSR = 0x10000000; // SCB_ICSR_PENDSVSET_Msk;
+#ifdef __STM32F4__
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+#endif
     }
 }
 

@@ -78,7 +78,10 @@ void FilamentDetector::on_module_loaded()
     if (this->encoder_pin != nullptr) {
         // set interrupt on rising edge
         this->encoder_pin->rise(this, &FilamentDetector::on_pin_rise);
+#ifndef __STM32F4__
+        // TODO(ghent360): look how to set the interrupt
         NVIC_SetPriority(EINT3_IRQn, 16); // set to low priority
+#endif
     }
 
 

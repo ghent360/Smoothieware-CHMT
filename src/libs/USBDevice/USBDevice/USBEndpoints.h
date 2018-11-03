@@ -67,6 +67,8 @@ public:
     #include "USBEndpoints_LPC17_LPC23.h"
 #elif defined(TARGET_LPC11U24)
     #include "USBEndpoints_LPC11U.h"
+#elif defined(__STM32F4__)    
+    #include "USBEndpoints_STM32F4.h"
 #else
     #error "Unknown target type"
 #endif

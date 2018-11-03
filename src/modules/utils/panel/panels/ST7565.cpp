@@ -13,8 +13,7 @@
 #include "checksumm.h"
 #include "StreamOutputPool.h"
 #include "ConfigValue.h"
-
-
+#include "board_pins.h"
 
 //definitions for lcd
 #define LCDWIDTH 128
@@ -82,11 +81,11 @@ ST7565::ST7565(uint8_t variant)
     int spi_channel = THEKERNEL->config->value(panel_checksum, spi_channel_checksum)->by_default(0)->as_number();
     PinName mosi, miso, sclk;
     if(spi_channel == 0) {
-        mosi = P0_18; miso = P0_17; sclk = P0_15;
+        mosi = EXT_MOSI; miso = EXT_MISO; sclk = EXT_SCK;
     } else if(spi_channel == 1) {
-        mosi = P0_9; miso = P0_8; sclk = P0_7;
+        mosi = SD_MOSI; miso = SD_MISO; sclk = SD_SCK;
     } else {
-        mosi = P0_18; miso = P0_17; sclk = P0_15;
+        mosi = EXT_MOSI; miso = EXT_MISO; sclk = EXT_SCK;
     }
 
     this->spi = new mbed::SPI(mosi, miso, sclk);

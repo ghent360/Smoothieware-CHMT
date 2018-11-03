@@ -39,6 +39,7 @@
 
 // for parse_pins in mbed
 #include "pinmap.h"
+#include "board_pins.h"
 
 #define panel_checksum             CHECKSUM("panel")
 #define enable_checksum            CHECKSUM("enable")
@@ -134,6 +135,7 @@ void Panel::on_module_loaded()
         return;
     }
 
+#ifndef DISABLEMSD
     // external sd
     if(THEKERNEL->config->value( panel_checksum, ext_sd_checksum )->by_default(false)->as_bool()) {
         this->external_sd_enable= true;
@@ -145,6 +147,7 @@ void Panel::on_module_loaded()
         this->extsd_spi_cs= parse_pins(s.c_str());
         this->register_for_event(ON_SECOND_TICK);
     }
+#endif
 
     // these need to be called here as they need the config cache loaded as they enumerate modules
     this->custom_screen= new CustomScreen();
@@ -667,14 +670,15 @@ void  Panel::set_playing_file(string f)
 
 bool Panel::mount_external_sd(bool on)
 {
+#ifndef DISABLEMSD
     // now setup the external sdcard if we have one and mount it
     if(on) {
         if(this->sd == nullptr) {
             PinName mosi, miso, sclk, cs= this->extsd_spi_cs;
             if(extsd_spi_channel == 0) {
-                mosi = P0_18; miso = P0_17; sclk = P0_15;
+                mosi = EXT_MOSI; miso = EXT_MISO; sclk = EXT_SCK;
             } else if(extsd_spi_channel == 1) {
-                mosi = P0_9; miso = P0_8; sclk = P0_7;
+                mosi = SD_MOSI; miso = SD_MISO; sclk = SD_SCK;
             } else{
                 this->external_sd_enable= false;
                 THEKERNEL->streams->printf("Bad SPI channel for external SDCard\n");
@@ -697,6 +701,7 @@ bool Panel::mount_external_sd(bool on)
         this->extmounter= nullptr;
         THEKERNEL->streams->printf("External SDcard unmounted\n");
     }
+#endif
     return true;
 }
 

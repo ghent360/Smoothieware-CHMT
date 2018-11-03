@@ -3,15 +3,30 @@
  * released under MIT license http://mbed.org/licence/mit
  */
 #include "mbed.h"
+#undef ADC
 #include "adc.h"
+
+#ifdef __STM32F4__
+#include "pinmap.h"
+#include "PeripheralPins.h"
+#include "mri.h"
+#include <vector>
+#include "SlowTicker.h"
+#include "Kernel.h"
+
+#define STM_ADC ADC1
+extern "C" uint32_t Set_GPIO_Clock(uint32_t port);
+#define ADC_SQR3_SQ2_Pos          (5U)                                         
+#define ADC_SQR2_SQ8_Pos          (5U)                                         
+#define ADC_SQR1_SQ14_Pos         (5U)                                         
+#endif
 
 using namespace mbed;
 
 ADC *ADC::instance;
 
-ADC::ADC(int sample_rate, int cclk_div)
-    {
-
+#ifndef __STM32F4__
+ADC::ADC(int sample_rate, int cclk_div){
     int i, adc_clk_freq, pclk, clock_div, max_div=1;
 
     //Work out CCLK
@@ -77,9 +92,7 @@ ADC::ADC(int sample_rate, int cclk_div)
     //Initialize arrays
     for (i=7; i>=0; i--) {
         _adc_data[i] = 0;
-        _adc_isr[i] = NULL;
     }
-
 
     //* Attach IRQ
     instance = this;
@@ -87,14 +100,7 @@ ADC::ADC(int sample_rate, int cclk_div)
 
     //Disable global interrupt
     LPC_ADC->ADINTEN &= ~0x100;
-
 };
-
-void ADC::_adcisr(void)
-{
-    instance->adcisr();
-}
-
 
 void ADC::adcisr(void)
 {
@@ -116,8 +122,6 @@ void ADC::adcisr(void)
     // Channel that triggered interrupt
     chan = (LPC_ADC->ADGDR >> 24) & 0x07;
     //User defined interrupt handlers
-    if (_adc_isr[chan] != NULL)
-        _adc_isr[chan](_adc_data[chan]);
     if (_adc_g_isr != NULL)
         _adc_g_isr(chan, _adc_data[chan]);
     return;
@@ -147,49 +151,6 @@ int ADC::_pin_to_channel(PinName pin) {
             break;
     }
     return(chan);
-}
-
-PinName ADC::channel_to_pin(int chan) {
-    const PinName pin[8]={p15, p16, p17, p18, p19, p20, p15, p15};
-
-    if ((chan < 0) || (chan > 5))
-        fprintf(stderr, "ADC channel %u is outside range available to MBED pins.\n", chan);
-    return(pin[chan & 0x07]);
-}
-
-
-int ADC::channel_to_pin_number(int chan) {
-    const int pin[8]={15, 16, 17, 18, 19, 20, 0, 0};
-
-    if ((chan < 0) || (chan > 5))
-        fprintf(stderr, "ADC channel %u is outside range available to MBED pins.\n", chan);
-    return(pin[chan & 0x07]);
-}
-
-
-uint32_t ADC::_data_of_pin(PinName pin) {
-    //If in burst mode and at least one interrupt enabled then
-    //take all values from _adc_data
-    if (burst() && (LPC_ADC->ADINTEN & 0x3F)) {
-        return(_adc_data[_pin_to_channel(pin)]);
-    } else {
-        //Return current register value or last value from interrupt
-        switch (pin) {
-            case p15://=p0.23 of LPC1768
-            default:
-                return(LPC_ADC->ADINTEN & 0x01?_adc_data[0]:LPC_ADC->ADDR0);
-            case p16://=p0.24 of LPC1768
-                return(LPC_ADC->ADINTEN & 0x02?_adc_data[1]:LPC_ADC->ADDR1);
-            case p17://=p0.25 of LPC1768
-                return(LPC_ADC->ADINTEN & 0x04?_adc_data[2]:LPC_ADC->ADDR2);
-            case p18://=p0.26 of LPC1768:
-                return(LPC_ADC->ADINTEN & 0x08?_adc_data[3]:LPC_ADC->ADDR3);
-            case p19://=p1.30 of LPC1768
-                return(LPC_ADC->ADINTEN & 0x10?_adc_data[4]:LPC_ADC->ADDR4);
-            case p20://=p1.31 of LPC1768
-                return(LPC_ADC->ADINTEN & 0x20?_adc_data[5]:LPC_ADC->ADDR5);
-        }
-    }
 }
 
 //Enable or disable an ADC pin
@@ -272,24 +233,6 @@ void ADC::setup(PinName pin, int state) {
         LPC_ADC->ADCR &= ~(1 << chan);
     }
 }
-//Return channel enabled/disabled state
-int ADC::setup(PinName pin) {
-    int chan;
-
-    chan = _pin_to_channel(pin);
-    return((LPC_ADC->ADCR & (1 << chan)) >> chan);
-}
-
-//Select channel already setup
-void ADC::select(PinName pin) {
-    int chan;
-
-    //Only one channel can be selected at a time if not in burst mode
-    if (!burst()) LPC_ADC->ADCR &= ~0xFF;
-    //Select channel
-    chan = _pin_to_channel(pin);
-    LPC_ADC->ADCR |= (1 << chan);
-}
 
 //Enable or disable burst mode
 void ADC::burst(int state) {
@@ -306,17 +249,6 @@ int  ADC::burst(void) {
     return((LPC_ADC->ADCR & (1 << 16)) >> 16);
 }
 
-//Set startmode and edge
-void ADC::startmode(int mode, int edge) {
-    int lpc_adc_temp;
-
-    //Reset start mode and edge bit,
-    lpc_adc_temp = LPC_ADC->ADCR & ~(0x0F << 24);
-    //Write with new values
-    lpc_adc_temp |= ((mode & 7) << 24) | ((edge & 1) << 27);
-    LPC_ADC->ADCR = lpc_adc_temp;
-}
-
 //Return startmode state according to mode_edge=0: mode and mode_edge=1: edge
 int ADC::startmode(int mode_edge){
     switch (mode_edge) {
@@ -327,12 +259,6 @@ int ADC::startmode(int mode_edge){
             return((LPC_ADC->ADCR >> 27) & 0x01);
     }
 }
-
-//Start ADC conversion
-void ADC::start(void) {
-    startmode(1,0);
-}
-
 
 //Set interrupt enable/disable for pin to state
 void ADC::interrupt_state(PinName pin, int state) {
@@ -352,88 +278,156 @@ void ADC::interrupt_state(PinName pin, int state) {
     }
 }
 
-//Return enable/disable state of interrupt for pin
-int ADC::interrupt_state(PinName pin) {
-    int chan;
+#else  // defined(__STM32F4__)
 
-    chan = _pin_to_channel(pin);
-    return((LPC_ADC->ADINTEN >> chan) & 0x01);
-}
+ADC::ADC(int sample_rate, int cclk_div) {
+    scan_count_active = scan_count_next = 0;
+    scan_index = 0;
+    attached = 0;
+    interrupt_mask = 0;
 
+    memset(scan_chan_lut, 0xFF, sizeof(scan_chan_lut));
 
-//Attach custom interrupt handler replacing default
-void ADC::attach(void(*fptr)(void)) {
-    //* Attach IRQ
-    NVIC_SetVector(ADC_IRQn, (uint32_t)fptr);
-}
+    __HAL_RCC_ADC1_CLK_ENABLE();
 
-//Restore default interrupt handler
-void ADC::detach(void) {
-    //* Attach IRQ
-    instance = this;
+    // adcclk /8 prescaler
+    ((ADC_Common_TypeDef *) ADC_BASE)->CCR |= ADC_CCR_ADCPRE;
+
+    // use long sampling time to reduce isr call freq, to reduce chance of overflow
+    // 168 Mhz / 2 (APB CLK) / 8 (ADCCLK) / (480+15) = ~47 us conversion
+    // for max 16 scan channels, thats max sampling rate of ~1.3 kHz
+    STM_ADC->SMPR1 = ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 | ADC_SMPR1_SMP13 | 
+                     ADC_SMPR1_SMP14 | ADC_SMPR1_SMP15 | ADC_SMPR1_SMP16 | ADC_SMPR1_SMP17 | 
+                     ADC_SMPR1_SMP18;
+
+    STM_ADC->SMPR2 = ADC_SMPR2_SMP0 | ADC_SMPR2_SMP1 | ADC_SMPR2_SMP2 | ADC_SMPR2_SMP3 | 
+                     ADC_SMPR2_SMP4 | ADC_SMPR2_SMP5 | ADC_SMPR2_SMP6 | ADC_SMPR2_SMP7 | 
+                     ADC_SMPR2_SMP8 | ADC_SMPR2_SMP9;
+ 
+    // overrun ie, scan mode, end of conv. ie
+    STM_ADC->CR1 = ADC_CR1_OVRIE | ADC_CR1_SCAN | ADC_CR1_EOCIE;
+
+    // interrupt after every conversion
+    // turn on adc
+    STM_ADC->CR2 |= ADC_CR2_EOCS | ADC_CR2_ADON;
+
     NVIC_SetVector(ADC_IRQn, (uint32_t)&_adcisr);
+    NVIC_EnableIRQ(ADC_IRQn);
+
+    _adc_g_isr = NULL;
+    instance = this;
 }
 
+int ADC::_pin_to_channel(PinName pin) {
+    uint32_t function = pinmap_function(pin, PinMap_ADC);
+    uint8_t chan = 0xFF;
 
-//Append interrupt handler for pin to function isr
-void ADC::append(PinName pin, void(*fptr)(uint32_t value)) {
-    int chan;
+    if (function != (uint32_t)NC)
+        chan = scan_chan_lut[STM_PIN_CHANNEL(function)];
 
-    chan = _pin_to_channel(pin);
-    _adc_isr[chan] = fptr;
+    return chan;
 }
 
-//Append interrupt handler for pin to function isr
-void ADC::unappend(PinName pin) {
-    int chan;
-
-    chan = _pin_to_channel(pin);
-    _adc_isr[chan] = NULL;
+// enable or disable burst mode
+void ADC::burst(int state) {
+    if (state && !attached) {
+        THEKERNEL->slow_ticker->attach(1000, this, &ADC::on_tick);
+        attached = 1;
+    }
 }
 
-//Unappend global interrupt handler to function isr
+// enable or disable an ADC pin
+void ADC::setup(PinName pin, int state) {
+    uint32_t function = pinmap_function(pin, PinMap_ADC);
+    uint8_t stm_chan = 0xFF;
+    uint8_t chan = 0xFF;
+
+    // we don't support dealloc for now, exit early if all channels full or pin doesn't support adc
+    if (!state || scan_count_next >= ADC_CHANNEL_COUNT || function == (uint32_t)NC) 
+        return;
+
+    // set analog mode for gpio (b11)
+    GPIO_TypeDef *gpio = (GPIO_TypeDef *) Set_GPIO_Clock(STM_PORT(pin));
+    gpio->MODER |= (0x3 << (2*STM_PIN(pin)));
+
+    stm_chan = STM_PIN_CHANNEL(function);
+    chan = scan_count_next++;
+
+    scan_chan_lut[stm_chan] = chan;
+
+    // configure adc scan channel
+    if (chan < 6) {
+        STM_ADC->SQR3 |= (stm_chan << (ADC_SQR3_SQ2_Pos*chan));
+    } else if (chan < 12) {
+        STM_ADC->SQR2 |= (stm_chan << (ADC_SQR2_SQ8_Pos*(chan - 6)));
+    } else if (chan < 16) {
+        STM_ADC->SQR1 |= (stm_chan << (ADC_SQR1_SQ14_Pos*(chan - 12)));
+    }
+}
+
+// set interrupt enable/disable for pin to state
+void ADC::interrupt_state(PinName pin, int state) {
+    int chan = _pin_to_channel(pin);
+
+    if (chan < ADC_CHANNEL_COUNT) {
+        if (state)
+            interrupt_mask |= (1 << chan);
+        else
+            interrupt_mask &= ~(1 << chan);
+     }    
+}
+
+void ADC::adcisr(void)
+{
+    // dr read clears eoc bit
+    // must read data before checking overflow bit
+    uint16_t data = STM_ADC->DR; // to be sure we are valid
+
+    if (STM_ADC->SR & ADC_SR_OVR) {
+        // conversion was clobbered by overflow, clear its flag too, clear strt so we restart
+        STM_ADC->SR &= ~(ADC_SR_OVR | ADC_SR_EOC | ADC_SR_STRT);
+
+        // overrun will abort scan sequence, next start will resume from beginning
+        scan_index = 0;
+        __debugbreak();
+    } else {
+        // don't clear EOC flag, it could have popped after we read dr, and dr may have new valid data
+        if (_adc_g_isr != NULL && (interrupt_mask & (1 << scan_index)))
+            _adc_g_isr(scan_index, data);
+
+        if (++scan_index >= scan_count_active) {
+            STM_ADC->SR &= ~(ADC_SR_STRT); // clear strt so next tick starts scan
+            scan_index = 0;
+        }
+    }
+}
+
+//Callback for attaching to slowticker as scan start timer 
+uint32_t ADC::on_tick(uint32_t dummy) {
+    // previous conversion still running
+    if (STM_ADC->SR & ADC_SR_STRT)
+        return dummy;
+
+    // synchronize scan_count_active used by isr and scan_count_next while adding channels
+    if (scan_count_active != scan_count_next) {
+        scan_count_active = scan_count_next;
+
+        // increase scan count
+        STM_ADC->SQR1 = (STM_ADC->SQR1 & (~ADC_SQR1_L)) | ((scan_count_active-1) << 20);
+    }
+    STM_ADC->CR2 |= ADC_CR2_SWSTART;
+
+    return dummy;
+}
+
+#endif // __STM32F4__
+
+void ADC::_adcisr(void)
+{
+    instance->adcisr();
+}
+
+//append global interrupt handler to function isr
 void ADC::append(void(*fptr)(int chan, uint32_t value)) {
     _adc_g_isr = fptr;
-}
-
-//Detach global interrupt handler to function isr
-void ADC::unappend() {
-    _adc_g_isr = NULL;
-}
-
-//Set ADC offset
-void ADC::offset(int offset) {
-    LPC_ADC->ADTRM &= ~(0x07 << 4);
-    LPC_ADC->ADTRM |= (offset & 0x07) << 4;
-}
-
-//Return current ADC offset
-int ADC::offset(void) {
-    return((LPC_ADC->ADTRM >> 4) & 0x07);
-}
-
-//Return value of ADC on pin
-int ADC::read(PinName pin) {
-    //Reset DONE and OVERRUN flags of interrupt handled ADC data
-    _adc_data[_pin_to_channel(pin)] &= ~(((uint32_t)0x01 << 31) | ((uint32_t)0x01 << 30));
-    //Return value
-    return((_data_of_pin(pin) >> 4) & 0xFFF);
-}
-
-//Return DONE flag of ADC on pin
-int ADC::done(PinName pin) {
-    return((_data_of_pin(pin) >> 31) & 0x01);
-}
-
-//Return OVERRUN flag of ADC on pin
-int ADC::overrun(PinName pin) {
-    return((_data_of_pin(pin) >> 30) & 0x01);
-}
-
-int ADC::actual_adc_clock(void) {
-    return(_adc_clk_freq);
-}
-
-int ADC::actual_sample_rate(void) {
-    return(_adc_clk_freq / CLKS_PER_SAMPLE);
 }

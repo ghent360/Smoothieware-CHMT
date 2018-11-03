@@ -7,8 +7,10 @@
 
 #include "libs/Kernel.h"
 #include "libs/utils.h"
+#ifndef __STM32F4__
 #include "system_LPC17xx.h"
 #include "LPC17xx.h"
+#endif
 #include "utils.h"
 
 #include <string>
@@ -146,17 +148,21 @@ string get_arguments( const string& possible_command )
 bool file_exists( const string file_name )
 {
     bool exists = false;
+#ifndef DISABLEMSD
     FILE *lp = fopen(file_name.c_str(), "r");
     if(lp) {
         exists = true;
     }
     fclose(lp);
+#endif
     return exists;
 }
 
 // Prepares and executes a watchdog reset for dfu or reboot
 void system_reset( bool dfu )
 {
+#ifndef __STM32F4__
+//TODO(ghent360): do we need this at all?
     if(dfu) {
         LPC_WDT->WDCLKSEL = 0x1;                // Set CLK src to PCLK
         uint32_t clk = SystemCoreClock / 16;    // WD has a fixed /4 prescaler, PCLK default is /4
@@ -167,6 +173,9 @@ void system_reset( bool dfu )
     } else {
         NVIC_SystemReset();
     }
+#else
+    NVIC_SystemReset();
+#endif
 }
 
 // Convert a path indication ( absolute or relative ) into a path ( absolute )

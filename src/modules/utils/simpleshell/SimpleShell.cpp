@@ -12,7 +12,7 @@
 #include "libs/utils.h"
 #include "libs/SerialMessage.h"
 #include "libs/StreamOutput.h"
-#include "modules/robot/Conveyor.h"
+#include "Conveyor.h"
 #include "DirHandle.h"
 #include "mri.h"
 #include "version.h"
@@ -41,8 +41,12 @@
 #include "utils.h"
 #include "AutoPushPop.h"
 
+#ifdef __STM32F4__
+#include "system_stm32f4xx.h"
+#else
 #include "system_LPC17xx.h"
 #include "LPC17xx.h"
+#endif
 
 #include "mbed.h" // for wait_ms()
 
@@ -216,7 +220,7 @@ void SimpleShell::on_console_line_received( void *argument )
             case 'G':
                 // issue get state
                 get_command("state", new_message.stream);
-                new_message.stream->printf("ok\n");
+                //new_message.stream->printf("ok\n"); // sending this while printing will cause ok count to get out of sync
                 break;
 
             case 'X':
@@ -242,6 +246,11 @@ void SimpleShell::on_console_line_received( void *argument )
                     THEKERNEL->call_event(ON_GCODE_RECEIVED, &gcode);
                 }
                 new_message.stream->printf("ok\n");
+                break;
+
+            case 'J':
+                // instant jog command
+                jog(possible_command, new_message.stream);
                 break;
 
             default:
@@ -270,9 +279,9 @@ void SimpleShell::on_console_line_received( void *argument )
         } else if (cmd == "fire") {
             // these are handled by Laser module
 
-        } else if (cmd == "ok") {
-            // probably an echo so reply ok
-            new_message.stream->printf("ok\n");
+        } else if (cmd.substr(0, 2) == "ok") {
+            // probably an echo so ignore the whole line
+            //new_message.stream->printf("ok\n");
 
         }else if(!parse_command(cmd.c_str(), possible_command, new_message.stream)) {
             new_message.stream->printf("error:Unsupported command - %s\n", cmd.c_str());
@@ -320,11 +329,15 @@ void SimpleShell::ls_command( string parameters, StreamOutput *stream )
     }
 }
 
+#ifndef DISABLEMSD
 extern SDFAT mounter;
+#endif
 
 void SimpleShell::remount_command( string parameters, StreamOutput *stream )
 {
+#ifndef DISABLEMSD
     mounter.remount();
+#endif
     stream->printf("remounted\r\n");
 }
 
@@ -592,6 +605,7 @@ void SimpleShell::mem_command( string parameters, StreamOutput *stream)
     stream->printf("Block size: %u bytes, Tickinfo size: %u bytes\n", sizeof(Block), sizeof(Block::tickinfo_t) * Block::n_actuators);
 }
 
+#ifndef __STM32F4__
 static uint32_t getDeviceType()
 {
 #define IAP_LOCATION 0x1FFF1FF1
@@ -609,6 +623,7 @@ static uint32_t getDeviceType()
 
     return result[1];
 }
+#endif
 
 // get network config
 void SimpleShell::net_command( string parameters, StreamOutput *stream)
@@ -629,8 +644,13 @@ void SimpleShell::net_command( string parameters, StreamOutput *stream)
 void SimpleShell::version_command( string parameters, StreamOutput *stream)
 {
     Version vers;
+#ifndef __STM32F4__
     uint32_t dev = getDeviceType();
     const char *mcu = (dev & 0x00100000) ? "LPC1769" : "LPC1768";
+#else
+    const uint32_t *mcu_idcode = (const uint32_t *)DBGMCU_BASE;
+    const char *mcu = ((*mcu_idcode & 0x0FFF) == 0x413) ? "STM32F4" : "Unknown";
+#endif
     stream->printf("Build version: %s, Build date: %s, MCU: %s, System Clock: %ldMHz\r\n", vers.get_build(), vers.get_build_date(), mcu, SystemCoreClock / 1000000);
     #ifdef CNC
     stream->printf("  CNC Build ");
@@ -1121,7 +1141,7 @@ void SimpleShell::test_command( string parameters, StreamOutput *stream)
         // reset the position based on current actuator position
         THEROBOT->reset_position_from_current_actuator_position();
 
-        stream->printf("done\n");
+        //stream->printf("done\n");
 
     }else {
         stream->printf("usage:\n test jog axis distance iterations [feedrate]\n");
@@ -1129,6 +1149,56 @@ void SimpleShell::test_command( string parameters, StreamOutput *stream)
         stream->printf(" test circle radius iterations [feedrate]\n");
         stream->printf(" test raw axis steps steps/sec\n");
     }
+}
+
+void SimpleShell::jog(string parameters, StreamOutput *stream)
+{
+    // $J X0.1 F0.5
+    int n_motors= THEROBOT->get_number_registered_motors();
+
+    // get axis to move and amount (X0.1)
+    // for now always 1 axis
+    size_t npos= parameters.find_first_of("XYZABC");
+    if(npos == string::npos) {
+        stream->printf("usage: $J X|Y|Z|A|B|C 0.01 [F0.5]\n");
+        return;
+    }
+
+    string s = parameters.substr(npos);
+    if(s.empty() || s.size() < 2) {
+        stream->printf("usage: $J X0.01 [F0.5]\n");
+        return;
+    }
+    char ax= toupper(s[0]);
+    uint8_t a= ax >= 'X' ? ax - 'X' : ax - 'A' + 3;
+    if(a >= n_motors) {
+        stream->printf("error:bad axis\n");
+        return;
+    }
+
+    float d= strtof(s.substr(1).c_str(), NULL);
+
+    float delta[n_motors];
+    for (int i = 0; i < n_motors; ++i) {
+        delta[i]= 0;
+    }
+    delta[a]= d;
+
+    // get speed scale
+    float scale= 1.0F;
+    npos= parameters.find_first_of("F");
+    if(npos != string::npos && npos+1 < parameters.size()) {
+        scale= strtof(parameters.substr(npos+1).c_str(), NULL);
+    }
+
+    THEROBOT->push_state();
+    float rate_mm_s= THEROBOT->actuators[a]->get_max_rate() * scale;
+    THEROBOT->delta_move(delta, rate_mm_s, n_motors);
+
+    // turn off queue delay and run it now
+    THECONVEYOR->force_queue();
+    THEROBOT->pop_state();
+    //stream->printf("Jog: %c%f F%f\n", ax, d, scale);
 }
 
 void SimpleShell::help_command( string parameters, StreamOutput *stream )

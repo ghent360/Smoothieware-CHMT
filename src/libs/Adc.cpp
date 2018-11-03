@@ -18,6 +18,11 @@
 
 #include "mbed.h"
 
+#ifdef __STM32F4__
+#include "pinmap.h"
+#include "PeripheralPins.h"
+#endif
+
 // This is an interface to the mbed.org ADC library you can find in libs/ADC/adc.h
 // TODO : Having the same name is confusing, should change that
 
@@ -58,20 +63,26 @@ void Adc::enable_pin(Pin *pin)
     PinName pin_name = this->_pin_to_pinname(pin);
     int channel = adc->_pin_to_channel(pin_name);
     memset(sample_buffers[channel], 0, sizeof(sample_buffers[0]));
+    sample_indexs[channel] = 0;
 
     this->adc->burst(1);
     this->adc->setup(pin_name, 1);
     this->adc->interrupt_state(pin_name, 1);
 }
 
-// Keeps the last 8 values for each channel
+// Keeps the last num_samples values for each channel
 // This is called in an ISR, so sample_buffers needs to be accessed atomically
 void Adc::new_sample(int chan, uint32_t value)
 {
-    // Shuffle down and add new value to the end
+    // circular buffer to overwrite oldest reading
     if(chan < num_channels) {
-        memmove(&sample_buffers[chan][0], &sample_buffers[chan][1], sizeof(sample_buffers[0]) - sizeof(sample_buffers[0][0]));
-        sample_buffers[chan][num_samples - 1] = (value >> 4) & 0xFFF; // the 12 bit ADC reading
+#ifndef __STM32F4__
+        sample_buffers[chan][sample_indexs[chan]++] = (value >> 4) & 0xFFF; // the 12 bit ADC reading
+#else
+        sample_buffers[chan][sample_indexs[chan]++] = value & 0xFFF; // the 12 bit ADC reading
+#endif
+        if (sample_indexs[chan] >= num_samples)
+            sample_indexs[chan] = 0;
     }
 }
 
@@ -124,6 +135,7 @@ unsigned int Adc::read(Pin *pin)
 // Convert a smoothie Pin into a mBed Pin
 PinName Adc::_pin_to_pinname(Pin *pin)
 {
+#ifndef __STM32F4__    
     if( pin->port == LPC_GPIO0 && pin->pin == 23 ) {
         return p15;
     } else if( pin->port == LPC_GPIO0 && pin->pin == 24 ) {
@@ -140,5 +152,12 @@ PinName Adc::_pin_to_pinname(Pin *pin)
         //TODO: Error
         return NC;
     }
+#else
+    PinName pinname = port_pin((PortName)pin->port_number, pin->pin);
+    if (pinmap_peripheral(pinname, PinMap_ADC) != (uint32_t)NC)
+        return pinname; 
+
+    return NC;    
+#endif    
 }
 

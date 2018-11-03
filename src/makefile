@@ -1,6 +1,14 @@
 PROJECT=main
 BUILD_DIR=../build
-DEVICES=lpc1768
+DEVICES=stm32f407
+GHENT360=1
+NONETWORK=1
+DISABLEMSD=1
+DISABLEUSB=1
+BOARD=PRNTR_V1
+AXIS=6
+#DEVICES=lpc1768
+#BOARD=SMOOTHIE_V1
 
 # BUILD_TYPE can be set to the following values:
 #  Checked - Optimizations enabled with MRI debug monitor support. (Recommended Type)
@@ -57,6 +65,8 @@ ifneq "$(STEPTICKER_DEBUG_PIN)" ""
 # Set a Pin here that toggles on end of move
 DEFINES += -DSTEPTICKER_DEBUG_PIN=$(STEPTICKER_DEBUG_PIN)
 endif
+
+DEFINES += -D$(BOARD)
 
 # include an optional default set of excludes
 # add any modules that you do not want included in the build

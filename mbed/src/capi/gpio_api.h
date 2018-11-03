@@ -33,6 +33,8 @@ void gpio_init(gpio_t *obj, PinName pin, PinDirection direction);
 void gpio_mode(gpio_t *obj, PinMode mode);
 void gpio_dir (gpio_t *obj, PinDirection direction);
 
+#define gpio_init_out(obj, pin) gpio_init(obj, pin, PIN_OUTPUT)
+
 #ifdef __cplusplus
 }
 #endif

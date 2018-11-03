@@ -29,7 +29,9 @@
 #include "modules/utils/killbutton/KillButton.h"
 #include "modules/utils/PlayLed/PlayLed.h"
 #include "modules/utils/panel/Panel.h"
+#ifndef NONETWORK
 #include "libs/Network/uip/Network.h"
+#endif
 #include "Config.h"
 #include "checksumm.h"
 #include "ConfigValue.h"
@@ -56,10 +58,15 @@
 #include "libs/Watchdog.h"
 
 #include "version.h"
+#ifdef __STM32F4__
+#include "system_stm32f4xx.h"
+#else
 #include "system_LPC17xx.h"
+#endif
 #include "platform_memory.h"
 
 #include "mbed.h"
+#include "board_pins.h"
 
 #define second_usb_serial_enable_checksum  CHECKSUM("second_usb_serial_enable")
 #define disable_msd_checksum  CHECKSUM("msd_disable")
@@ -67,33 +74,39 @@
 #define watchdog_timeout_checksum  CHECKSUM("watchdog_timeout")
 
 
-// USB Stuff
-SDCard sd  __attribute__ ((section ("AHBSRAM0"))) (P0_9, P0_8, P0_7, P0_6);      // this selects SPI1 as the sdcard as it is on Smoothieboard
-//SDCard sd(P0_18, P0_17, P0_15, P0_16);  // this selects SPI0 as the sdcard
+#ifndef DISABLEMSD
+SDCard sd  __attribute__ ((section ("AHBSRAM0"))) (SD_MOSI, SD_MISO, SD_SCK, SD_CS);      // this selects SPI1 as the sdcard as it is on Smoothieboard
+//SDCard sd(P0_18, P0_17, P0_15, P0_16); // this selects SPI0 as the sdcard
 //SDCard sd(P0_18, P0_17, P0_15, P2_8);  // this selects SPI0 as the sdcard witrh a different sd select
+#endif
 
+#ifndef DISABLEUSB
+// USB Stuff
 USB u __attribute__ ((section ("AHBSRAM0")));
 USBSerial usbserial __attribute__ ((section ("AHBSRAM0"))) (&u);
-#ifndef DISABLEMSD
+#ifdef DISABLEMSD
 USBMSD msc __attribute__ ((section ("AHBSRAM0"))) (&u, &sd);
 #else
 USBMSD *msc= NULL;
 #endif
+#endif
 
+#ifndef DISABLEMSD
 SDFAT mounter __attribute__ ((section ("AHBSRAM0"))) ("sd", &sd);
+#endif
 
 GPIO leds[5] = {
-    GPIO(P1_18),
-    GPIO(P1_19),
-    GPIO(P1_20),
-    GPIO(P1_21),
-    GPIO(P4_28)
+    GPIO(LED1),
+    GPIO(LED2),
+    GPIO(LED3),
+    GPIO(LED4),
+    GPIO(LED5)
 };
 
 void init() {
 
     // Default pins to low status
-    for (int i = 0; i < 5; i++){
+    for (size_t i = 0; i < sizeof(leds)/sizeof(leds[0]); i++){
         leds[i].output();
         leds[i]= 0;
     }
@@ -103,14 +116,16 @@ void init() {
     kernel->streams->printf("Smoothie Running @%ldMHz\r\n", SystemCoreClock / 1000000);
     SimpleShell::version_command("", kernel->streams);
 
+#ifndef DISABLEMSD
     bool sdok= (sd.disk_initialize() == 0);
     if(!sdok) kernel->streams->printf("SDCard failed to initialize\r\n");
+#endif
 
-    #ifdef NONETWORK
-        kernel->streams->printf("NETWORK is disabled\r\n");
-    #endif
+#ifdef NONETWORK
+    kernel->streams->printf("NETWORK is disabled\r\n");
+#endif
 
-#ifdef DISABLEMSD
+#ifndef DISABLEMSD
     // attempt to be able to disable msd in config
     if(sdok && !kernel->config->value( disable_msd_checksum )->by_default(true)->as_bool()){
         // HACK to zero the memory USBMSD uses as it and its objects seem to not initialize properly in the ctor
@@ -132,67 +147,69 @@ void init() {
     kernel->add_module( new(AHB0) PlayLed() );
 
     // these modules can be completely disabled in the Makefile by adding to EXCLUDE_MODULES
-    #ifndef NO_TOOLS_SWITCH
+#ifndef NO_TOOLS_SWITCH
     SwitchPool *sp= new SwitchPool();
     sp->load_tools();
     delete sp;
-    #endif
-    #ifndef NO_TOOLS_EXTRUDER
+#endif
+#ifndef NO_TOOLS_EXTRUDER
     // NOTE this must be done first before Temperature control so ToolManager can handle Tn before temperaturecontrol module does
     ExtruderMaker *em= new ExtruderMaker();
     em->load_tools();
     delete em;
-    #endif
-    #ifndef NO_TOOLS_TEMPERATURECONTROL
+#endif
+#ifndef NO_TOOLS_TEMPERATURECONTROL
     // Note order is important here must be after extruder so Tn as a parameter will get executed first
     TemperatureControlPool *tp= new TemperatureControlPool();
     tp->load_tools();
     delete tp;
-    #endif
-    #ifndef NO_TOOLS_ENDSTOPS
+#endif
+#ifndef NO_TOOLS_ENDSTOPS
     kernel->add_module( new(AHB0) Endstops() );
-    #endif
-    #ifndef NO_TOOLS_LASER
+#endif
+#ifndef NO_TOOLS_LASER
     kernel->add_module( new Laser() );
-    #endif
-    #ifndef NO_TOOLS_SPINDLE
+#endif
+#ifndef NO_TOOLS_SPINDLE
     SpindleMaker *sm= new SpindleMaker();
     sm->load_spindle();
     delete sm;
     //kernel->add_module( new(AHB0) Spindle() );
-    #endif
-    #ifndef NO_UTILS_PANEL
+#endif
+#ifndef NO_UTILS_PANEL
     kernel->add_module( new(AHB0) Panel() );
-    #endif
-    #ifndef NO_TOOLS_ZPROBE
+#endif
+#ifndef NO_TOOLS_ZPROBE
     kernel->add_module( new(AHB0) ZProbe() );
-    #endif
-    #ifndef NO_TOOLS_SCARACAL
+#endif
+#ifndef NO_TOOLS_SCARACAL
     kernel->add_module( new(AHB0) SCARAcal() );
-    #endif
-    #ifndef NO_TOOLS_ROTARYDELTACALIBRATION
+#endif
+#ifndef NO_TOOLS_ROTARYDELTACALIBRATION
     kernel->add_module( new(AHB0) RotaryDeltaCalibration() );
-    #endif
-    #ifndef NONETWORK
+#endif
+#ifndef NONETWORK
     kernel->add_module( new Network() );
-    #endif
-    #ifndef NO_TOOLS_TEMPERATURESWITCH
+#endif
+#ifndef NO_TOOLS_TEMPERATURESWITCH
     // Must be loaded after TemperatureControl
     kernel->add_module( new(AHB0) TemperatureSwitch() );
-    #endif
-    #ifndef NO_TOOLS_DRILLINGCYCLES
+#endif
+#ifndef NO_TOOLS_DRILLINGCYCLES
     kernel->add_module( new(AHB0) Drillingcycles() );
-    #endif
-    #ifndef NO_TOOLS_FILAMENTDETECTOR
+#endif
+#ifndef NO_TOOLS_FILAMENTDETECTOR
     kernel->add_module( new(AHB0) FilamentDetector() );
-    #endif
-    #ifndef NO_UTILS_MOTORDRIVERCONTROL
+#endif
+#ifndef NO_UTILS_MOTORDRIVERCONTROL
     kernel->add_module( new MotorDriverControl(0) );
-    #endif
+#endif
+#ifndef DISABLEUSB
     // Create and initialize USB stuff
     u.init();
-
-#ifdef DISABLEMSD
+#endif
+#ifndef DISABLEUSB
+#ifndef DISABLEMSD
     if(sdok && msc != NULL){
         kernel->add_module( msc );
     }
@@ -208,6 +225,7 @@ void init() {
     if( kernel->config->value( dfu_enable_checksum )->by_default(false)->as_bool() ){
         kernel->add_module( new(AHB0) DFU(&u));
     }
+#endif // !DISABLEUSB
 
     // 10 second watchdog timeout (or config as seconds)
     float t= kernel->config->value( watchdog_timeout_checksum )->by_default(10.0F)->as_number();
@@ -219,8 +237,9 @@ void init() {
         kernel->streams->printf("WARNING Watchdog is disabled\n");
     }
 
-
+#ifndef DISABLEUSB
     kernel->add_module( &u );
+#endif
 
     // memory before cache is cleared
     //SimpleShell::print_mem(kernel->streams);
@@ -231,9 +250,12 @@ void init() {
     if(kernel->is_using_leds()) {
         // set some leds to indicate status... led0 init done, led1 mainloop running, led2 idle loop running, led3 sdcard ok
         leds[0]= 1; // indicate we are done with init
+#ifndef DISABLEMSD        
         leds[3]= sdok?1:0; // 4th led indicates sdcard is available (TODO maye should indicate config was found)
+#endif        
     }
 
+#ifndef DISABLEMSD
     if(sdok) {
         // load config override file if present
         // NOTE only Mxxx commands that set values should be put in this file. The file is generated by M500
@@ -251,6 +273,7 @@ void init() {
             fclose(fp);
         }
     }
+#endif
 
     // start the timers and interrupts
     THEKERNEL->conveyor->start(THEROBOT->get_number_registered_motors());

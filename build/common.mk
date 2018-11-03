@@ -59,15 +59,15 @@ endif
 
 ifeq "$(BUILD_TYPE)" "Debug"
 OPTIMIZATION = 0
-MRI_ENABLE ?= 1
-MRI_SEMIHOST_STDIO ?= 1
+MRI_ENABLE = 0
+#MRI_SEMIHOST_STDIO ?= 1
 endif
 
 
 ifeq "$(BUILD_TYPE)" "Checked"
 OPTIMIZATION ?= 2
-MRI_ENABLE = 1
-MRI_SEMIHOST_STDIO ?= 1
+MRI_ENABLE = 0
+#MRI_SEMIHOST_STDIO ?= 1
 endif
 
 MRI_INIT_PARAMETERS=$(MRI_UART)
@@ -85,11 +85,11 @@ else
 CSRCS2 = $(CSRCS1)
 endif
 
-# do not compile the src/testframework as that can only be done with rake
-CSRCS = $(filter-out $(SRC)/testframework/%,$(CSRCS2))
-
 ifeq "$(DISABLEMSD)" "1"
-DEFINES += -DDISABLEMSD
+DEFINES += -DDISABLEMSD=1
+endif
+ifeq "$(DISABLEUSB)" "1"
+DEFINES += -DDISABLEUSB=1
 endif
 
 ASRCS =  $(wildcard $(SRC)/*.S $(SRC)/*/*.S $(SRC)/*/*/*.S $(SRC)/*/*/*/*.S $(SRC)/*/*/*/*/*.S)
@@ -117,15 +117,28 @@ else
 	CPPSRCS21 = $(filter-out $(SRC)/modules/utils/panel/screens/cnc/%,$(CPPSRCS2))
 endif
 
+# ghent360: exclude the LPC17XX filder from libs. Seems device dependent.
+ifeq "$(GHENT360)" "1"
+	CPPSRCS221 = $(filter-out $(SRC)/libs/LPC17xx/%,$(CPPSRCS21))
+	CSRCS221 = $(filter-out $(SRC)/libs/LPC17xx/%,$(CSRCS2))
+	CPPSRCS22 = $(filter-out $(SRC)/libs/USBDevice/%,$(CPPSRCS221))
+	CSRCS22 = $(filter-out $(SRC)/libs/USBDevice/%,$(CSRCS221))
+else
+	CPPSRCS22 = $(CPPSRCS21)
+	CSRCS22 = $(CSRCS2)
+endif
+
 # Totally exclude any modules listed in EXCLUDE_MODULES
 # uppercase function
 uc = $(subst a,A,$(subst b,B,$(subst c,C,$(subst d,D,$(subst e,E,$(subst f,F,$(subst g,G,$(subst h,H,$(subst i,I,$(subst j,J,$(subst k,K,$(subst l,L,$(subst m,M,$(subst n,N,$(subst o,O,$(subst p,P,$(subst q,Q,$(subst r,R,$(subst s,S,$(subst t,T,$(subst u,U,$(subst v,V,$(subst w,W,$(subst x,X,$(subst y,Y,$(subst z,Z,$1))))))))))))))))))))))))))
 EXL = $(patsubst %,$(SRC)/modules/%/%,$(EXCLUDED_MODULES))
-CPPSRCS3 = $(filter-out $(EXL),$(CPPSRCS21))
+CPPSRCS3 = $(filter-out $(EXL),$(CPPSRCS22))
 DEFINES += $(call uc, $(subst /,_,$(patsubst %,-DNO_%,$(EXCLUDED_MODULES))))
 
 # do not compile the src/testframework as that can only be done with rake
 CPPSRCS = $(filter-out $(SRC)/testframework/%,$(CPPSRCS3))
+# do not compile the src/testframework as that can only be done with rake
+CSRCS = $(filter-out $(SRC)/testframework/%,$(CSRCS22))
 
 # List of the objects files to be compiled/assembled
 OBJECTS = $(patsubst %.c,$(OUTDIR)/%.o,$(CSRCS)) $(patsubst %.s,$(OUTDIR)/%.o,$(patsubst %.S,$(OUTDIR)/%.o,$(ASRCS))) $(patsubst %.cpp,$(OUTDIR)/%.o,$(CPPSRCS))
@@ -148,7 +161,13 @@ MRI_DIR  = $(BUILD_DIR)/../mri
 # Include path which points to external library headers and to subdirectories of this project which contain headers.
 SUBDIRS = $(wildcard $(SRC)/* $(SRC)/*/* $(SRC)/*/*/* $(SRC)/*/*/*/* $(SRC)/*/*/*/*/* $(SRC)/*/*/*/*/*/*)
 PROJINCS = $(sort $(dir $(SUBDIRS)))
-INCDIRS += $(SRC) $(PROJINCS) $(MRI_DIR) $(MBED_DIR) $(MBED_DIR)/$(DEVICE)
+# ghent360: exclude the LPC17XX filder from libs. Seems device dependent.
+ifeq "$(GHENT360)" "1"
+PROJINCS2 = $(filter-out $(SRC)/libs/LPC17xx/%,$(PROJINCS))
+else
+PROJINCS2 = $(PROJINCS)
+endif
+INCDIRS += $(SRC) $(PROJINCS2) $(MRI_DIR) $(MBED_DIR) $(MBED_DIR)/$(DEVICE)
 
 # DEFINEs to be used when building C/C++ code
 DEFINES += -DTARGET_$(DEVICE)
@@ -167,7 +186,8 @@ SYS_LIBS = -specs=nano.specs -lstdc++ -lsupc++ -lm -lgcc -lc -lnosys
 LIBS = $(LIBS_PREFIX)
 
 ifeq "$(MRI_ENABLE)" "1"
-LIBS += $(MRI_DIR)/mri.ar
+#TODO(ghent360): re-enable
+#LIBS += $(MRI_DIR)/mri.ar
 endif
 
 LIBS += $(MBED_LIBS)
@@ -207,7 +227,7 @@ AS_FLAGS += -g3 $(DEVICE_FLAGS)
 # Linker Options.
 LDFLAGS = $(DEVICE_FLAGS) -specs=$(BUILD_DIR)/startfile.spec
 LDFLAGS += -Wl,-Map=$(OUTDIR)/$(PROJECT).map,--cref,--gc-sections,--wrap=_isatty,--wrap=malloc,--wrap=realloc,--wrap=free$(MRI_WRAPS)
-LDFLAGS += -T$(LSCRIPT)  -L $(EXTERNAL_DIR)/gcc/LPC1768
+LDFLAGS += -T$(LSCRIPT)  -L $(EXTERNAL_DIR)/gcc/$(DEVICE)
 ifneq "$(NO_FLOAT_SCANF)" "1"
 LDFLAGS += -u _scanf_float
 endif
@@ -316,7 +336,8 @@ $(OUTDIR)/%.o : %.s makefile
 	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
 	$(Q) $(AS) $(AS_FLAGS) -o $@ $<
 
+# Added config_sedaulf.s assembly file which would compile properly
 $(OUTDIR)/configdefault.o : config.default
-	$(Q) $(OBJCOPY) -I binary -O elf32-littlearm -B arm --readonly-text --rename-section .data=.rodata.configdefault $< $@
+#	$(Q) $(OBJCOPY) -I binary -O elf32-littlearm -B arm --readonly-text --rename-section .data=.rodata.configdefault $< $@
 
 #########################################################################

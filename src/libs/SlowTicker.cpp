@@ -16,6 +16,10 @@
 
 #include <mri.h>
 
+#ifdef __STM32F4__
+extern "C" void TIM6_DAC_IRQHandler(void);
+#endif
+
 // This module uses a Timer to periodically call hooks
 // Modules register with a function ( callback ) and a frequency, and we then call that function at the given frequency.
 
@@ -24,6 +28,7 @@ SlowTicker* global_slow_ticker;
 SlowTicker::SlowTicker(){
     global_slow_ticker = this;
 
+#ifndef __STM32F4__
     // ISP button FIXME: WHy is this here?
     ispbtn.from_string("2.10")->as_input()->pull_up();
 
@@ -31,6 +36,11 @@ SlowTicker::SlowTicker(){
     LPC_TIM2->MCR = 3;              // Match on MR0, reset on MR0
     // do not enable interrupt until setup is complete
     LPC_TIM2->TCR = 0;              // Disable interrupt
+#else
+    __TIM6_CLK_ENABLE();
+    NVIC_SetVector(TIM6_DAC_IRQn, (uint32_t)TIM6_DAC_IRQHandler);
+    TIM6->CR1 = TIM_CR1_URS;    // int on overflow
+#endif
 
     max_frequency = 5;  // initial max frequency is set to 5Hz
     set_frequency(max_frequency);
@@ -39,8 +49,14 @@ SlowTicker::SlowTicker(){
 
 void SlowTicker::start()
 {
+#ifndef __STM32F4__
     LPC_TIM2->TCR = 1;              // Enable interrupt
     NVIC_EnableIRQ(TIMER2_IRQn);    // Enable interrupt handler
+#else
+    TIM6->DIER = TIM_DIER_UIE;      // update interrupt en
+    NVIC_EnableIRQ(TIM6_DAC_IRQn);      // Enable interrupt handler
+    TIM6->CR1 |= TIM_CR1_CEN;       // start
+#endif
 }
 
 void SlowTicker::on_module_loaded(){
@@ -49,11 +65,18 @@ void SlowTicker::on_module_loaded(){
 
 // Set the base frequency we use for all sub-frequencies
 void SlowTicker::set_frequency( int frequency ){
-    this->interval = (SystemCoreClock >> 2) / frequency;   // SystemCoreClock/4 = Timer increments in a second
+    // SystemCoreClock/4 = Timer increments in a second
+    this->interval = 
+        ((SystemCoreClock / SYSTEM_CLOCK_DIVIDER) / SLOWTICKER_PRESCALER) / frequency;
+#ifndef __STM32F4__
     LPC_TIM2->MR0 = this->interval;
     LPC_TIM2->TCR = 3;  // Reset
     LPC_TIM2->TCR = 1;  // Reset
-    flag_1s_count= SystemCoreClock>>2;
+#else
+    TIM6->PSC = SLOWTICKER_PRESCALER - 1;
+    TIM6->ARR = this->interval;
+#endif
+    flag_1s_count= (SystemCoreClock / SYSTEM_CLOCK_DIVIDER) / SLOWTICKER_PRESCALER;
 }
 
 // The actual interrupt being called by the timer, this is where work is done
@@ -75,16 +98,17 @@ void SlowTicker::tick(){
     if (flag_1s_count < 0)
     {
         // add a second to our counter
-        flag_1s_count += SystemCoreClock >> 2;
+        flag_1s_count += (SystemCoreClock / SYSTEM_CLOCK_DIVIDER) / SLOWTICKER_PRESCALER;
         // and set a flag for idle event to pick up
         flag_1s_flag++;
     }
 
+#ifndef __STM32F4__
     // Enter MRI mode if the ISP button is pressed
     // TODO: This should have it's own module
     if (ispbtn.get() == 0)
         __debugbreak();
-
+#endif
 }
 
 bool SlowTicker::flag_1s(){
@@ -112,8 +136,13 @@ void SlowTicker::on_idle(void*)
 {
     static uint16_t ledcnt= 0;
     if(THEKERNEL->is_using_leds()) {
+#ifndef __STM32F4__
         // flash led 3 to show we are alive
         leds[2]= (ledcnt++ & 0x1000) ? 1 : 0;
+#else
+        // TODO(ghent360): fix the leds
+        leds[0]= (ledcnt++ & 0x1000) ? 1 : 0;
+#endif
     }
 
     // if interrupt has set the 1 second flag
@@ -122,10 +151,16 @@ void SlowTicker::on_idle(void*)
         THEKERNEL->call_event(ON_SECOND_TICK);
 }
 
+#ifndef __STM32F4__
 extern "C" void TIMER2_IRQHandler (void){
     if((LPC_TIM2->IR >> 0) & 1){  // If interrupt register set for MR0
         LPC_TIM2->IR |= 1 << 0;   // Reset it
     }
     global_slow_ticker->tick();
 }
-
+#else
+extern "C" void TIM6_DAC_IRQHandler (void){
+    TIM6->SR = ~TIM_SR_UIF;
+    global_slow_ticker->tick();
+}
+#endif

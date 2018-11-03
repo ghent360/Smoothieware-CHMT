@@ -54,6 +54,7 @@
 #define  z_axis_max_speed_checksum           CHECKSUM("z_axis_max_speed")
 #define  segment_z_moves_checksum            CHECKSUM("segment_z_moves")
 #define  save_g92_checksum                   CHECKSUM("save_g92")
+#define  save_g54_checksum                   CHECKSUM("save_g54")
 #define  set_g92_checksum                    CHECKSUM("set_g92")
 
 // arm solutions
@@ -191,6 +192,7 @@ void Robot::load_config()
 
     this->segment_z_moves     = THEKERNEL->config->value(segment_z_moves_checksum     )->by_default(true)->as_bool();
     this->save_g92            = THEKERNEL->config->value(save_g92_checksum            )->by_default(false)->as_bool();
+    this->save_g54            = THEKERNEL->config->value(save_g54_checksum            )->by_default(THEKERNEL->is_grbl_mode())->as_bool();
     string g92                = THEKERNEL->config->value(set_g92_checksum             )->by_default("")->as_string();
     if(!g92.empty()) {
         // optional setting for a fixed G92 offset
@@ -266,8 +268,14 @@ void Robot::load_config()
     // so the first move can be correct if homing is not performed
     ActuatorCoordinates actuator_pos;
     arm_solution->cartesian_to_actuator(machine_position, actuator_pos);
-    for (size_t i = 0; i < n_motors; i++)
+    for (size_t i = X_AXIS; i <= Z_AXIS; i++) {
         actuators[i]->change_last_milestone(actuator_pos[i]);
+    }
+
+    // initialize any extra axis to machine position
+    for (size_t i = A_AXIS; i < n_motors; i++) {
+         actuators[i]->change_last_milestone(machine_position[i]);
+    }
 
     //this->clearToolOffset();
 
@@ -584,6 +592,17 @@ void Robot::on_gcode_received(void *argument)
                         actuators[selected_extruder]->change_last_milestone(get_e_scale_fnc ? e*get_e_scale_fnc() : e);
                     }
                 }
+                if(gcode->subcode == 0 && gcode->get_num_args() > 0) {
+                    for (int i = A_AXIS; i < n_motors; i++) {
+                        // ABC just need to set machine_position and compensated_machine_position if specified
+                        char axis= 'A'+i-3;
+                        float ap= gcode->get_value(axis);
+                        if((!actuators[i]->is_extruder() || ap == 0) && gcode->has_letter(axis)) {
+                            machine_position[i]= compensated_machine_position[i]= ap;
+                            actuators[i]->change_last_milestone(ap); // this updates the last_milestone in the actuator
+                        }
+                    }
+                }
                 #endif
 
                 return;
@@ -847,16 +866,18 @@ void Robot::on_gcode_received(void *argument)
 
                 // save wcs_offsets and current_wcs
                 // TODO this may need to be done whenever they change to be compliant
-                gcode->stream->printf(";WCS settings\n");
-                gcode->stream->printf("%s\n", wcs2gcode(current_wcs).c_str());
-                int n = 1;
-                for(auto &i : wcs_offsets) {
-                    if(i != wcs_t(0, 0, 0)) {
-                        float x, y, z;
-                        std::tie(x, y, z) = i;
-                        gcode->stream->printf("G10 L2 P%d X%f Y%f Z%f ; %s\n", n, x, y, z, wcs2gcode(n-1).c_str());
+                if(save_g54) {
+                    gcode->stream->printf(";WCS settings\n");
+                    gcode->stream->printf("%s\n", wcs2gcode(current_wcs).c_str());
+                    int n = 1;
+                    for(auto &i : wcs_offsets) {
+                        if(i != wcs_t(0, 0, 0)) {
+                            float x, y, z;
+                            std::tie(x, y, z) = i;
+                            gcode->stream->printf("G10 L2 P%d X%f Y%f Z%f ; %s\n", n, x, y, z, wcs2gcode(n-1).c_str());
+                        }
+                        ++n;
                     }
-                    ++n;
                 }
                 if(save_g92) {
                     // linuxcnc saves G92, so we do too if configured, default is to not save to maintain backward compatibility

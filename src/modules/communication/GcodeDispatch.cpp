@@ -24,14 +24,18 @@
 #include "PublicData.h"
 #include "SimpleShell.h"
 #include "utils.h"
+#ifndef __STM32F4__
 #include "LPC17xx.h"
+#else
+#include "cmsis_device.h"
+#endif
 #include "version.h"
 
 #define panel_display_message_checksum CHECKSUM("display_message")
 #define panel_checksum             CHECKSUM("panel")
 
 // goes in Flash, list of Mxxx codes that are allowed when in Halted state
-static const int allowed_mcodes[]= {2,5,9,30,105,114,119,80,81,911,503,106,107}; // get temp, get pos, get endstops etc
+static const int allowed_mcodes[]= {2,5,9,30,105,114,115,119,80,81,911,503,106,107}; // get temp, get pos, get endstops etc
 static bool is_allowed_mcode(int m) {
     for (size_t i = 0; i < sizeof(allowed_mcodes)/sizeof(int); ++i) {
         if(allowed_mcodes[i] == m) return true;
@@ -138,6 +142,7 @@ try_again:
                 currentline = nextline;
             }
 
+            bool sent_ok= false; // used for G1 optimization
             while(possible_command.size() > 0) {
                 // assumes G or M are always the first on the line
                 size_t nextcmd = possible_command.find_first_of("GM", 2);
@@ -164,7 +169,7 @@ try_again:
                             }
                             new_message.stream->printf("ok\n");
                             delete gcode;
-                            continue;
+                            return;
 
                         }else if(!is_allowed_mcode(gcode->m)) {
                             // ignore everything, return error string to host
@@ -209,6 +214,12 @@ try_again:
                             // makes it handle the parameters as a machine position
                             THEROBOT->next_command_is_MCS= true;
 
+                        } else if(gcode->g == 1) {
+                            // optimize G1 to send ok immediately (one per line) before it is planned
+                            if(!sent_ok) {
+                                sent_ok= true;
+                                new_message.stream->printf("ok\n");
+                            }
                         }
 
                         // remember last modal group 1 code
@@ -263,7 +274,13 @@ try_again:
                             case 115: { // M115 Get firmware version and capabilities
                                 Version vers;
 
-                                new_message.stream->printf("FIRMWARE_NAME:Smoothieware, FIRMWARE_URL:http%%3A//smoothieware.org, X-SOURCE_CODE_URL:https://github.com/Smoothieware/Smoothieware, FIRMWARE_VERSION:%s, X-FIRMWARE_BUILD_DATE:%s, X-SYSTEM_CLOCK:%ldMHz, X-AXES:%d", vers.get_build(), vers.get_build_date(), SystemCoreClock / 1000000, MAX_ROBOT_ACTUATORS);
+                                new_message.stream->printf(
+                                    "FIRMWARE_NAME:Smoothieware, FIRMWARE_URL:http%%3A//smoothieware.org, X-SOURCE_CODE_URL:https://github.com/Smoothieware/Smoothieware, FIRMWARE_VERSION:%s, X-FIRMWARE_BUILD_DATE:%s, X-SYSTEM_CLOCK:%ldMHz, X-AXES:%d, X-GRBL_MODE:%d",
+                                    vers.get_build(),
+                                    vers.get_build_date(),
+                                    SystemCoreClock / 1000000,
+                                    MAX_ROBOT_ACTUATORS,
+                                    THEKERNEL->is_grbl_mode());
 
                                 #ifdef CNC
                                 new_message.stream->printf(", X-CNC:1");
@@ -392,7 +409,7 @@ try_again:
                         new_message.stream->printf("Entering Alarm/Halt state\n");
                         THEKERNEL->call_event(ON_HALT, nullptr);
 
-                    }else{
+                    }else if(!sent_ok) {
 
                         if(gcode->add_nl)
                             new_message.stream->printf("\r\n");
@@ -454,6 +471,10 @@ try_again:
             new_message.stream->printf("rs N%d\r\n", nextline);
         }
 
+    } else if ( first_char == ';' || first_char == '(' || first_char == '\n' || first_char == '\r' ) {
+        // Ignore comments and blank lines
+        new_message.stream->printf("ok\n");
+
     } else if( (n=possible_command.find_first_of("XYZF")) == 0 || (first_char == ' ' && n != string::npos) ) {
         // handle pycam syntax, use last modal group 1 command and resubmit if an X Y Z or F is found on its own line
         char buf[6];
@@ -461,9 +482,10 @@ try_again:
         possible_command.insert(0, buf);
         goto try_again;
 
-        // Ignore comments and blank lines
-    } else if ( first_char == ';' || first_char == '(' || first_char == ' ' || first_char == '\n' || first_char == '\r' ) {
-        new_message.stream->printf("ok\r\n");
+
+    } else {
+        // an uppercase non command word on its own (except XYZF) just returns ok, we could add an error but no hosts expect that.
+        new_message.stream->printf("ok - ignored\n");
     }
 }
 
