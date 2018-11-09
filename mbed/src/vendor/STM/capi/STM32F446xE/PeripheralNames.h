@@ -29,7 +29,7 @@
  */
 
 /*
- * Source: %mbedmicro%/libraries/mbed/targets/hal/TARGET_STM/TARGET_STM32F4/TARGET_NUCLEO_F446RE
+ * Source: %mbed-os%/targets/TARGET_STM/TARGET_STM32F4/TARGET_STM32F446xE/TARGET_NUCLEO_F446RE
  */
 
 #ifndef MBED_PERIPHERALNAMES_H
@@ -42,7 +42,9 @@ extern "C" {
 #endif
 
 typedef enum {
-    ADC_1 = (int)ADC1_BASE
+    ADC_1 = (int)ADC1_BASE,
+    ADC_2 = (int)ADC2_BASE,
+    ADC_3 = (int)ADC3_BASE
 } ADCName;
 
 typedef enum {
@@ -58,10 +60,6 @@ typedef enum {
     UART_6 = (int)USART6_BASE
 } UARTName;
 
-#define STDIO_UART_TX  PA_2
-#define STDIO_UART_RX  PA_3
-#define STDIO_UART     UART_2
-
 typedef enum {
     SPI_1 = (int)SPI1_BASE,
     SPI_2 = (int)SPI2_BASE,
@@ -72,7 +70,8 @@ typedef enum {
 typedef enum {
     I2C_1 = (int)I2C1_BASE,
     I2C_2 = (int)I2C2_BASE,
-    I2C_3 = (int)I2C3_BASE
+    I2C_3 = (int)I2C3_BASE,
+    FMPI2C_1 = (int)FMPI2C1_BASE
 } I2CName;
 
 typedef enum {
@@ -89,6 +88,15 @@ typedef enum {
     PWM_13 = (int)TIM13_BASE,
     PWM_14 = (int)TIM14_BASE
 } PWMName;
+
+typedef enum {
+    CAN_1 = (int)CAN1_BASE,
+    CAN_2 = (int)CAN2_BASE
+} CANName;
+
+typedef enum {
+    QSPI_1 = (int)QSPI_R_BASE,
+} QSPIName;
 
 #ifdef __cplusplus
 }

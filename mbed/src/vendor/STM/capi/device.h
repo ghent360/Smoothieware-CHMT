@@ -1,3 +1,5 @@
+// The 'features' section in 'target.json' is now used to create the device's hardware preprocessor switches.
+// Check the 'features' section of the target description in 'targets.json' for more details.
 /* mbed Microcontroller Library
  *******************************************************************************
  * Copyright (c) 2014, STMicroelectronics
@@ -29,51 +31,17 @@
  */
 
 /*
- * Source: %mbedmicro%/libraries/mbed/targets/hal/TARGET_STM/TARGET_STM32F4
+ * Source: %mbed-os%/targets/TARGET_STM/TARGET_STM32F4
  */
 
-#ifndef MBED_GPIO_OBJECT_H
-#define MBED_GPIO_OBJECT_H
+#ifndef MBED_DEVICE_H
+#define MBED_DEVICE_H
 
-#include "mbed_assert.h"
-#include "cmsis.h"
-#include "PortNames.h"
-#include "PeripheralNames.h"
-#include "PinNames.h"
+//=======================================
+#define DEVICE_ID_LENGTH       24
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct {
-    PinName  pin;
-    uint32_t mask;
-    __IO uint32_t *reg_in;
-    __IO uint32_t *reg_set_clr;
-} gpio_t;
-
-static inline void gpio_write(gpio_t *obj, int value)
-{
-    MBED_ASSERT(obj->pin != (PinName)NC);
-    if (value) {
-        *obj->reg_set_clr = obj->mask;
-    } else {
-        *obj->reg_set_clr = obj->mask << 16;
-    }
-}
-
-static inline int gpio_read(gpio_t *obj)
-{
-    MBED_ASSERT(obj->pin != (PinName)NC);
-    return ((*obj->reg_in & obj->mask) ? 1 : 0);
-}
-
-static inline int gpio_is_connected(const gpio_t *obj) {
-    return obj->pin != (PinName)NC;
-}
-
-#ifdef __cplusplus
-}
-#endif
+#include "objects.h"
+/*  WORKAROUND waiting for mbed-os issue 4408 to be addressed */
+#include "stm32f4xx_ll_usart.h"
 
 #endif

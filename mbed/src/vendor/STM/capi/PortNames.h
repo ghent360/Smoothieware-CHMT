@@ -1,6 +1,6 @@
 /* mbed Microcontroller Library
  *******************************************************************************
- * Copyright (c) 2014, STMicroelectronics
+ * Copyright (c) 2016, STMicroelectronics
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  */
 
 /*
- * Source: %mbedmicro%/libraries/mbed/targets/hal/TARGET_STM/TARGET_STM32F4/TARGET_DISCO_F407VG
+ * Source: %mbed-os%/targets/TARGET_STM
  */
 
 #ifndef MBED_PORTNAMES_H
@@ -48,7 +48,9 @@ typedef enum {
     PortF = 5,
     PortG = 6,
     PortH = 7,
-    PortI = 8
+    PortI = 8,
+    PortJ = 9,
+    PortK = 10
 } PortName;
 
 #ifdef __cplusplus

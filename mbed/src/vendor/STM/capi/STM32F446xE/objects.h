@@ -29,7 +29,7 @@
  */
 
 /*
- * Source: %mbedmicro%/libraries/mbed/targets/hal/TARGET_STM/TARGET_STM32F4/TARGET_NUCLEO_F446RE
+ * Source: %mbed-os%/targets/TARGET_STM/TARGET_STM32F4/TARGET_STM32F446xE
  */
 
 #ifndef MBED_OBJECTS_H
@@ -59,57 +59,7 @@ struct port_s {
     __IO uint32_t *reg_out;
 };
 
-struct analogin_s {
-    ADCName adc;
-    PinName pin;
-    uint8_t channel;
-};
-
-struct dac_s {
-    DACName dac;
-    uint8_t channel;
-};
-
-struct serial_s {
-    UARTName uart;
-    int index; // Used by irq
-    uint32_t baudrate;
-    uint32_t databits;
-    uint32_t stopbits;
-    uint32_t parity;
-    PinName pin_tx;
-    PinName pin_rx;
-};
-
-struct spi_s {
-    SPIName spi;
-    uint32_t bits;
-    uint32_t cpol;
-    uint32_t cpha;
-    uint32_t mode;
-    uint32_t nss;
-    uint32_t br_presc;
-    PinName pin_miso;
-    PinName pin_mosi;
-    PinName pin_sclk;
-    PinName pin_ssel;
-};
-
-struct i2c_s {
-    I2CName  i2c;
-    uint32_t slave;
-};
-
-struct pwmout_s {
-    PWMName pwm;
-    PinName pin;
-    uint32_t period;
-    uint32_t pulse;
-    uint8_t channel;
-    uint8_t inverted;
-};
-
-#include "gpio_object.h"
+#include "common_objects.h"
 
 #ifdef __cplusplus
 }
