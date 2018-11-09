@@ -10,7 +10,9 @@
 #include <mri.h>
 
 #include "gpio.h"
+#ifndef DISABLELEDS
 extern GPIO leds[];
+#endif
 
 #ifdef __STM32F4__
 static WWDG_HandleTypeDef m_wdt_handle;
@@ -76,6 +78,7 @@ void Watchdog::on_idle(void*)
 #ifndef __STM32F4__
 extern "C" void WDT_IRQHandler(void)
 {
+#ifndef DISABLELEDS
     if(THEKERNEL->is_using_leds()) {
         // set led pattern to show we are in watchdog timeout
         leds[0]= 0;
@@ -83,7 +86,7 @@ extern "C" void WDT_IRQHandler(void)
         leds[2]= 0;
         leds[3]= 1;
     }
-
+#endif
     WDT_ClrTimeOutFlag(); // bootloader uses this flag to enter DFU mode
     WDT_Feed();
     __debugbreak();
@@ -91,13 +94,15 @@ extern "C" void WDT_IRQHandler(void)
 #else
 extern "C" void WWDG_IRQHandler(void)
 {
+#ifndef DISABLELEDS
     if(THEKERNEL->is_using_leds()) {
         // set led pattern to show we are in watchdog timeout
         leds[0]= 0;
-        //leds[1]= 1;
-        //leds[2]= 0;
-        //leds[3]= 1;
+        leds[1]= 1;
+        leds[2]= 0;
+        leds[3]= 1;
     }
+#endif
     HAL_WWDG_IRQHandler(&m_wdt_handle); // clears int flag
     //HAL_WWDG_Refresh(&m_wdt_handle, WWDG_CR_T);  // don't refresh, let wdt reset device
     __debugbreak();                     // but trigger breakpoint if we're on a debugger

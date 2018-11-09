@@ -44,6 +44,59 @@ alpha_homing_retract_mm                      5                # distance in mm
 beta_homing_retract_mm                       5                # "
 gamma_homing_retract_mm                      1                # "
 
+x_axis_max_speed                             30000            # mm/min
+alpha_max_rate                               30000.0          # mm/min actuator max speed
+y_axis_max_speed                             30000            # mm/min
+beta_max_rate                                30000.0          # mm/min actuator max speed
+z_axis_max_speed                             300              # mm/min
+gamma_max_rate                               300.0            # mm/min actuator max speed
+
+## Extruder module configuration
+extruder.hotend0.enable                          true             # Whether to activate the extruder module at all. All configuration is ignored if false
+extruder.hotend0.steps_per_mm                    140              # Steps per mm for extruder stepper
+extruder.hotend0.default_feed_rate               600              # Default rate ( mm/minute ) for moves where only the extruder moves
+extruder.hotend0.acceleration                    500              # Acceleration for the stepper motor mm/sec²
+extruder.hotend0.max_speed                       50               # mm/s
+
+# extruder offset
+#extruder.hotend0.x_offset                        0                # x offset from origin in mm
+#extruder.hotend0.y_offset                        0                # y offset from origin in mm
+#extruder.hotend0.z_offset                        0                # z offset from origin in mm
+
+# firmware retract settings when using G10/G11, these are the defaults if not defined, must be defined for each extruder if not using the defaults
+#extruder.hotend0.retract_length                  3               # retract length in mm
+#extruder.hotend0.retract_feedrate                45              # retract feedrate in mm/sec
+#extruder.hotend0.retract_recover_length          0               # additional length for recover
+#extruder.hotend0.retract_recover_feedrate        8               # recover feedrate in mm/sec (should be less than retract feedrate)
+#extruder.hotend0.retract_zlift_length            0               # zlift on retract in mm, 0 disables
+#extruder.hotend0.retract_zlift_feedrate          6000            # zlift feedrate in mm/min (Note mm/min NOT mm/sec)
+
+# Stepper module pins ( ports, and pin numbers, appending "!" to the number will invert a pin )
+alpha_step_pin                               a.4              # Pin for alpha stepper step signal
+alpha_dir_pin                                c.4              # Pin for alpha stepper direction
+alpha_en_pin                                 a.5              # Pin for alpha enable pin
+#alpha_current                                1.0              # X stepper motor current
+
+beta_step_pin                                c.5              # Pin for beta stepper step signal
+beta_dir_pin                                 b.12             # Pin for beta stepper direction
+beta_en_pin                                  a.5              # Pin for beta enable
+#beta_current                                 1.0              # Y stepper motor current
+
+gamma_step_pin                               b.13             # Pin for gamma stepper step signal
+gamma_dir_pin                                b.15             # Pin for gamma stepper direction
+gamma_en_pin                                 a.5              # Pin for gamma enable
+#gamma_current                                1.0              # Z stepper motor current
+
+extruder.hotend0.step_pin                    c.7              # Pin for extruder step signal
+extruder.hotend0.dir_pin                     c.8              # Pin for extruder dir signal
+extruder.hotend0.en_pin                      a.5              # Pin for extruder enable signal
+#delta_current                                1.0              # Extruder stepper motor current
+
+extruder.hotend1.step_pin                    c.9              # Pin for extruder step signal
+extruder.hotend1.dir_pin                     a.9              # Pin for extruder dir signal
+extruder.hotend1.en_pin                      a.5              # Pin for extruder enable signal
+#epsilon_current                              1.0              # Extruder stepper motor current
+
 # Hotend temperature control configuration
 # Heater 0
 temperature_control.hotend0.enable            true             # Whether to activate this ( "hotend" ) module at all. All configuration is ignored if false.

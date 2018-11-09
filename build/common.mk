@@ -101,6 +101,9 @@ endif
 ifeq "$(DISABLESD)" "1"
 DEFINES += -DDISABLESD=1
 endif
+ifeq "$(DISABLELEDS)" "1"
+DEFINES += -DDISABLELEDS=1
+endif
 ifeq "$(DISABLEUSB)" "1"
 DEFINES += -DDISABLEUSB=1
 endif
