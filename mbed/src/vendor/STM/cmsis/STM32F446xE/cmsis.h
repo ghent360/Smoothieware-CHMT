@@ -30,7 +30,7 @@
  */
 
 /*
- * Source: %mbedmicro%/libraries/mbed/targets/cmsis/TARGET_STM/TARGET_STM32F4/TARGET_NUCLEO_F446RE
+ * Source: %mbed-os%/targets/TARGET_STM/TARGET_STM32F4/TARGET_STM32F446xE/device
  */
 
 
