@@ -18,14 +18,14 @@ mm_max_arc_error                             0.01             # The maximum erro
 #mm_per_line_segment                          5                # Lines can be cut into segments ( not usefull with cartesian coordinates robots ).
 
 # Arm solution configuration : Cartesian robot. Translates mm positions into stepper positions
-alpha_steps_per_mm                           80               # Steps per mm for alpha stepper
-beta_steps_per_mm                            80               # Steps per mm for beta stepper
-gamma_steps_per_mm                           1637.7953        # Steps per mm for gamma stepper
+alpha_steps_per_mm                           200.12           # Steps per mm for alpha stepper
+beta_steps_per_mm                            200.12           # Steps per mm for beta stepper
+gamma_steps_per_mm                           1600             # Steps per mm for gamma stepper
 
 # Planner module configuration : Look-ahead and acceleration configuration
 planner_queue_size                           32               # DO NOT CHANGE THIS UNLESS YOU KNOW EXACTLY WHAT YOUR ARE DOING
-acceleration                                 3000             # Acceleration in mm/second/second.
-#z_acceleration                              500              # Acceleration for Z only moves in mm/s^2, 0 disables it, disabled by default. DO NOT SET ON A DELTA
+acceleration                                 600              # Acceleration in mm/second/second.
+z_acceleration                               100              # Acceleration for Z only moves in mm/s^2, 0 disables it, disabled by default. DO NOT SET ON A DELTA
 junction_deviation                           0.05             # Similar to the old "max_jerk", in millimeters, see : https://github.com/grbl/grbl/blob/master/planner.c#L409
                                                               # and https://github.com/grbl/grbl/wiki/Configuring-Grbl-v0.8 . Lower values mean being more careful, higher values means being faster and have more jerk
 
@@ -44,18 +44,18 @@ alpha_homing_retract_mm                      5                # distance in mm
 beta_homing_retract_mm                       5                # "
 gamma_homing_retract_mm                      1                # "
 
-x_axis_max_speed                             30000            # mm/min
-alpha_max_rate                               30000.0          # mm/min actuator max speed
-y_axis_max_speed                             30000            # mm/min
-beta_max_rate                                30000.0          # mm/min actuator max speed
-z_axis_max_speed                             300              # mm/min
-gamma_max_rate                               300.0            # mm/min actuator max speed
+x_axis_max_speed                             12000            # mm/min
+alpha_max_rate                               12000.0          # mm/min actuator max speed
+y_axis_max_speed                             12000            # mm/min
+beta_max_rate                                12000.0          # mm/min actuator max speed
+z_axis_max_speed                             360              # mm/min
+gamma_max_rate                               360.0            # mm/min actuator max speed
 
 ## Extruder module configuration
 extruder.hotend0.enable                          true             # Whether to activate the extruder module at all. All configuration is ignored if false
-extruder.hotend0.steps_per_mm                    140              # Steps per mm for extruder stepper
-extruder.hotend0.default_feed_rate               600              # Default rate ( mm/minute ) for moves where only the extruder moves
-extruder.hotend0.acceleration                    500              # Acceleration for the stepper motor mm/sec²
+extruder.hotend0.steps_per_mm                    152              # Steps per mm for extruder stepper
+extruder.hotend0.default_feed_rate               1500             # Default rate ( mm/minute ) for moves where only the extruder moves
+extruder.hotend0.acceleration                    5000             # Acceleration for the stepper motor mm/sec²
 extruder.hotend0.max_speed                       50               # mm/s
 
 # extruder offset
@@ -70,6 +70,25 @@ extruder.hotend0.max_speed                       50               # mm/s
 #extruder.hotend0.retract_recover_feedrate        8               # recover feedrate in mm/sec (should be less than retract feedrate)
 #extruder.hotend0.retract_zlift_length            0               # zlift on retract in mm, 0 disables
 #extruder.hotend0.retract_zlift_feedrate          6000            # zlift feedrate in mm/min (Note mm/min NOT mm/sec)
+
+extruder.hotend1.enable                          true             # Whether to activate the extruder module at all. All configuration is ignored if false
+extruder.hotend1.steps_per_mm                    152              # Steps per mm for extruder stepper
+extruder.hotend1.default_feed_rate               1500             # Default rate ( mm/minute ) for moves where only the extruder moves
+extruder.hotend1.acceleration                    5000             # Acceleration for the stepper motor mm/sec²
+extruder.hotend1.max_speed                       50               # mm/s
+
+# extruder offset
+extruder.hotend1.x_offset                        36               # x offset from origin in mm
+extruder.hotend1.y_offset                        0                # y offset from origin in mm
+extruder.hotend1.z_offset                        0                # z offset from origin in mm
+
+# firmware retract settings when using G10/G11, these are the defaults if not defined, must be defined for each extruder if not using the defaults
+#extruder.hotend1.retract_length                  3               # retract length in mm
+#extruder.hotend1.retract_feedrate                45              # retract feedrate in mm/sec
+#extruder.hotend1.retract_recover_length          0               # additional length for recover
+#extruder.hotend1.retract_recover_feedrate        8               # recover feedrate in mm/sec (should be less than retract feedrate)
+#extruder.hotend1.retract_zlift_length            0               # zlift on retract in mm, 0 disables
+#extruder.hotend1.retract_zlift_feedrate          6000            # zlift feedrate in mm/min (Note mm/min NOT mm/sec)
 
 # Stepper module pins ( ports, and pin numbers, appending "!" to the number will invert a pin )
 alpha_step_pin                               a.4              # Pin for alpha stepper step signal
@@ -179,17 +198,17 @@ alpha_min_endstop                            c.10!            # add a ! to inver
 #alpha_max_endstop                           d.2!             #
 alpha_homing_direction                       home_to_min      # or set to home_to_max and set alpha_max
 alpha_min                                    0                # this gets loaded after homing when home_to_min is set
-alpha_max                                    200              # this gets loaded after homing when home_to_max is set
+alpha_max                                    245              # this gets loaded after homing when home_to_max is set
 beta_min_endstop                             c.11!            #
 #beta_max_endstop                            b.4!             #
 beta_homing_direction                        home_to_min      #
 beta_min                                     0                #
-beta_max                                     200              #
+beta_max                                     245              #
 gamma_min_endstop                            c.12!            #
 #gamma_max_endstop                           b.5!             #
 gamma_homing_direction                       home_to_min      #
 gamma_min                                    0                #
-gamma_max                                    200              #
+gamma_max                                    230              #
 
 # optional Z probe
 zprobe.enable                                false           # set to true to enable a zprobe
