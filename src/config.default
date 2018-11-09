@@ -9,18 +9,76 @@
 uart0.baud_rate 115200 
 
 # Hotend temperature control configuration
-temperature_control.hotend.enable            true             # Whether to activate this ( "hotend" ) module at all. All configuration is ignored if false.
-temperature_control.hotend.thermistor_pin    a.0              # Pin for the thermistor to read
-temperature_control.hotend.heater_pin        a.6!             # Pin that controls the heater
-temperature_control.hotend.thermistor        EPCOS100K        # see http://smoothieware.org/temperaturecontrol#toc5
-#temperature_control.hotend.beta             4066             # or set the beta value
+# Heater 0
+temperature_control.hotend0.enable            true             # Whether to activate this ( "hotend" ) module at all. All configuration is ignored if false.
+temperature_control.hotend0.thermistor_pin    a.0              # Pin for the thermistor to read
+temperature_control.hotend0.heater_pin        a.6!             # Pin that controls the heater
+temperature_control.hotend0.thermistor        Semitec          # see http://smoothieware.org/temperaturecontrol#toc5
+#temperature_control.hotend0.beta             4066             # or set the beta value
 
-temperature_control.hotend.set_m_code        104              #
-temperature_control.hotend.set_and_wait_m_code 109            #
-temperature_control.hotend.designator        T                #
-#temperature_control.hotend.max_temp         300              # Set maximum temperature - Will prevent heating above 300 by default
-#temperature_control.hotend.min_temp         0                # Set minimum temperature - Will prevent heating below 0 by default
+temperature_control.hotend0.set_m_code        104              #
+temperature_control.hotend0.set_and_wait_m_code 109            #
+temperature_control.hotend0.designator        T0               #
+#temperature_control.hotend0.max_temp         300              # Set maximum temperature - Will prevent heating above 300 by default
+#temperature_control.hotend0.min_temp         0                # Set minimum temperature - Will prevent heating below 0 by default
 
-temperature_control.hotend.p_factor          13.7             #
-temperature_control.hotend.i_factor          0.097            #
-temperature_control.hotend.d_factor          24               #
+temperature_control.hotend0.p_factor          21.5             #
+temperature_control.hotend0.i_factor          0.975            #
+temperature_control.hotend0.d_factor          119              #
+
+# Heater 1
+temperature_control.hotend1.enable            true             # Whether to activate this ( "hotend" ) module at all. All configuration is ignored if false.
+temperature_control.hotend1.thermistor_pin    a.1              # Pin for the thermistor to read
+temperature_control.hotend1.heater_pin        a.7!             # Pin that controls the heater
+temperature_control.hotend1.thermistor        Semitec          # see http://smoothieware.org/temperaturecontrol#toc5
+#temperature_control.hotend1.beta             4066             # or set the beta value
+
+temperature_control.hotend1.set_m_code        104              #
+temperature_control.hotend1.set_and_wait_m_code 109            #
+temperature_control.hotend1.designator        T1               #
+#temperature_control.hotend1.max_temp         300              # Set maximum temperature - Will prevent heating above 300 by default
+#temperature_control.hotend1.min_temp         0                # Set minimum temperature - Will prevent heating below 0 by default
+
+temperature_control.hotend1.p_factor          21.5             #
+temperature_control.hotend1.i_factor          0.975            #
+temperature_control.hotend1.d_factor          119              #
+
+# Heater Bed
+temperature_control.bed.enable                true             # Whether to activate this ( "hotend" ) module at all. All configuration is ignored if false.
+temperature_control.bed.thermistor_pin        c.0              # Pin for the thermistor to read
+temperature_control.bed.heater_pin            b.0!             # Pin that controls the heater
+temperature_control.bed.thermistor            Semitec          # see http://smoothieware.org/temperaturecontrol#toc5
+#temperature_control.bed.beta                 4066             # or set the beta value
+
+temperature_control.bed.set_m_code            140              #
+temperature_control.bed.set_and_wait_m_code   190              #
+temperature_control.bed.designator            B                #
+
+temperature_control.bed.p_factor              21.5             #
+temperature_control.bed.i_factor              0.975            #
+temperature_control.bed.d_factor              119              #
+
+# Switch modules for fan control
+switch.fan0_cool.enable                       true             #
+switch.fan0_cool.input_on_command             M106             #
+switch.fan0_cool.input_off_command            M107             #
+switch.fan0_cool.output_pin                   c.6              #
+switch.fan0_cool.output_type                  hwpwm            #
+
+switch.fan1_cool.enable                       true             #
+switch.fan1_cool.input_on_command             M106             #
+switch.fan1_cool.input_off_command            M107             #
+switch.fan1_cool.output_pin                   a.8              #
+switch.fan1_cool.output_type                  hwpwm            #
+
+switch.fan0_part.enable                       true             #
+switch.fan0_part.input_on_command             M106             #
+switch.fan0_part.input_off_command            M107             #
+switch.fan0_part.output_pin                   b.2              #
+switch.fan0_part.output_type                  hwpwm            #
+
+switch.fan1_part.enable                       true             #
+switch.fan1_part.input_on_command             M106             #
+switch.fan1_part.input_off_command            M107             #
+switch.fan1_part.output_pin                   b.14             #
+switch.fan1_part.output_type                  hwpwm            #
