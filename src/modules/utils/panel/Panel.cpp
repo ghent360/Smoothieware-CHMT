@@ -680,9 +680,9 @@ bool Panel::mount_external_sd(bool on)
         if(this->sd == nullptr) {
             PinName mosi, miso, sclk, cs= this->extsd_spi_cs;
             if(extsd_spi_channel == 0) {
-                mosi = EXT_MOSI; miso = EXT_MISO; sclk = EXT_SCK;
+                mosi = SPI1_MOSI; miso = SPI1_MISO; sclk = SPI1_SCK;
             } else if(extsd_spi_channel == 1) {
-                mosi = SD_MOSI; miso = SD_MISO; sclk = SD_SCK;
+                mosi = SPI2_MOSI; miso = SPI2_MISO; sclk = SPI2_SCK;
             } else{
                 this->external_sd_enable= false;
                 THEKERNEL->streams->printf("Bad SPI channel for external SDCard\n");

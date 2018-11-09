@@ -45,19 +45,13 @@ void Max31855::UpdateConfig(uint16_t module_checksum, uint16_t name_checksum)
     PinName miso;
     PinName mosi;
     PinName sclk;
-#ifndef __STM32F4__
     if(spi_channel == 0) {
         // Channel 0
-        mosi=P0_18; miso=P0_17; sclk=P0_15;
+        mosi=SPI1_MOSI; miso=SPI1_MISO; sclk=SPI1_SCK;
     } else {
         // Channel 1
-        mosi=P0_9; miso=P0_8; sclk=P0_7;
+        mosi=SPI2_MOSI; miso=SPI2_MISO; sclk=SPI2_SCK;
     }
-#else
-    miso = TEMP_MISO;
-    mosi = TEMP_MOSI;
-    sclk = TEMP_SCK;
-#endif
     delete spi;
     spi = new mbed::SPI(mosi, miso, sclk);
 

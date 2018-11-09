@@ -131,17 +131,16 @@ bool SlowTicker::flag_1s(){
 }
 
 #include "gpio.h"
+#ifndef DISABLELEDS
 extern GPIO leds[];
+#endif
 void SlowTicker::on_idle(void*)
 {
     static uint16_t ledcnt= 0;
     if(THEKERNEL->is_using_leds()) {
-#ifndef __STM32F4__
+#ifndef DISABLELEDS
         // flash led 3 to show we are alive
         leds[2]= (ledcnt++ & 0x1000) ? 1 : 0;
-#else
-        // TODO(ghent360): fix the leds
-        leds[0]= (ledcnt++ & 0x1000) ? 1 : 0;
 #endif
     }
 

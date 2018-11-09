@@ -649,7 +649,23 @@ void SimpleShell::version_command( string parameters, StreamOutput *stream)
     const char *mcu = (dev & 0x00100000) ? "LPC1769" : "LPC1768";
 #else
     const uint32_t *mcu_idcode = (const uint32_t *)DBGMCU_BASE;
-    const char *mcu = ((*mcu_idcode & 0x0FFF) == 0x413) ? "STM32F4" : "Unknown";
+    const uint32_t device_id = (*mcu_idcode & 0x0FFF);
+    const char *mcu = "Unknown STM32";
+    // Table courtesy of https://stm32f4-discovery.net/hal_api/group___t_m___i_d.html
+    switch (device_id) {
+        case 0x0413: mcu = "STM32F405/7"; break;
+        case 0x0419: mcu = "STM32F42x/43x"; break;
+        case 0x0423: mcu = "STM32F401xB/C"; break;
+        case 0x0433: mcu = "STM32F401xD/E"; break;
+        case 0x0431: mcu = "STM32F411xC/E"; break;
+        case 0x0421: mcu = "STM32F446"; break;
+        case 0x0449: mcu = "STM32F7x6"; break;
+        case 0x0444: mcu = "STM32F03x"; break;
+        case 0x0445: mcu = "STM32F04x"; break;
+        case 0x0440: mcu = "STM32F05x"; break;
+        case 0x0448: mcu = "STM32F07x"; break;
+        case 0x0442: mcu = "STM32F09x"; break;
+    }
 #endif
     stream->printf("Build version: %s, Build date: %s, MCU: %s, System Clock: %ldMHz\r\n", vers.get_build(), vers.get_build_date(), mcu, SystemCoreClock / 1000000);
     #ifdef CNC
