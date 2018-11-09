@@ -635,7 +635,7 @@ void TMC21X::init(uint16_t cs)
 {
     // read chip specific config entries
     this->resistor= THEKERNEL->config->value(motor_driver_control_checksum, cs, sense_resistor_checksum)->by_default(50)->as_number(); // in milliohms
-    this->chopper_mode= THEKERNEL->config->value(motor_driver_control_checksum, cs, sense_resistor_checksum)->by_default(2)->as_number();
+    this->chopper_mode= THEKERNEL->config->value(motor_driver_control_checksum, cs, chopper_mode_checksum)->by_default(2)->as_number();
 
     //setting the default register values
     this->gconf_register_value = ZEROS_DEFAULT_DATA;
@@ -1848,7 +1848,12 @@ bool TMC21X::setRawRegister(StreamOutput *stream, uint32_t reg, uint32_t val)
  */
 uint32_t TMC21X::send2130(uint8_t reg, uint32_t datagram)
 {
-    uint8_t buf[] {(uint8_t)(reg), (uint8_t)(datagram >> 24), (uint8_t)(datagram >> 16), (uint8_t)(datagram >> 8), (uint8_t)(datagram >> 0)};
+    uint8_t buf[] {
+        (uint8_t)(reg),
+        (uint8_t)(datagram >> 24),
+        (uint8_t)(datagram >> 16),
+        (uint8_t)(datagram >> 8),
+        (uint8_t)(datagram >> 0)};
     uint8_t rbuf[5];
 
     //write/read the values
@@ -1859,7 +1864,7 @@ uint32_t TMC21X::send2130(uint8_t reg, uint32_t datagram)
     spi_status_result = rbuf[0];
     uint32_t i_datagram = ((rbuf[1] << 24) | (rbuf[2] << 16) | (rbuf[3] << 8) | (rbuf[4] << 0));
 
-    //THEKERNEL->streams->printf("sent: %02X, %02X, %02X, %02X, %02X received: %02X, %02X, %02X, %02X, %02X \n", buf[4], buf[3], buf[2], buf[1], buf[0], rbuf[4], rbuf[3], rbuf[2], rbuf[1], rbuf[0]);
+    THEKERNEL->streams->printf("sent: %02X, %02X, %02X, %02X, %02X received: %02X, %02X, %02X, %02X, %02X \n", buf[4], buf[3], buf[2], buf[1], buf[0], rbuf[4], rbuf[3], rbuf[2], rbuf[1], rbuf[0]);
 
     return i_datagram;
 }

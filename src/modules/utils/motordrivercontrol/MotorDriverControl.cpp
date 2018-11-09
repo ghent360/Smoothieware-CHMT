@@ -147,7 +147,7 @@ bool MotorDriverControl::config_module(uint16_t cs)
     switch(chip) {
         case DRV8711: max_current= 4000; break;
         case TMC2660: max_current= 3000; break;
-        case TMC2130: max_current= 3000; break;
+        case TMC2130: max_current= 1400; break;
     }
 
     max_current= THEKERNEL->config->value(motor_driver_control_checksum, cs, max_current_checksum )->by_default((int)max_current)->as_number(); // in mA
