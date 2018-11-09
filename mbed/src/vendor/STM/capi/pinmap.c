@@ -1,6 +1,6 @@
 /* mbed Microcontroller Library
  *******************************************************************************
- * Copyright (c) 2014, STMicroelectronics
+ * Copyright (c) 2017, STMicroelectronics
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,102 +29,35 @@
  */
 
 /*
- * Source: %mbedmicro%/libraries/mbed/targets/hal/TARGET_STM/TARGET_STM32F4
+ * Source: %mbed-os%/targets/TARGET_STM
  */
 
 #include "mbed_assert.h"
 #include "pinmap.h"
 #include "PortNames.h"
 #include "mbed_error.h"
+#include "pin_device.h"
 
-// GPIO mode look-up table
-static const uint32_t gpio_mode[13] = {
-    0x00000000, //  0 = GPIO_MODE_INPUT
-    0x00000001, //  1 = GPIO_MODE_OUTPUT_PP
-    0x00000011, //  2 = GPIO_MODE_OUTPUT_OD
-    0x00000002, //  3 = GPIO_MODE_AF_PP
-    0x00000012, //  4 = GPIO_MODE_AF_OD
-    0x00000003, //  5 = GPIO_MODE_ANALOG
-    0x10110000, //  6 = GPIO_MODE_IT_RISING
-    0x10210000, //  7 = GPIO_MODE_IT_FALLING
-    0x10310000, //  8 = GPIO_MODE_IT_RISING_FALLING
-    0x10120000, //  9 = GPIO_MODE_EVT_RISING
-    0x10220000, // 10 = GPIO_MODE_EVT_FALLING
-    0x10320000, // 11 = GPIO_MODE_EVT_RISING_FALLING
-    0x10000000  // 12 = Reset GPIO_MODE_IT_EVT
+extern GPIO_TypeDef *Set_GPIO_Clock(uint32_t port_idx);
+
+const uint32_t ll_pin_defines[16] = {
+    LL_GPIO_PIN_0,
+    LL_GPIO_PIN_1,
+    LL_GPIO_PIN_2,
+    LL_GPIO_PIN_3,
+    LL_GPIO_PIN_4,
+    LL_GPIO_PIN_5,
+    LL_GPIO_PIN_6,
+    LL_GPIO_PIN_7,
+    LL_GPIO_PIN_8,
+    LL_GPIO_PIN_9,
+    LL_GPIO_PIN_10,
+    LL_GPIO_PIN_11,
+    LL_GPIO_PIN_12,
+    LL_GPIO_PIN_13,
+    LL_GPIO_PIN_14,
+    LL_GPIO_PIN_15
 };
-
-// Enable GPIO clock and return GPIO base address
-uint32_t Set_GPIO_Clock(uint32_t port_idx)
-{
-    uint32_t gpio_add = 0;
-    switch (port_idx) {
-        case PortA:
-            gpio_add = GPIOA_BASE;
-            __GPIOA_CLK_ENABLE();
-            break;
-        case PortB:
-            gpio_add = GPIOB_BASE;
-            __GPIOB_CLK_ENABLE();
-            break;
-        case PortC:
-            gpio_add = GPIOC_BASE;
-            __GPIOC_CLK_ENABLE();
-            break;
-#if defined GPIOD_BASE
-        case PortD:
-            gpio_add = GPIOD_BASE;
-            __GPIOD_CLK_ENABLE();
-            break;
-#endif
-#if defined GPIOE_BASE
-        case PortE:
-            gpio_add = GPIOE_BASE;
-            __GPIOE_CLK_ENABLE();
-            break;
-#endif
-#if defined GPIOF_BASE
-        case PortF:
-            gpio_add = GPIOF_BASE;
-            __GPIOF_CLK_ENABLE();
-            break;
-#endif
-#if defined GPIOG_BASE
-        case PortG:
-            gpio_add = GPIOG_BASE;
-            __GPIOG_CLK_ENABLE();
-            break;
-#endif
-#if defined GPIOH_BASE
-        case PortH:
-            gpio_add = GPIOH_BASE;
-            __GPIOH_CLK_ENABLE();
-            break;
-#endif
-#if defined GPIOI_BASE
-        case PortI:
-            gpio_add = GPIOI_BASE;
-            __GPIOI_CLK_ENABLE();
-            break;
-#endif
-#if defined GPIOJ_BASE
-        case PortJ:
-            gpio_add = GPIOJ_BASE;
-            __GPIOJ_CLK_ENABLE();
-            break;
-#endif
-#if defined GPIOK_BASE
-        case PortK:
-            gpio_add = GPIOK_BASE;
-            __GPIOK_CLK_ENABLE();
-            break;
-#endif
-        default:
-            error("Pinmap error: wrong port number.");
-            break;
-    }
-    return gpio_add;
-}
 
 /**
  * Configure pin (mode, speed, output type and pull-up/pull-down)
@@ -132,35 +65,72 @@ uint32_t Set_GPIO_Clock(uint32_t port_idx)
 void pin_function(PinName pin, int data)
 {
     MBED_ASSERT(pin != (PinName)NC);
-    // Get the pin informations
-    uint32_t mode  = STM_PIN_MODE(data);
-    uint32_t pupd  = STM_PIN_PUPD(data);
-    uint32_t afnum = STM_PIN_AFNUM(data);
 
-    uint32_t port_index = STM_PORT(pin);
-    uint32_t pin_index  = STM_PIN(pin);
+    // Get the pin informations
+    uint32_t mode  = STM_PIN_FUNCTION(data);
+    uint32_t afnum = STM_PIN_AFNUM(data);
+    uint32_t port = STM_PORT(pin);
+    uint32_t ll_pin  = ll_pin_defines[STM_PIN(pin)];
+    uint32_t ll_mode = 0;
 
     // Enable GPIO clock
-    uint32_t gpio_add = Set_GPIO_Clock(port_index);
-    GPIO_TypeDef *gpio = (GPIO_TypeDef *)gpio_add;
+    GPIO_TypeDef *gpio = Set_GPIO_Clock(port);
 
-    // Configure GPIO
-    GPIO_InitTypeDef GPIO_InitStructure;
-    GPIO_InitStructure.Pin       = (uint32_t)(1 << pin_index);
-    GPIO_InitStructure.Mode      = gpio_mode[mode];
-    GPIO_InitStructure.Pull      = pupd;
-    GPIO_InitStructure.Speed     = GPIO_SPEED_HIGH;
-    GPIO_InitStructure.Alternate = afnum;
-    HAL_GPIO_Init(gpio, &GPIO_InitStructure);
+    /*  Set default speed to high.
+     *  For most families there are dedicated registers so it is
+     *  not so important, register can be set at any time.
+     *  But for families like F1, speed only applies to output.
+     */
+#if defined (TARGET_STM32F1)
+    if (mode == STM_PIN_OUTPUT) {
+#endif
+        LL_GPIO_SetPinSpeed(gpio, ll_pin, LL_GPIO_SPEED_FREQ_HIGH);
+#if defined (TARGET_STM32F1)
+    }
+#endif
 
-    // [TODO] Disconnect JTAG-DP + SW-DP signals.
-    // Warning: Need to reconnect under reset
-    //if ((pin == PA_13) || (pin == PA_14)) {
-    //
-    //}
-    //if ((pin == PA_15) || (pin == PB_3) || (pin == PB_4)) {
-    //
-    //}
+    switch (mode) {
+        case STM_PIN_INPUT:
+            ll_mode = LL_GPIO_MODE_INPUT;
+            break;
+        case STM_PIN_OUTPUT:
+            ll_mode = LL_GPIO_MODE_OUTPUT;
+            break;
+        case STM_PIN_ALTERNATE:
+            ll_mode = LL_GPIO_MODE_ALTERNATE;
+            // In case of ALT function, also set he afnum
+            stm_pin_SetAFPin(gpio, pin, afnum);
+            break;
+        case STM_PIN_ANALOG:
+            ll_mode = LL_GPIO_MODE_ANALOG;
+            break;
+        default:
+            MBED_ASSERT(0);
+            break;
+    }
+    LL_GPIO_SetPinMode(gpio, ll_pin, ll_mode);
+
+#if defined(GPIO_ASCR_ASC0)
+    /*  For families where Analog Control ASC0 register is present */
+    if (STM_PIN_ANALOG_CONTROL(data)) {
+        LL_GPIO_EnablePinAnalogControl(gpio, ll_pin);
+    } else {
+        LL_GPIO_DisablePinAnalogControl(gpio, ll_pin);
+    }
+#endif
+
+    /*  For now by default use Speed HIGH for output or alt modes */
+    if ((mode == STM_PIN_OUTPUT) || (mode == STM_PIN_ALTERNATE)) {
+        if (STM_PIN_OD(data)) {
+            LL_GPIO_SetPinOutputType(gpio, ll_pin, LL_GPIO_OUTPUT_OPENDRAIN);
+        } else {
+            LL_GPIO_SetPinOutputType(gpio, ll_pin, LL_GPIO_OUTPUT_PUSHPULL);
+        }
+    }
+
+    stm_pin_PullConfig(gpio, ll_pin, STM_PIN_PUPD(data));
+
+    stm_pin_DisconnectDebug(pin);
 }
 
 /**
@@ -169,18 +139,26 @@ void pin_function(PinName pin, int data)
 void pin_mode(PinName pin, PinMode mode)
 {
     MBED_ASSERT(pin != (PinName)NC);
+
     uint32_t port_index = STM_PORT(pin);
-    uint32_t pin_index  = STM_PIN(pin);
-
+    uint32_t ll_pin  = ll_pin_defines[STM_PIN(pin)];
     // Enable GPIO clock
-    uint32_t gpio_add = Set_GPIO_Clock(port_index);
-    GPIO_TypeDef *gpio = (GPIO_TypeDef *)gpio_add;
+    GPIO_TypeDef *gpio = Set_GPIO_Clock(port_index);
+    uint32_t function = LL_GPIO_GetPinMode(gpio, ll_pin);
 
-    // Configure pull-up/pull-down resistors
-    uint32_t pupd = (uint32_t)mode;
-    if (pupd > 2)
-        pupd = 0; // Open-drain = No pull-up/No pull-down
-    gpio->PUPDR &= (uint32_t)(~(GPIO_PUPDR_PUPDR0 << (pin_index * 2)));
-    gpio->PUPDR |= (uint32_t)(pupd << (pin_index * 2));
+    if ((function == LL_GPIO_MODE_OUTPUT) || (function == LL_GPIO_MODE_ALTERNATE)) {
+        if ((mode == OpenDrainNoPull) || (mode == OpenDrainPullUp) || (mode == OpenDrainPullDown)) {
+            LL_GPIO_SetPinOutputType(gpio, ll_pin, LL_GPIO_OUTPUT_OPENDRAIN);
+        } else {
+            LL_GPIO_SetPinOutputType(gpio, ll_pin, LL_GPIO_OUTPUT_PUSHPULL);
+        }
+    }
 
+    if ((mode == OpenDrainPullUp) || (mode == PullUp)) {
+        stm_pin_PullConfig(gpio, ll_pin, GPIO_PULLUP);
+    } else if ((mode == OpenDrainPullDown) || (mode == PullDown)) {
+        stm_pin_PullConfig(gpio, ll_pin, GPIO_PULLDOWN);
+    } else {
+        stm_pin_PullConfig(gpio, ll_pin, GPIO_NOPULL);
+    }
 }
