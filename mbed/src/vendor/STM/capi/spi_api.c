@@ -116,9 +116,10 @@ void spi_init(spi_t *obj, PinName mosi, PinName miso, PinName sclk, PinName ssel
 
     // Save new values
     obj->bits = SPI_DATASIZE_8BIT;
-    obj->cpol = SPI_POLARITY_LOW;
-    obj->cpha = SPI_PHASE_1EDGE;
+    obj->cpol = SPI_POLARITY_HIGH;
+    obj->cpha = SPI_PHASE_2EDGE;
     obj->br_presc = SPI_BAUDRATEPRESCALER_256;
+    obj->mode = SPI_MODE_MASTER;
 
     obj->pin_miso = miso;
     obj->pin_mosi = mosi;
@@ -127,6 +128,7 @@ void spi_init(spi_t *obj, PinName mosi, PinName miso, PinName sclk, PinName ssel
 
     if (ssel != NC) {
         pinmap_pinout(ssel, PinMap_SPI_SSEL);
+        obj->nss = SPI_NSS_HARD_OUTPUT;
     } else {
         obj->nss = SPI_NSS_SOFT;
     }

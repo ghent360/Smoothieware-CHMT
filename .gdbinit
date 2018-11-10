@@ -111,3 +111,5 @@ end
 document crashdump
 Dumps a full crash dump to gdb.txt
 end
+
+target extended-remote localhost:3333

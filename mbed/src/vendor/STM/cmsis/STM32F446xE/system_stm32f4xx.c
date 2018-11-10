@@ -146,7 +146,7 @@
 /* Select the clock sources (other than HSI) to start with (0=OFF, 1=ON) */
 #define USE_PLL_HSE_EXTC (1) /* Use external clock */
 #define USE_PLL_HSE_XTAL (0) /* Use external xtal */
-#define DEBUG_MCO        (1) // Output the MCO1/MCO2 on PA8/PC9 for debugging (0=OFF, 1=ON)
+#define DEBUG_MCO        (0) // Output the MCO1/MCO2 on PA8/PC9 for debugging (0=OFF, 1=ON)
 
 /**
   * @}
