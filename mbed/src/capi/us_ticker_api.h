@@ -17,6 +17,7 @@
 #define MBED_US_TICKER_API_H
 
 #include <stdint.h>
+#include "ticker_api.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,15 +28,18 @@ uint32_t us_ticker_read(void);
 typedef void (*ticker_event_handler)(uint32_t id);
 void us_ticker_set_handler(ticker_event_handler handler);
 
-typedef struct ticker_event_s {
-    uint32_t timestamp;
-    uint32_t id;
-    struct ticker_event_s *next;
-} ticker_event_t;
-
 void us_ticker_insert_event(ticker_event_t *obj, unsigned int timestamp, uint32_t id);
 void us_ticker_remove_event(ticker_event_t *obj);
+const ticker_data_t *get_us_ticker_data(void);
+void us_ticker_init(void);
+void us_ticker_disable_interrupt(void);
+void us_ticker_clear_interrupt(void);
+void us_ticker_fire_interrupt(void);
+void us_ticker_set_interrupt(timestamp_t timestamp);
+const ticker_info_t *us_ticker_get_info(void);
+void us_ticker_free(void);
 
+typedef void (*ticker_irq_handler_type)(const ticker_data_t *const);
 #ifdef __cplusplus
 }
 #endif

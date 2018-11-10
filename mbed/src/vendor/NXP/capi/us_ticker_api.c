@@ -34,7 +34,7 @@
 
 static int us_ticker_running = 0;
 
-static inline void us_ticker_init(void) {
+inline void us_ticker_init(void) {
     us_ticker_running = 1;
 #if defined(TARGET_LPC1768) || defined(TARGET_LPC2368)
     LPC_SC->PCONP |= 1 << 23; // Clock TIMER_3
@@ -61,18 +61,18 @@ uint32_t us_ticker_read() {
     return US_TICKER_TIMER->TC;
 }
 
-static inline void us_ticker_set_interrupt(unsigned int timestamp) {
+inline void us_ticker_set_interrupt(timestamp_t timestamp) {
     // set match value
     US_TICKER_TIMER->MR0 = timestamp;
     // enable match interrupt
     US_TICKER_TIMER->MCR |= 1;
 }
 
-static inline void us_ticker_disable_interrupt(void) {
+inline void us_ticker_disable_interrupt(void) {
     US_TICKER_TIMER->MCR &= ~1;
 }
 
-static inline void us_ticker_clear_interrupt(void) {
+inline void us_ticker_clear_interrupt(void) {
     US_TICKER_TIMER->IR = 1;
 }
 

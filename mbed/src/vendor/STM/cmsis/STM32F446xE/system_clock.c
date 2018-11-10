@@ -275,120 +275,7 @@ uint8_t SetSysClock_PLL_HSI(void)
 
 /* The prototype shows it is a naked function - in effect this is just an
 assembly function. */
-void UsageFault_Handler( void ) __attribute__( ( naked ) );
-void prvGetRegistersFromStack( uint32_t *pulFaultStackAddress );
-
-/* The fault handler implementation calls a function called
-prvGetRegistersFromStack(). */
-void xUsageFault_Handler(void)
-{
-    __asm volatile
-    (
-        " tst lr, #4                                                \n"
-        " ite eq                                                    \n"
-        " mrseq r0, msp                                             \n"
-        " mrsne r0, psp                                             \n"
-        " ldr r1, [r0, #24]                                         \n"
-        " ldr r2, handler2_address_const                            \n"
-        " bx r2                                                     \n"
-        " handler2_address_const: .word prvGetRegistersFromStack    \n"
-    );
-}
-
-void NMI_Handler() { while(1);}
-void HardFault_Handler() { while(1);}
-void MemManage_Handler() { while(1);}
-void BusFault_Handler() { while(1);}
-void UsageFault_Handler() { while(1);}
-void SVC_Handler() { while(1);}
-void DebugMon_Handler() { while(1);}
-//void PendSV_Handler() { while(1);}
-void SysTick_Handler() { while(1);}
-
-void     PVD_IRQHandler        () { while(1); } /* PVD through EXTI Line detection */                        
-void     TAMP_STAMP_IRQHandler () { while(1); } /* Tamper and TimeStamps through the EXTI line */            
-void     RTC_WKUP_IRQHandler   () { while(1); } /* RTC Wakeup through the EXTI line */                      
-
-void FLASH_IRQHandler() { while(1);}
-void RCC_IRQHandler() { while(1);}
-void EXTI0_IRQHandler() { while(1);}
-void EXTI1_IRQHandler() { while(1);}
-void EXTI2_IRQHandler() { while(1);}
-void EXTI3_IRQHandler() { while(1);}
-void EXTI4_IRQHandler() { while(1);}
-void DMA1_Stream0_IRQHandler() { while(1);}
-void DMA1_Stream1_IRQHandler() { while(1);}
-void DMA1_Stream2_IRQHandler() { while(1);}
-void DMA1_Stream3_IRQHandler() { while(1);}
-void DMA1_Stream4_IRQHandler() { while(1);}
-void DMA1_Stream5_IRQHandler() { while(1);}
-void DMA1_Stream6_IRQHandler() { while(1);}
-void ADC_IRQHandler() { while(1);}
-void CAN1_TX_IRQHandler() { while(1);}
-void CAN1_RX0_IRQHandler() { while(1);}
-void CAN1_RX1_IRQHandler() { while(1);}
-void CAN1_SCE_IRQHandler() { while(1);}
-
-  void EXTI9_5_IRQHandler           () { while(1); } /* External Line[9:5]s          */                          
-  void TIM1_BRK_TIM9_IRQHandler     () { while(1); } /* TIM1 Break and TIM9          */         
-  void TIM1_UP_TIM10_IRQHandler     () { while(1); } /* TIM1 Update and TIM10        */         
-  void TIM1_TRG_COM_TIM11_IRQHandler() { while(1); } /* TIM1 Trigger and Commutation and TIM11 */
-  void TIM1_CC_IRQHandler           () { while(1); } /* TIM1 Capture Compare         */                          
-  void TIM2_IRQHandler              () { while(1); } /* TIM2                         */                   
-  void TIM3_IRQHandler              () { while(1); } /* TIM3                         */                   
-  void TIM4_IRQHandler              () { while(1); } /* TIM4                         */                   
-  void I2C1_EV_IRQHandler           () { while(1); } /* I2C1 Event                   */                          
-  void I2C1_ER_IRQHandler           () { while(1); } /* I2C1 Error                   */                          
-  void I2C2_EV_IRQHandler           () { while(1); } /* I2C2 Event                   */                          
-  void I2C2_ER_IRQHandler           () { while(1); } /* I2C2 Error                   */                            
-  void SPI1_IRQHandler              () { while(1); } /* SPI1                         */                   
-  void SPI2_IRQHandler              () { while(1); } /* SPI2                         */                   
-  void USART1_IRQHandler            () { while(1); } /* USART1                       */                   
-  void USART2_IRQHandler            () { while(1); } /* USART2                       */                   
-  void USART3_IRQHandler            () { while(1); } /* USART3                       */                   
-  void EXTI15_10_IRQHandler         () { while(1); } /* External Line[15:10]s        */                          
-  void RTC_Alarm_IRQHandler         () { while(1); } /* RTC Alarm (A and B) through EXTI Line */                 
-  void OTG_FS_WKUP_IRQHandler       () { while(1); } /* USB OTG FS Wakeup through EXTI line */                       
-  void TIM8_BRK_TIM12_IRQHandler    () { while(1); } /* TIM8 Break and TIM12         */         
-  void TIM8_UP_TIM13_IRQHandler     () { while(1); } /* TIM8 Update and TIM13        */         
-  void TIM8_CC_IRQHandler           () { while(1); } /* TIM8 Capture Compare         */                          
-  void DMA1_Stream7_IRQHandler      () { while(1); } /* DMA1 Stream7                 */                          
-  void FMC_IRQHandler               () { while(1); } /* FMC                          */                   
-  void SDIO_IRQHandler              () { while(1); } /* SDIO                         */                   
-  void TIM5_IRQHandler              () { while(1); } /* TIM5                         */                   
-  void SPI3_IRQHandler              () { while(1); } /* SPI3                         */                   
-  void UART4_IRQHandler             () { while(1); } /* UART4                        */                   
-  void UART5_IRQHandler             () { while(1); } /* UART5                        */                   
-  void DMA2_Stream0_IRQHandler      () { while(1); } /* DMA2 Stream 0                */                   
-  void DMA2_Stream1_IRQHandler      () { while(1); } /* DMA2 Stream 1                */                   
-  void DMA2_Stream2_IRQHandler      () { while(1); } /* DMA2 Stream 2                */                   
-  void DMA2_Stream3_IRQHandler      () { while(1); } /* DMA2 Stream 3                */                   
-  void DMA2_Stream4_IRQHandler      () { while(1); } /* DMA2 Stream 4                */                   
-  void CAN2_TX_IRQHandler           () { while(1); } /* CAN2 TX                      */                          
-  void CAN2_RX0_IRQHandler          () { while(1); } /* CAN2 RX0                     */                          
-  void CAN2_RX1_IRQHandler          () { while(1); } /* CAN2 RX1                     */                          
-  void CAN2_SCE_IRQHandler          () { while(1); } /* CAN2 SCE                     */                          
-  void OTG_FS_IRQHandler            () { while(1); } /* USB OTG FS                   */                   
-  void DMA2_Stream5_IRQHandler      () { while(1); } /* DMA2 Stream 5                */                   
-  void DMA2_Stream6_IRQHandler      () { while(1); } /* DMA2 Stream 6                */                   
-  void DMA2_Stream7_IRQHandler      () { while(1); } /* DMA2 Stream 7                */                   
-  void USART6_IRQHandler            () { while(1); } /* USART6                       */                    
-  void I2C3_EV_IRQHandler           () { while(1); } /* I2C3 event                   */                          
-  void I2C3_ER_IRQHandler           () { while(1); } /* I2C3 error                   */                          
-  void OTG_HS_EP1_OUT_IRQHandler    () { while(1); } /* USB OTG HS End Point 1 Out   */                   
-  void OTG_HS_EP1_IN_IRQHandler     () { while(1); } /* USB OTG HS End Point 1 In    */                   
-  void OTG_HS_WKUP_IRQHandler       () { while(1); } /* USB OTG HS Wakeup through EXTI */                         
-  void OTG_HS_IRQHandler            () { while(1); } /* USB OTG HS                   */                   
-  void DCMI_IRQHandler              () { while(1); } /* DCMI                         */                   
-  void FPU_IRQHandler               () { while(1); } /* FPU                          */
-  void SPI4_IRQHandler              () { while(1); } /* SPI4                         */
-  void SAI1_IRQHandler              () { while(1); } /* SAI1						              */
-  void SAI2_IRQHandler              () { while(1); } /* SAI2                         */
-  void QuadSPI_IRQHandler           () { while(1); } /* QuadSPI                      */
-  void CEC_IRQHandler               () { while(1); } /* CEC                          */
-  void SPDIF_RX_IRQHandler          () { while(1); } /* SPDIF RX                     */
-  void FMPI2C1_Event_IRQHandler     () { while(1); } /* FMPI2C 1 Event               */
-  void FMPI2C1_Error_IRQHandler     () { while(1); } /* FMPI2C 1 Error               */
+void HardFault_Handler( void ) __attribute__( ( naked ) );
 
 void prvGetRegistersFromStack( uint32_t *pulFaultStackAddress )
 {
@@ -418,3 +305,114 @@ volatile uint32_t psr;/* Program status register. */
     /* When the following line is hit, the variables contain the register values. */
     for( ;; );
 }
+
+/* The fault handler implementation calls a function called
+prvGetRegistersFromStack(). */
+void HardFault_Handler(void)
+{
+    __asm volatile
+    (
+        " tst lr, #4                                                \n"
+        " ite eq                                                    \n"
+        " mrseq r0, msp                                             \n"
+        " mrsne r0, psp                                             \n"
+        " ldr r1, [r0, #24]                                         \n"
+        " ldr r2, handler2_address_const                            \n"
+        " bx r2                                                     \n"
+        " handler2_address_const: .word prvGetRegistersFromStack    \n"
+    );
+}
+
+void NMI_Handler() { while(1);}
+//void HardFault_Handler() { while(1);}
+void MemManage_Handler() { while(1);}
+void BusFault_Handler() { while(1);}
+void UsageFault_Handler() { while(1);}
+void SVC_Handler() { while(1);}
+void DebugMon_Handler() { while(1);}
+void SysTick_Handler() { while(1);}
+
+void PVD_IRQHandler        () { while(1); } /* PVD through EXTI Line detection */                        
+void TAMP_STAMP_IRQHandler () { while(1); } /* Tamper and TimeStamps through the EXTI line */            
+void RTC_WKUP_IRQHandler   () { while(1); } /* RTC Wakeup through the EXTI line */                      
+
+void FLASH_IRQHandler() { while(1);}
+void RCC_IRQHandler() { while(1);}
+void EXTI0_IRQHandler() { while(1);}
+void EXTI1_IRQHandler() { while(1);}
+void EXTI2_IRQHandler() { while(1);}
+void EXTI3_IRQHandler() { while(1);}
+void EXTI4_IRQHandler() { while(1);}
+void DMA1_Stream0_IRQHandler() { while(1);}
+void DMA1_Stream1_IRQHandler() { while(1);}
+void DMA1_Stream2_IRQHandler() { while(1);}
+void DMA1_Stream3_IRQHandler() { while(1);}
+void DMA1_Stream4_IRQHandler() { while(1);}
+void DMA1_Stream5_IRQHandler() { while(1);}
+void DMA1_Stream6_IRQHandler() { while(1);}
+void ADC_IRQHandler() { while(1);}
+void CAN1_TX_IRQHandler() { while(1);}
+void CAN1_RX0_IRQHandler() { while(1);}
+void CAN1_RX1_IRQHandler() { while(1);}
+void CAN1_SCE_IRQHandler() { while(1);}
+
+void EXTI9_5_IRQHandler           () { while(1); } /* External Line[9:5]s          */                          
+void TIM1_BRK_TIM9_IRQHandler     () { while(1); } /* TIM1 Break and TIM9          */         
+void TIM1_UP_TIM10_IRQHandler     () { while(1); } /* TIM1 Update and TIM10        */         
+void TIM1_TRG_COM_TIM11_IRQHandler() { while(1); } /* TIM1 Trigger and Commutation and TIM11 */
+void TIM1_CC_IRQHandler           () { while(1); } /* TIM1 Capture Compare         */                          
+void TIM2_IRQHandler              () { while(1); } /* TIM2                         */                   
+void TIM3_IRQHandler              () { while(1); } /* TIM3                         */                   
+void TIM4_IRQHandler              () { while(1); } /* TIM4                         */                   
+void I2C1_EV_IRQHandler           () { while(1); } /* I2C1 Event                   */                          
+void I2C1_ER_IRQHandler           () { while(1); } /* I2C1 Error                   */                          
+void I2C2_EV_IRQHandler           () { while(1); } /* I2C2 Event                   */                          
+void I2C2_ER_IRQHandler           () { while(1); } /* I2C2 Error                   */                            
+void SPI1_IRQHandler              () { while(1); } /* SPI1                         */                   
+void SPI2_IRQHandler              () { while(1); } /* SPI2                         */                   
+void USART1_IRQHandler            () { while(1); } /* USART1                       */                   
+void USART2_IRQHandler            () { while(1); } /* USART2                       */                   
+void USART3_IRQHandler            () { while(1); } /* USART3                       */                   
+void EXTI15_10_IRQHandler         () { while(1); } /* External Line[15:10]s        */                          
+void RTC_Alarm_IRQHandler         () { while(1); } /* RTC Alarm (A and B) through EXTI Line */                 
+void OTG_FS_WKUP_IRQHandler       () { while(1); } /* USB OTG FS Wakeup through EXTI line */                       
+void TIM8_BRK_TIM12_IRQHandler    () { while(1); } /* TIM8 Break and TIM12         */         
+void TIM8_UP_TIM13_IRQHandler     () { while(1); } /* TIM8 Update and TIM13        */         
+void TIM8_CC_IRQHandler           () { while(1); } /* TIM8 Capture Compare         */                          
+void DMA1_Stream7_IRQHandler      () { while(1); } /* DMA1 Stream7                 */                          
+void FMC_IRQHandler               () { while(1); } /* FMC                          */                   
+void SDIO_IRQHandler              () { while(1); } /* SDIO                         */                   
+void TIM5_IRQHandler              () { while(1); } /* TIM5                         */                   
+void SPI3_IRQHandler              () { while(1); } /* SPI3                         */                   
+void UART4_IRQHandler             () { while(1); } /* UART4                        */                   
+void UART5_IRQHandler             () { while(1); } /* UART5                        */                   
+void DMA2_Stream0_IRQHandler      () { while(1); } /* DMA2 Stream 0                */                   
+void DMA2_Stream1_IRQHandler      () { while(1); } /* DMA2 Stream 1                */                   
+void DMA2_Stream2_IRQHandler      () { while(1); } /* DMA2 Stream 2                */                   
+void DMA2_Stream3_IRQHandler      () { while(1); } /* DMA2 Stream 3                */                   
+void DMA2_Stream4_IRQHandler      () { while(1); } /* DMA2 Stream 4                */                   
+void CAN2_TX_IRQHandler           () { while(1); } /* CAN2 TX                      */                          
+void CAN2_RX0_IRQHandler          () { while(1); } /* CAN2 RX0                     */                          
+void CAN2_RX1_IRQHandler          () { while(1); } /* CAN2 RX1                     */                          
+void CAN2_SCE_IRQHandler          () { while(1); } /* CAN2 SCE                     */                          
+void OTG_FS_IRQHandler            () { while(1); } /* USB OTG FS                   */                   
+void DMA2_Stream5_IRQHandler      () { while(1); } /* DMA2 Stream 5                */                   
+void DMA2_Stream6_IRQHandler      () { while(1); } /* DMA2 Stream 6                */                   
+void DMA2_Stream7_IRQHandler      () { while(1); } /* DMA2 Stream 7                */                   
+void USART6_IRQHandler            () { while(1); } /* USART6                       */                    
+void I2C3_EV_IRQHandler           () { while(1); } /* I2C3 event                   */                          
+void I2C3_ER_IRQHandler           () { while(1); } /* I2C3 error                   */                          
+void OTG_HS_EP1_OUT_IRQHandler    () { while(1); } /* USB OTG HS End Point 1 Out   */                   
+void OTG_HS_EP1_IN_IRQHandler     () { while(1); } /* USB OTG HS End Point 1 In    */                   
+void OTG_HS_WKUP_IRQHandler       () { while(1); } /* USB OTG HS Wakeup through EXTI */                         
+void OTG_HS_IRQHandler            () { while(1); } /* USB OTG HS                   */                   
+void DCMI_IRQHandler              () { while(1); } /* DCMI                         */                   
+void FPU_IRQHandler               () { while(1); } /* FPU                          */
+void SPI4_IRQHandler              () { while(1); } /* SPI4                         */
+void SAI1_IRQHandler              () { while(1); } /* SAI1						              */
+void SAI2_IRQHandler              () { while(1); } /* SAI2                         */
+void QuadSPI_IRQHandler           () { while(1); } /* QuadSPI                      */
+void CEC_IRQHandler               () { while(1); } /* CEC                          */
+void SPDIF_RX_IRQHandler          () { while(1); } /* SPDIF RX                     */
+void FMPI2C1_Event_IRQHandler     () { while(1); } /* FMPI2C 1 Event               */
+void FMPI2C1_Error_IRQHandler     () { while(1); } /* FMPI2C 1 Error               */

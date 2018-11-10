@@ -269,7 +269,7 @@ __weak void HAL_MspDeInit(void)
   * @param TickPriority Tick interrupt priority.
   * @retval HAL status
   */
-__weak HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
+__weak HAL_StatusTypeDef _HAL_InitTick(uint32_t TickPriority)
 {
   /* Configure the SysTick to have interrupt in 1ms time basis*/
   if (HAL_SYSTICK_Config(SystemCoreClock / (1000U / uwTickFreq)) > 0U)

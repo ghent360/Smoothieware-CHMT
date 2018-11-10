@@ -42,7 +42,6 @@ typedef uint32_t timestamp_t;
  */
 typedef uint64_t us_timestamp_t;
 
-#if 0
 /** Ticker's event structure
  */
 typedef struct ticker_event_s {
@@ -50,7 +49,6 @@ typedef struct ticker_event_s {
     uint32_t               id;        /**< TimerEvent object */
     struct ticker_event_s *next;      /**< Next event in the queue */
 } ticker_event_t;
-#endif
 
 typedef void (*ticker_event_handler)(uint32_t id);
 
