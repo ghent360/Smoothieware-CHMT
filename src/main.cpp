@@ -46,11 +46,15 @@
 // Debug
 #include "libs/SerialMessage.h"
 
+#ifndef DISABLEUSB
 #include "libs/USBDevice/USB.h"
 #include "libs/USBDevice/USBMSD/USBMSD.h"
+#ifndef DISABLEMSD
 #include "libs/USBDevice/USBMSD/SDCard.h"
+#endif
 #include "libs/USBDevice/USBSerial/USBSerial.h"
 #include "libs/USBDevice/DFU.h"
+#endif
 #include "libs/SDFAT.h"
 #include "StreamOutputPool.h"
 #include "ToolManager.h"

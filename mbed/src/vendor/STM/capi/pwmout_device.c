@@ -1,8 +1,6 @@
-// The 'features' section in 'target.json' is now used to create the device's hardware preprocessor switches.
-// Check the 'features' section of the target description in 'targets.json' for more details.
 /* mbed Microcontroller Library
  *******************************************************************************
- * Copyright (c) 2014, STMicroelectronics
+ * Copyright (c) 2017, STMicroelectronics
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,49 +32,50 @@
  * Source: %mbed-os%/targets/TARGET_STM/TARGET_STM32F4
  */
 
-#ifndef MBED_DEVICE_H
-#define MBED_DEVICE_H
+#include "cmsis.h"
+#include "pwmout_api.h"
+#include "pwmout_device.h"
 
-//=======================================
-#define DEVICE_ID_LENGTH       24
+#ifdef DEVICE_PWMOUT
 
-#define DEVICE_PORTIN           1
-#define DEVICE_PORTOUT          1
-#define DEVICE_PORTINOUT        1
-
-#define DEVICE_INTERRUPTIN      1
-
-#define DEVICE_ANALOGIN         1
-#define DEVICE_ANALOGOUT        0
-
-#define DEVICE_SERIAL           1
-
-#define DEVICE_I2C              1
-#define DEVICE_I2CSLAVE         1
-
-#define DEVICE_SPI              1
-#define DEVICE_SPISLAVE         1
-
-#define DEVICE_CAN              0
-
-#define DEVICE_RTC              0
-
-#define DEVICE_ETHERNET         0
-
-#define DEVICE_PWMOUT           1
-
-#define DEVICE_SEMIHOST         0
-#define DEVICE_LOCALFILESYSTEM  0
-#define DEVICE_MAC_OFFSET      20
-
-#define DEVICE_SLEEP            1
-
-#define DEVICE_DEBUG_AWARENESS  0
-
-#define DEVICE_STDIO_MESSAGES   1
-
-#include "objects.h"
-/*  WORKAROUND waiting for mbed-os issue 4408 to be addressed */
-#include "stm32f4xx_ll_usart.h"
-
+const pwm_apb_map_t pwm_apb_map_table[] = {
+#if defined(TIM2_BASE)
+    {PWM_2, PWMOUT_ON_APB1},
 #endif
+#if defined(TIM3_BASE)
+    {PWM_3, PWMOUT_ON_APB1},
+#endif
+#if defined(TIM4_BASE)
+    {PWM_4, PWMOUT_ON_APB1},
+#endif
+#if defined(TIM5_BASE)
+    {PWM_5, PWMOUT_ON_APB1},
+#endif
+#if defined(TIM12_BASE)
+    {PWM_12, PWMOUT_ON_APB1},
+#endif
+#if defined(TIM13_BASE)
+    {PWM_13, PWMOUT_ON_APB1},
+#endif
+#if defined(TIM14_BASE)
+    {PWM_14, PWMOUT_ON_APB1},
+#endif
+#if defined(TIM1_BASE)
+    {PWM_1, PWMOUT_ON_APB2},
+#endif
+#if defined(TIM8_BASE)
+    {PWM_8, PWMOUT_ON_APB2},
+#endif
+#if defined(TIM9_BASE)
+    {PWM_9, PWMOUT_ON_APB2},
+#endif
+#if defined(TIM10_BASE)
+    {PWM_10, PWMOUT_ON_APB2},
+#endif
+#if defined(TIM11_BASE)
+    {PWM_11, PWMOUT_ON_APB2},
+#endif
+    {(PWMName) 0, PWMOUT_UNKNOWN}
+};
+
+#endif // DEVICE_PWMOUT

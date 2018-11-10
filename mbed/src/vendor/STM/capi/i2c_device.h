@@ -1,8 +1,6 @@
-// The 'features' section in 'target.json' is now used to create the device's hardware preprocessor switches.
-// Check the 'features' section of the target description in 'targets.json' for more details.
 /* mbed Microcontroller Library
  *******************************************************************************
- * Copyright (c) 2014, STMicroelectronics
+ * Copyright (c) 2015, STMicroelectronics
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,49 +32,22 @@
  * Source: %mbed-os%/targets/TARGET_STM/TARGET_STM32F4
  */
 
-#ifndef MBED_DEVICE_H
-#define MBED_DEVICE_H
+#ifndef MBED_I2C_DEVICE_H
+#define MBED_I2C_DEVICE_H
 
-//=======================================
-#define DEVICE_ID_LENGTH       24
+#include "cmsis.h"
 
-#define DEVICE_PORTIN           1
-#define DEVICE_PORTOUT          1
-#define DEVICE_PORTINOUT        1
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define DEVICE_INTERRUPTIN      1
+#ifdef DEVICE_I2C
 
-#define DEVICE_ANALOGIN         1
-#define DEVICE_ANALOGOUT        0
+/*  Define IP version */
+#define I2C_IP_VERSION_V1
 
-#define DEVICE_SERIAL           1
+#define I2C_IT_ALL (I2C_IT_EVT | I2C_IT_BUF | I2C_IT_ERR)
 
-#define DEVICE_I2C              1
-#define DEVICE_I2CSLAVE         1
-
-#define DEVICE_SPI              1
-#define DEVICE_SPISLAVE         1
-
-#define DEVICE_CAN              0
-
-#define DEVICE_RTC              0
-
-#define DEVICE_ETHERNET         0
-
-#define DEVICE_PWMOUT           1
-
-#define DEVICE_SEMIHOST         0
-#define DEVICE_LOCALFILESYSTEM  0
-#define DEVICE_MAC_OFFSET      20
-
-#define DEVICE_SLEEP            1
-
-#define DEVICE_DEBUG_AWARENESS  0
-
-#define DEVICE_STDIO_MESSAGES   1
-
-#include "objects.h"
-/*  WORKAROUND waiting for mbed-os issue 4408 to be addressed */
-#include "stm32f4xx_ll_usart.h"
+#endif // DEVICE_I2C
 
 #endif

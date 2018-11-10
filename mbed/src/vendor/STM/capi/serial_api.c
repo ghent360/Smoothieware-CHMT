@@ -32,6 +32,7 @@
  * Source: %mbed-os%/targets/TARGET_STM
  */
 
+#include "device.h"
 
 #if DEVICE_SERIAL
 

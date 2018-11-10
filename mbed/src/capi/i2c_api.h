@@ -24,6 +24,17 @@
 extern "C" {
 #endif
 
+enum {
+    I2C_ERROR_NO_SLAVE = -1,
+    I2C_ERROR_BUS_BUSY = -2
+};
+
+#define I2C_EVENT_ERROR               (1 << 1)
+#define I2C_EVENT_ERROR_NO_SLAVE      (1 << 2)
+#define I2C_EVENT_TRANSFER_COMPLETE   (1 << 3)
+#define I2C_EVENT_TRANSFER_EARLY_NACK (1 << 4)
+#define I2C_EVENT_ALL                 (I2C_EVENT_ERROR |  I2C_EVENT_TRANSFER_COMPLETE | I2C_EVENT_ERROR_NO_SLAVE | I2C_EVENT_TRANSFER_EARLY_NACK)
+
 typedef struct i2c_s i2c_t;
 
 void i2c_init         (i2c_t *obj, PinName sda, PinName scl);

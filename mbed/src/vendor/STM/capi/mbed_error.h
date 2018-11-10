@@ -27,8 +27,8 @@
 #ifndef MBED_ERROR_H
 #define MBED_ERROR_H
 
-#include "platform/mbed_retarget.h"
-#include "platform/mbed_toolchain.h"
+#include "mbed_retarget.h"
+#include "mbed_toolchain.h"
 
 #ifdef __cplusplus
 extern "C" {

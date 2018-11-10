@@ -36,7 +36,7 @@
 
 #include "mbed_assert.h"
 #include "i2c_api.h"
-#include "platform/mbed_wait_api.h"
+#include "mbed_wait_api.h"
 
 #if DEVICE_I2C
 

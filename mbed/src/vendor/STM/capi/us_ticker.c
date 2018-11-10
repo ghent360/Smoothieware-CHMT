@@ -22,6 +22,7 @@
 #include "us_ticker_api.h"
 #include "PeripheralNames.h"
 #include "us_ticker_data.h"
+#include "ticker_api.h"
 
 TIM_HandleTypeDef TimMasterHandle;
 

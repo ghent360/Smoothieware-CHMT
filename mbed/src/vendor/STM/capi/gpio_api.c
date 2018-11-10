@@ -128,7 +128,7 @@ uint32_t gpio_set(PinName pin)
 }
 
 
-void gpio_init(gpio_t *obj, PinName pin)
+void gpio_init(gpio_t *obj, PinName pin, PinDirection direction)
 {
     obj->pin = pin;
     if (pin == (PinName)NC) {
@@ -151,6 +151,7 @@ void gpio_init(gpio_t *obj, PinName pin)
 #else
     obj->reg_clr = &gpio->BRR;
 #endif
+    gpio_dir(obj, direction);
 }
 
 void gpio_mode(gpio_t *obj, PinMode mode)

@@ -28,7 +28,7 @@ DEVICE_C_FLAGS =-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -mthu
 DEVICE_AS_FLAGS=-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 
-DEVICE_C_FLAGS += -DUSE120MHZ
+DEVICE_C_FLAGS += -DUSE120MHZ -DSTM32F446xx
 DEVICE_C_FLAGS += -I$(VENDOR_CMSIS_SRC)/hal
 
 include arm-common.mk
