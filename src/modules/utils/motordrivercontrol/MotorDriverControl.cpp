@@ -387,6 +387,7 @@ void MotorDriverControl::set_current(uint32_t c)
             
         case TMC2130:
             tmc21x->setCurrent(c);
+            tmc21x->setHoldCurrent(50); // 50%
             break;
     }
 }
@@ -496,6 +497,7 @@ void MotorDriverControl::set_options(Gcode *gcode)
             //     }
             // }
         }
+        break;
         case TMC2130: {
             TMC21X::options_t options= gcode->get_args_int();
             if(options.size() > 0) {

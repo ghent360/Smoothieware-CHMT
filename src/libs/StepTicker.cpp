@@ -60,12 +60,12 @@ StepTicker::StepTicker()
 #define UNSTEP_TIME 100    
 #else
     __TIM7_CLK_ENABLE();
-    __TIM8_CLK_ENABLE();
+    __TIM14_CLK_ENABLE();
     NVIC_SetVector(TIM7_IRQn, (uint32_t)TIM7_IRQHandler);
     NVIC_SetVector(TIM8_TRG_COM_TIM14_IRQn, (uint32_t)TIM8_TRG_COM_TIM14_IRQHandler);
     NVIC_SetVector(PendSV_IRQn, (uint32_t)PendSV_Handler);
     TIM7->CR1 = TIM_CR1_URS;    // int on overflow
-    TIM8->CR1 = TIM_CR1_URS | TIM_CR1_OPM;  // int on overflow, one-shot mode
+    TIM14->CR1 = TIM_CR1_URS | TIM_CR1_OPM;  // int on overflow, one-shot mode
 #define UNSTEP_TIME 5    
 #endif
     // Default start values
@@ -97,7 +97,7 @@ void StepTicker::start()
     NVIC_EnableIRQ(TIMER1_IRQn);     // Enable interrupt handler
 #else
     TIM7->DIER = TIM_DIER_UIE;     // update interrupt en
-    TIM8->DIER = TIM_DIER_UIE;     // update interrupt en
+    TIM14->DIER = TIM_DIER_UIE;    // update interrupt en
     NVIC_EnableIRQ(TIM8_TRG_COM_TIM14_IRQn);     // enable interrupt handler
     NVIC_EnableIRQ(TIM7_IRQn);     // enable interrupt handler
     NVIC_EnableIRQ(PendSV_IRQn);   // enable interrupt handler
@@ -133,7 +133,7 @@ void StepTicker::set_unstep_time( float microseconds )
 #ifndef __STM32F4__
     LPC_TIM1->MR0 = delay;
 #else
-    TIM8->ARR = delay;
+    TIM14->ARR = delay;
 #endif
     // TODO check that the unstep time is less than the step period, if not slow down step ticker
 }
@@ -166,7 +166,7 @@ extern "C" void TIMER0_IRQHandler (void)
 #else
 extern "C" void TIM8_TRG_COM_TIM14_IRQHandler (void)
 {
-    TIM8->SR = ~TIM_SR_UIF;
+    TIM14->SR = ~TIM_SR_UIF;
     StepTicker::getInstance()->unstep_tick();
 }
 
@@ -278,7 +278,7 @@ void StepTicker::step_tick (void)
         LPC_TIM1->TCR = 1;
 #else
         // CEN should have cleared by one-shot mode
-        TIM8->CR1 |= TIM_CR1_CEN;
+        TIM14->CR1 |= TIM_CR1_CEN;
 #endif
     }
 

@@ -1270,15 +1270,16 @@ void TMC21X::setCurrent(unsigned int current)
     //with Rsense = 50 milli Ohm (default)
     //for vsense = 0,32V (VSENSE not set)
     //or vsense = 0,18V (VSENSE set)
-    current_scaling = (uint8_t)(((resistor_value + 20) * mASetting * 32.0F / (0.32F * 1000.0F * 1000.0F)) - 0.5F); //theoretically - 1.0 for better rounding it is 0.5
+    //current_scaling = (uint8_t)(((resistor_value + 20) * mASetting * 32.0F / (0.32F * 1000.0F * 1000.0F)) - 0.5F); //theoretically - 1.0 for better rounding it is 0.5
+    current_scaling = (32.0 * 1.41421 * mASetting / 1000.0) * (resistor_value/1000 + 0.02) / 0.325 - 1;
     //check if the current scaling is too low
     if (current_scaling < 16) {
         //set the Vsense bit to get a use half the sense voltage (to support lower motor currents)
         this->chopconf_register_value |= CHOPCONF_VSENSE;
         //and recalculate the current setting
-        current_scaling = (uint8_t)(((resistor_value + 20) * mASetting * 32.0F / (0.18F * 1000.0F * 1000.0F)) - 0.5F); //theoretically - 1.0 for better rounding it is 0.5
+        //current_scaling = (uint8_t)(((resistor_value + 20) * mASetting * 32.0F / (0.18F * 1000.0F * 1000.0F)) - 0.5F); //theoretically - 1.0 for better rounding it is 0.5
+        current_scaling = (32.0 * 1.41421 * mASetting / 1000.0) * (resistor_value/1000 + 0.02) / 0.180 - 1;
     }
-
     //do some sanity checks
     if (current_scaling > 31) {
         current_scaling = 31;
@@ -1596,7 +1597,7 @@ void TMC21X::setEnabled(bool enabled)
     chopconf_register_value &= ~(CHOPCONF_TOFF);
     if (enabled) {
         //and set the t_off time
-        chopconf_register_value |= this->constant_off_time;
+        chopconf_register_value |= this->constant_off_time << CHOPCONF_TOFF_SHIFT;
     }
     //if not enabled we don't have to do anything since we already delete t_off from the register
     if (started) {
@@ -1864,7 +1865,10 @@ uint32_t TMC21X::send2130(uint8_t reg, uint32_t datagram)
     spi_status_result = rbuf[0];
     uint32_t i_datagram = ((rbuf[1] << 24) | (rbuf[2] << 16) | (rbuf[3] << 8) | (rbuf[4] << 0));
 
-    THEKERNEL->streams->printf("sent: %02X, %02X, %02X, %02X, %02X received: %02X, %02X, %02X, %02X, %02X \n", buf[4], buf[3], buf[2], buf[1], buf[0], rbuf[4], rbuf[3], rbuf[2], rbuf[1], rbuf[0]);
+    //if (reg & 0x80) {
+    //  THEKERNEL->streams->printf("W: %02X, %08lX\n", reg & 0x7f, datagram);
+    //}
+    //THEKERNEL->streams->printf("sent: %02X, %02X, %02X, %02X, %02X received: %02X, %02X, %02X, %02X, %02X \n", buf[4], buf[3], buf[2], buf[1], buf[0], rbuf[4], rbuf[3], rbuf[2], rbuf[1], rbuf[0]);
 
     return i_datagram;
 }

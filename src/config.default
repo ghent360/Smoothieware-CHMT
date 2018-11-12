@@ -117,50 +117,50 @@ motor_driver_control.alpha.axis                   X               # Axis designa
 motor_driver_control.alpha.chip                   TMC2130         # Motor driver chip type
 motor_driver_control.alpha.spi_channel            0               # Set corresponding pins of the selected spi channel
 motor_driver_control.alpha.spi_cs_pin             a.10            # Set chip select pin
-motor_driver_control.alpha.current                500             # Motor currents in mA
-motor_driver_control.alpha.sense_resistor         15              # Sensing resistor value as a reference in milliohms
+motor_driver_control.alpha.current                600             # Motor currents in mA
+motor_driver_control.alpha.sense_resistor         150             # Sensing resistor value as a reference in milliohms
 motor_driver_control.alpha.microsteps             16              # Set microstepping value per step pulse. It can be 1, 2, 4, 8, 16, 32, 64, 128 or 256 microsteps
-motor_driver_control.alpha.chopper_mode           2               # 0 = stealthChop ; 1 = spreadCycle ; 2 = traditional constant off-time
+motor_driver_control.alpha.chopper_mode           0               # 0 = stealthChop ; 1 = spreadCycle ; 2 = traditional constant off-time
 
 motor_driver_control.beta.enable                  true            # Enable motor driver module
 motor_driver_control.beta.axis                    Y               # Axis designator on which the motor driver is set 
 motor_driver_control.beta.chip                    TMC2130         # Motor driver chip type
 motor_driver_control.beta.spi_channel             0               # Set corresponding pins of the selected spi channel
 motor_driver_control.beta.spi_cs_pin              a.11            # Set chip select pin
-motor_driver_control.beta.current                 500             # Motor currents in mA
-motor_driver_control.beta.sense_resistor          15              # Sensing resistor value as a reference in milliohms
+motor_driver_control.beta.current                 400             # Motor currents in mA
+motor_driver_control.beta.sense_resistor          150             # Sensing resistor value as a reference in milliohms
 motor_driver_control.beta.microsteps              16              # Set microstepping value per step pulse. It can be 1, 2, 4, 8, 16, 32, 64, 128 or 256 microsteps
-motor_driver_control.beta.chopper_mode            2               # 0 = stealthChop ; 1 = spreadCycle ; 2 = traditional constant off-time
+motor_driver_control.beta.chopper_mode            0               # 0 = stealthChop ; 1 = spreadCycle ; 2 = traditional constant off-time
 
 motor_driver_control.gamma.enable                 true            # Enable motor driver module
 motor_driver_control.gamma.axis                   Z               # Axis designator on which the motor driver is set 
 motor_driver_control.gamma.chip                   TMC2130         # Motor driver chip type
 motor_driver_control.gamma.spi_channel            0               # Set corresponding pins of the selected spi channel
 motor_driver_control.gamma.spi_cs_pin             a.12            # Set chip select pin
-motor_driver_control.gamma.current                500             # Motor currents in mA
-motor_driver_control.gamma.sense_resistor         15              # Sensing resistor value as a reference in milliohms
+motor_driver_control.gamma.current                400             # Motor currents in mA
+motor_driver_control.gamma.sense_resistor         150             # Sensing resistor value as a reference in milliohms
 motor_driver_control.gamma.microsteps             16              # Set microstepping value per step pulse. It can be 1, 2, 4, 8, 16, 32, 64, 128 or 256 microsteps
-motor_driver_control.gamma.chopper_mode           2               # 0 = stealthChop ; 1 = spreadCycle ; 2 = traditional constant off-time
+motor_driver_control.gamma.chopper_mode           0               # 0 = stealthChop ; 1 = spreadCycle ; 2 = traditional constant off-time
 
 motor_driver_control.delta.enable                 true            # Enable motor driver module
 motor_driver_control.delta.axis                   A               # Axis designator on which the motor driver is set 
 motor_driver_control.delta.chip                   TMC2130         # Motor driver chip type
 motor_driver_control.delta.spi_channel            0               # Set corresponding pins of the selected spi channel
 motor_driver_control.delta.spi_cs_pin             b.3             # Set chip select pin
-motor_driver_control.delta.current                500             # Motor currents in mA
-motor_driver_control.delta.sense_resistor         15              # Sensing resistor value as a reference in milliohms
+motor_driver_control.delta.current                400             # Motor currents in mA
+motor_driver_control.delta.sense_resistor         150             # Sensing resistor value as a reference in milliohms
 motor_driver_control.delta.microsteps             16              # Set microstepping value per step pulse. It can be 1, 2, 4, 8, 16, 32, 64, 128 or 256 microsteps
-motor_driver_control.delta.chopper_mode           2               # 0 = stealthChop ; 1 = spreadCycle ; 2 = traditional constant off-time
+motor_driver_control.delta.chopper_mode           0               # 0 = stealthChop ; 1 = spreadCycle ; 2 = traditional constant off-time
 
 motor_driver_control.epsilon.enable               true            # Enable motor driver module
 motor_driver_control.epsilon.axis                 B               # Axis designator on which the motor driver is set 
 motor_driver_control.epsilon.chip                 TMC2130         # Motor driver chip type
 motor_driver_control.epsilon.spi_channel          0               # Set corresponding pins of the selected spi channel
 motor_driver_control.epsilon.spi_cs_pin           b.1             # Set chip select pin
-motor_driver_control.epsilon.current              500             # Motor currents in mA
-motor_driver_control.epsilon.sense_resistor       15              # Sensing resistor value as a reference in milliohms
+motor_driver_control.epsilon.current              400             # Motor currents in mA
+motor_driver_control.epsilon.sense_resistor       150             # Sensing resistor value as a reference in milliohms
 motor_driver_control.epsilon.microsteps           16              # Set microstepping value per step pulse. It can be 1, 2, 4, 8, 16, 32, 64, 128 or 256 microsteps
-motor_driver_control.epsilon.chopper_mode         2               # 0 = stealthChop ; 1 = spreadCycle ; 2 = traditional constant off-time
+motor_driver_control.epsilon.chopper_mode         0               # 0 = stealthChop ; 1 = spreadCycle ; 2 = traditional constant off-time
 
 # Hotend temperature control configuration
 # Heater 0
