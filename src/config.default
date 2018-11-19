@@ -163,10 +163,16 @@ motor_driver_control.epsilon.microsteps           16              # Set microste
 motor_driver_control.epsilon.chopper_mode         0               # 0 = stealthChop ; 1 = spreadCycle ; 2 = traditional constant off-time
 
 # Hotend temperature control configuration
+# Hotend thermocouple interface shares pins PA.8 and PC.6 with the
+# FANX_Cool mosfets. Select one or the other via jumpers on the board
 # Heater 0
 temperature_control.hotend0.enable                true            # Whether to activate this ( "hotend" ) module at all. All configuration is ignored if false.
-temperature_control.hotend0.thermistor_pin        a.0             # Pin for the thermistor to read
 temperature_control.hotend0.heater_pin            a.6!            # Pin that controls the heater
+#temperature_control.hotend0.sensor                max31855
+#temperature_control.hotend0.chip_select_pin       c.6
+#temperature_control.hotend0.spi_channel           0               # SPI channel 0 or 1
+#temperature_control.hotend0.readings_per_second   9               # 9 for max31855 and 4 for max6675
+temperature_control.hotend0.thermistor_pin        a.0             # Pin for the thermistor to read
 temperature_control.hotend0.thermistor            Semitec         # see http://smoothieware.org/temperaturecontrol#toc5
 #temperature_control.hotend0.beta                 4066            # or set the beta value
 
@@ -182,8 +188,12 @@ temperature_control.hotend0.d_factor              119             #
 
 # Heater 1
 temperature_control.hotend1.enable                true            # Whether to activate this ( "hotend" ) module at all. All configuration is ignored if false.
-temperature_control.hotend1.thermistor_pin        a.1             # Pin for the thermistor to read
 temperature_control.hotend1.heater_pin            a.7!            # Pin that controls the heater
+#temperature_control.hotend1.sensor                max31855
+#temperature_control.hotend1.chip_select_pin       a.8
+#temperature_control.hotend1.spi_channel           0               # SPI channel 0 or 1
+#temperature_control.hotend1.readings_per_second   9               # 9 for max31855 and 4 for max6675
+temperature_control.hotend1.thermistor_pin        a.1             # Pin for the thermistor to read
 temperature_control.hotend1.thermistor            Semitec         # see http://smoothieware.org/temperaturecontrol#toc5
 #temperature_control.hotend1.beta                 4066            # or set the beta value
 
@@ -213,17 +223,21 @@ temperature_control.bed.i_factor                  0.975           #
 temperature_control.bed.d_factor                  119             #
 
 # Switch modules for fan control
-switch.fan0_cool.enable                           true            #
-switch.fan0_cool.input_on_command                 M106            #
-switch.fan0_cool.input_off_command                M107            #
-switch.fan0_cool.output_pin                       c.6             #
-switch.fan0_cool.output_type                      hwpwm           #
 
-switch.fan1_cool.enable                           true            #
-switch.fan1_cool.input_on_command                 M106            #
-switch.fan1_cool.input_off_command                M107            #
-switch.fan1_cool.output_pin                       a.8             #
-switch.fan1_cool.output_type                      hwpwm           #
+#The FANX_cool modules are mutually exclusive with hotend thermocouple
+#interface. Both components share pins PC.6 and PA.8.
+#Select one or the other via jumpers on the board.
+#switch.fan0_cool.enable                           true            #
+#switch.fan0_cool.input_on_command                 M106            #
+#switch.fan0_cool.input_off_command                M107            #
+#switch.fan0_cool.output_pin                       c.6             #
+#switch.fan0_cool.output_type                      hwpwm           #
+
+#switch.fan1_cool.enable                           true            #
+#switch.fan1_cool.input_on_command                 M106            #
+#switch.fan1_cool.input_off_command                M107            #
+#switch.fan1_cool.output_pin                       a.8             #
+#switch.fan1_cool.output_type                      hwpwm           #
 
 switch.fan0_part.enable                           true            #
 switch.fan0_part.input_on_command                 M106            #
