@@ -12,6 +12,8 @@ debug
 /mbed/src/Debug/
 /mbed/src/Release/
 /LPC1768/
+/STM32F446xE/
+/STM32F407xG/
 /mbed/drop/
 /gcc-arm-none-eabi/
 /BuildShell
