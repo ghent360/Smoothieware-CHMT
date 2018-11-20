@@ -104,12 +104,12 @@ void Max31855::on_idle()
     else
     {
         data = data >> 2;
-        temperature = (data & 0x1FFF) / 4.f;
+        temperature = (data & 0x1FFF) * 0.25f;
 
         if (data & 0x2000)
         {
             data = ~data;
-            temperature = ((data & 0x1FFF) + 1) / -4.f;
+            temperature = ((data & 0x1FFF) + 1) * 0.25f;
         }
     }
 

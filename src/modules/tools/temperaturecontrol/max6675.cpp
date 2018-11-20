@@ -15,7 +15,9 @@
 #include "max6675.h"
 
 #include "MRI_Hooks.h"
-
+#ifdef __STM32F4__
+#include "board_pins.h"
+#endif
 #define chip_select_checksum CHECKSUM("chip_select_pin")
 #define spi_channel_checksum CHECKSUM("spi_channel")
 
@@ -45,10 +47,10 @@ void Max6675::UpdateConfig(uint16_t module_checksum, uint16_t name_checksum)
     PinName sclk;
     if(spi_channel == 0) {
         // Channel 0
-        mosi=P0_18; miso=P0_17; sclk=P0_15;
+        mosi=SPI1_MOSI; miso=SPI1_MISO; sclk=SPI1_SCK;
     } else {
         // Channel 1
-        mosi=P0_9; miso=P0_8; sclk=P0_7;
+        mosi=SPI2_MOSI; miso=SPI2_MISO; sclk=SPI2_SCK;
     }
 
     delete spi;
@@ -96,7 +98,7 @@ void Max6675::on_idle()
         temperature = infinityf();
     } else {
         data >>= 3;
-        temperature = data*0.25;
+        temperature = data * 0.25f;
     }
 
     if (readings.size() >= readings.capacity()) {
