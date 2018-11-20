@@ -168,12 +168,12 @@ motor_driver_control.epsilon.chopper_mode         0               # 0 = stealthC
 # Heater 0
 temperature_control.hotend0.enable                true            # Whether to activate this ( "hotend" ) module at all. All configuration is ignored if false.
 temperature_control.hotend0.heater_pin            a.6!            # Pin that controls the heater
-temperature_control.hotend0.sensor                max6675
-temperature_control.hotend0.chip_select_pin       c.6
-temperature_control.hotend0.spi_channel           0               # SPI channel 0 or 1
-temperature_control.hotend0.readings_per_second   4               # 9 for max31855 and 4 for max6675
-#temperature_control.hotend0.thermistor_pin        a.0             # Pin for the thermistor to read
-#temperature_control.hotend0.thermistor            Semitec         # see http://smoothieware.org/temperaturecontrol#toc5
+#temperature_control.hotend0.sensor                max6675
+#temperature_control.hotend0.chip_select_pin       c.6
+#temperature_control.hotend0.spi_channel           0               # SPI channel 0 or 1
+#temperature_control.hotend0.readings_per_second   4               # 9 for max31855 and 4 for max6675
+temperature_control.hotend0.thermistor_pin        a.0             # Pin for the thermistor to read
+temperature_control.hotend0.thermistor            Semitec         # see http://smoothieware.org/temperaturecontrol#toc5
 #temperature_control.hotend0.beta                 4066            # or set the beta value
 
 temperature_control.hotend0.set_m_code            104             #
