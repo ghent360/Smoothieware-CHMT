@@ -92,7 +92,7 @@ extruder.hotend1.z_offset                        0                # z offset fro
 
 # Stepper module pins ( ports, and pin numbers, appending "!" to the number will invert a pin )
 alpha_step_pin                                    a.4             # Pin for alpha stepper step signal
-alpha_dir_pin                                     c.4             # Pin for alpha stepper direction
+alpha_dir_pin                                     c.4!            # Pin for alpha stepper direction
 alpha_en_pin                                      a.5             # Pin for alpha enable pin
 
 beta_step_pin                                     c.5             # Pin for beta stepper step signal
@@ -291,18 +291,18 @@ zprobe.probe_height                               5               # how much abo
 ## Panel
 # See http://smoothieware.org/panel
 # Please find your panel on the wiki and copy/paste the right configuration here
-panel.enable                                 true                  # Set to true to enable the panel code
+#panel.enable                                 true                  # Set to true to enable the panel code
 
 # Example for reprap discount GLCD
 # on glcd EXP1 is to left and EXP2 is to right, pin 1 is bottom left, pin 2 is top left etc.
 # +5v is EXP1 pin 10, Gnd is EXP1 pin 9
-panel.lcd                                    reprap_discount_glcd  #
-panel.spi_channel                            0                 # SPI channel to use  ; GLCD EXP1 Pins 3,5 (MOSI, SCLK)
-panel.spi_cs_pin                             c.3               # SPI chip select     ; GLCD EXP1 Pin 4
-panel.encoder_a_pin                          a.13!^            # Encoder pin         ; GLCD EXP2 Pin 3
-panel.encoder_b_pin                          a.14!^            # Encoder pin         ; GLCD EXP2 Pin 5
-panel.click_button_pin                       b.8!^             # Click button        ; GLCD EXP1 Pin 2
-panel.buzz_pin                               b.9               # Pin for buzzer      ; GLCD EXP1 Pin 1
+#panel.lcd                                    reprap_discount_glcd  #
+#panel.spi_channel                            0                 # SPI channel to use  ; GLCD EXP1 Pins 3,5 (MOSI, SCLK)
+#panel.spi_cs_pin                             c.3               # SPI chip select     ; GLCD EXP1 Pin 4
+#panel.encoder_a_pin                          a.13!^            # Encoder pin         ; GLCD EXP2 Pin 3
+#panel.encoder_b_pin                          a.14!^            # Encoder pin         ; GLCD EXP2 Pin 5
+#panel.click_button_pin                       b.8!^             # Click button        ; GLCD EXP1 Pin 2
+#panel.buzz_pin                               b.9               # Pin for buzzer      ; GLCD EXP1 Pin 1
 #panel.back_button_pin                       2.11!^            # Back button         ; GLCD EXP2 Pin 8
 
 panel.menu_offset                            0                 # Some panels will need 1 here
