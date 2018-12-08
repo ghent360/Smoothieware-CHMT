@@ -57,7 +57,7 @@ void Watchdog::feed()
 #ifndef __STM32F4__
     WDT_Feed();
 #else
-    HAL_WWDG_Refresh(&m_wdt_handle, WWDG_CR_T);
+    HAL_WWDG_Refresh(&m_wdt_handle);
 #endif
 }
 
@@ -104,7 +104,7 @@ extern "C" void WWDG_IRQHandler(void)
     }
 #endif
     HAL_WWDG_IRQHandler(&m_wdt_handle); // clears int flag
-    //HAL_WWDG_Refresh(&m_wdt_handle, WWDG_CR_T);  // don't refresh, let wdt reset device
+    //HAL_WWDG_Refresh(&m_wdt_handle);  // don't refresh, let wdt reset device
     __debugbreak();                     // but trigger breakpoint if we're on a debugger
 }
 #endif // __STM32F4__
