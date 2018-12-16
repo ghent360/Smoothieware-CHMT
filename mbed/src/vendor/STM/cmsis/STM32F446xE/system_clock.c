@@ -266,3 +266,339 @@ uint8_t SetSysClock_PLL_HSI(void)
     return 1; // OK
 }
 #endif /* ((CLOCK_SOURCE) & USE_PLL_HSI) */
+
+#define DBG_HANDLER(n) \
+void n##_Handler( void ) __attribute__( ( naked ) ); \
+void n##_Handler(void) \
+{ \
+    while(1) __asm (" bkpt 255"); \
+}
+
+#define DBG_IRQ_HANDLER(n) \
+void n##_IRQHandler( void ) __attribute__( ( naked ) ); \
+void n##_IRQHandler(void) \
+{ \
+    while(1) __asm (" bkpt 255"); \
+}
+
+
+void HardFault_Handler( void ) __attribute__( ( naked ) );
+
+void prvGetRegistersFromStack( uint32_t *pulFaultStackAddress )
+{
+/* These are volatile to try and prevent the compiler/linker optimising them
+away as the variables never actually get used.  If the debugger won't show the
+values of the variables, make them global my moving their declaration outside
+of this function. */
+volatile uint32_t r0;
+volatile uint32_t r1;
+volatile uint32_t r2;
+volatile uint32_t r3;
+volatile uint32_t r12;
+volatile uint32_t lr; /* Link register. */
+volatile uint32_t pc; /* Program counter. */
+volatile uint32_t psr;/* Program status register. */
+
+    r0 = pulFaultStackAddress[ 0 ];
+    r1 = pulFaultStackAddress[ 1 ];
+    r2 = pulFaultStackAddress[ 2 ];
+    r3 = pulFaultStackAddress[ 3 ];
+
+    r12 = pulFaultStackAddress[ 4 ];
+    lr = pulFaultStackAddress[ 5 ];
+    pc = pulFaultStackAddress[ 6 ];
+    psr = pulFaultStackAddress[ 7 ];
+
+    /* When the following line is hit, the variables contain the register values. */
+    while(1) __asm (" bkpt 255");
+}
+
+void HardFault_Handler(void)
+{
+    __asm volatile
+    (
+        " tst lr, #4                                                \n"
+        " ite eq                                                    \n"
+        " mrseq r0, msp                                             \n"
+        " mrsne r0, psp                                             \n"
+        " ldr r1, [r0, #24]                                         \n"
+        " ldr r2, handler2_address_const                            \n"
+        " bx r2                                                     \n"
+        " handler2_address_const: .word prvGetRegistersFromStack    \n"
+    );
+}
+
+DBG_HANDLER(NMI)
+
+//DBG_HANDLER(HardFault)
+  
+DBG_HANDLER(MemManage)
+  
+DBG_HANDLER(BusFault)
+
+DBG_HANDLER(UsageFault)
+
+DBG_HANDLER(SVC)
+
+DBG_HANDLER(DebugMon)
+
+//DBG_HANDLER(PendSV)
+
+DBG_HANDLER(SysTick)
+  
+//DBG_IRQ_HANDLER(WWDG)
+                  
+DBG_IRQ_HANDLER(PVD)
+
+               
+DBG_IRQ_HANDLER(TAMP_STAMP)      
+
+            
+DBG_IRQ_HANDLER(RTC_WKUP)            
+
+            
+DBG_IRQ_HANDLER(FLASH)   
+
+                  
+DBG_IRQ_HANDLER(RCC)
+
+                  
+DBG_IRQ_HANDLER(EXTI0)   
+
+                  
+DBG_IRQ_HANDLER(EXTI1)   
+
+                     
+DBG_IRQ_HANDLER(EXTI2)   
+
+                 
+DBG_IRQ_HANDLER(EXTI3)   
+
+                        
+DBG_IRQ_HANDLER(EXTI4)   
+
+                  
+DBG_IRQ_HANDLER(DMA1_Stream0)         
+
+         
+DBG_IRQ_HANDLER(DMA1_Stream1)         
+
+                  
+DBG_IRQ_HANDLER(DMA1_Stream2)         
+
+                  
+DBG_IRQ_HANDLER(DMA1_Stream3)         
+
+                 
+DBG_IRQ_HANDLER(DMA1_Stream4)        
+
+                  
+DBG_IRQ_HANDLER(DMA1_Stream5)         
+
+                  
+DBG_IRQ_HANDLER(DMA1_Stream6)         
+
+                  
+DBG_IRQ_HANDLER(ADC)
+
+               
+DBG_IRQ_HANDLER(CAN1_TX)
+
+            
+DBG_IRQ_HANDLER(CAN1_RX0)            
+
+                           
+DBG_IRQ_HANDLER(CAN1_RX1)            
+
+            
+DBG_IRQ_HANDLER(CAN1_SCE)            
+
+            
+DBG_IRQ_HANDLER(EXTI9_5)
+
+            
+DBG_IRQ_HANDLER(TIM1_BRK_TIM9)      
+
+            
+DBG_IRQ_HANDLER(TIM1_UP_TIM10)      
+
+
+DBG_IRQ_HANDLER(TIM1_TRG_COM_TIM11)
+
+      
+DBG_IRQ_HANDLER(TIM1_CC)
+
+                  
+DBG_IRQ_HANDLER(TIM2)      
+
+                  
+DBG_IRQ_HANDLER(TIM3)      
+
+                  
+DBG_IRQ_HANDLER(TIM4)      
+
+                  
+DBG_IRQ_HANDLER(I2C1_EV)
+
+                     
+DBG_IRQ_HANDLER(I2C1_ER)
+
+                     
+DBG_IRQ_HANDLER(I2C2_EV)
+
+                  
+DBG_IRQ_HANDLER(I2C2_ER)
+
+                           
+DBG_IRQ_HANDLER(SPI1)      
+
+                        
+DBG_IRQ_HANDLER(SPI2)      
+
+                  
+DBG_IRQ_HANDLER(USART1)
+
+                     
+DBG_IRQ_HANDLER(USART2)
+
+                     
+DBG_IRQ_HANDLER(USART3)
+
+                  
+DBG_IRQ_HANDLER(EXTI15_10)         
+
+               
+DBG_IRQ_HANDLER(RTC_Alarm)         
+
+            
+DBG_IRQ_HANDLER(OTG_FS_WKUP)   
+
+            
+DBG_IRQ_HANDLER(TIM8_BRK_TIM12)   
+
+         
+DBG_IRQ_HANDLER(TIM8_UP_TIM13)      
+
+         
+//DBG_IRQ_HANDLER(TIM8_TRG_COM_TIM14)
+
+      
+DBG_IRQ_HANDLER(TIM8_CC)
+
+                  
+DBG_IRQ_HANDLER(DMA1_Stream7)         
+
+                     
+DBG_IRQ_HANDLER(FMC)      
+
+                     
+DBG_IRQ_HANDLER(SDIO)      
+
+                     
+DBG_IRQ_HANDLER(TIM5)      
+
+                     
+DBG_IRQ_HANDLER(SPI3)      
+
+                     
+DBG_IRQ_HANDLER(UART4)   
+
+                  
+DBG_IRQ_HANDLER(UART5)   
+
+                  
+//DBG_IRQ_HANDLER(TIM6_DAC)
+
+               
+//DBG_IRQ_HANDLER(TIM7)
+
+         
+DBG_IRQ_HANDLER(DMA2_Stream0)         
+
+               
+DBG_IRQ_HANDLER(DMA2_Stream1)         
+
+                  
+DBG_IRQ_HANDLER(DMA2_Stream2)         
+
+            
+DBG_IRQ_HANDLER(DMA2_Stream3)         
+
+            
+DBG_IRQ_HANDLER(DMA2_Stream4)         
+
+
+DBG_IRQ_HANDLER(CAN2_TX)
+
+                           
+DBG_IRQ_HANDLER(CAN2_RX0)            
+
+                           
+DBG_IRQ_HANDLER(CAN2_RX1)            
+
+                           
+DBG_IRQ_HANDLER(CAN2_SCE)            
+
+                           
+DBG_IRQ_HANDLER(OTG_FS)
+
+                     
+DBG_IRQ_HANDLER(DMA2_Stream5)         
+
+                  
+DBG_IRQ_HANDLER(DMA2_Stream6)         
+
+                  
+DBG_IRQ_HANDLER(DMA2_Stream7)         
+
+                  
+DBG_IRQ_HANDLER(USART6)
+
+                        
+DBG_IRQ_HANDLER(I2C3_EV)
+
+                        
+DBG_IRQ_HANDLER(I2C3_ER)
+
+                        
+DBG_IRQ_HANDLER(OTG_HS_EP1_OUT)   
+
+               
+DBG_IRQ_HANDLER(OTG_HS_EP1_IN)      
+
+               
+DBG_IRQ_HANDLER(OTG_HS_WKUP)   
+
+            
+DBG_IRQ_HANDLER(OTG_HS)
+
+                  
+DBG_IRQ_HANDLER(DCMI)      
+
+
+DBG_IRQ_HANDLER(FPU)            
+
+
+DBG_IRQ_HANDLER(SPI4)      
+
+
+DBG_IRQ_HANDLER(SAI1)      
+
+
+DBG_IRQ_HANDLER(SAI2)      
+
+   
+DBG_IRQ_HANDLER(QuadSPI)      
+
+ 
+DBG_IRQ_HANDLER(CEC)      
+
+   
+DBG_IRQ_HANDLER(SPDIF_RX)      
+
+ 
+DBG_IRQ_HANDLER(FMPI2C1_Event)      
+
+   
+DBG_IRQ_HANDLER(FMPI2C1_Error)      
+
