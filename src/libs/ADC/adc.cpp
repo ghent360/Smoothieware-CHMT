@@ -201,8 +201,7 @@ void ADC::setup(PinName pin, int state) {
         if (!burst()) LPC_ADC->ADCR &= ~0xFF;
         //Select channel
         LPC_ADC->ADCR |= (1 << chan);
-    }
-    else {
+    } else {
         switch(pin) {
             case p15://=p0.23 of LPC1768
             default:
@@ -240,10 +239,11 @@ void ADC::burst(int state) {
         if (startmode(0) != 0)
             fprintf(stderr, "ADC Warning. startmode is %u. Must be 0 for burst mode.\n", startmode(0));
         LPC_ADC->ADCR |= (1 << 16);
-    }
-    else
+    } else {
         LPC_ADC->ADCR &= ~(1 << 16);
+    }
 }
+
 //Return burst mode state
 int  ADC::burst(void) {
     return((LPC_ADC->ADCR & (1 << 16)) >> 16);
@@ -290,11 +290,11 @@ ADC::ADC(int sample_rate, int cclk_div) {
 
     __HAL_RCC_ADC1_CLK_ENABLE();
 
-    // adcclk /8 prescaler
-    ((ADC_Common_TypeDef *) ADC_BASE)->CCR |= ADC_CCR_ADCPRE;
+    // adcclk /8 prescaler, enable internal temp sensor
+    ((ADC_Common_TypeDef *) ADC_BASE)->CCR |= ADC_CCR_ADCPRE | ADC_CCR_TSVREFE;
 
     // use long sampling time to reduce isr call freq, to reduce chance of overflow
-    // 168 Mhz / 2 (APB CLK) / 8 (ADCCLK) / (480+15) = ~47 us conversion
+    // 168 Mhz / 2 (APB CLK) / 8 (ADCCLK) / (480+12) = ~47 us conversion
     // for max 16 scan channels, thats max sampling rate of ~1.3 kHz
     STM_ADC->SMPR1 = ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 | ADC_SMPR1_SMP13 | 
                      ADC_SMPR1_SMP14 | ADC_SMPR1_SMP15 | ADC_SMPR1_SMP16 | ADC_SMPR1_SMP17 | 
@@ -336,6 +336,32 @@ void ADC::burst(int state) {
     }
 }
 
+static void adc_clear_chan_seq(uint8_t chan) {
+    if (chan >= ADC_CHANNEL_COUNT) {
+        return;
+    }
+    if (chan < 6) {
+        STM_ADC->SQR3 &= ~(0x1f << (ADC_SQR3_SQ2_Pos*chan));
+    } else if (chan < 12) {
+        STM_ADC->SQR2 &= ~(0x1f << (ADC_SQR2_SQ8_Pos*(chan - 6)));
+    } else if (chan < 16) {
+        STM_ADC->SQR1 &= ~(0x1f << (ADC_SQR1_SQ14_Pos*(chan - 12)));
+    }
+}
+
+static void adc_set_chan_seq(uint8_t chan, uint8_t adc_chan) {
+    if (chan >= ADC_CHANNEL_COUNT || adc_chan >= ADC_CHANNEL_COUNT) {
+        return;
+    }
+    if (chan < 6) {
+        STM_ADC->SQR3 |= (adc_chan << (ADC_SQR3_SQ2_Pos*chan));
+    } else if (chan < 12) {
+        STM_ADC->SQR2 |= (adc_chan << (ADC_SQR2_SQ8_Pos*(chan - 6)));
+    } else if (chan < 16) {
+        STM_ADC->SQR1 |= (adc_chan << (ADC_SQR1_SQ14_Pos*(chan - 12)));
+    }
+}
+
 // enable or disable an ADC pin
 void ADC::setup(PinName pin, int state) {
     uint32_t function = pinmap_function(pin, PinMap_ADC);
@@ -343,25 +369,45 @@ void ADC::setup(PinName pin, int state) {
     uint8_t chan = 0xFF;
 
     // we don't support dealloc for now, exit early if all channels full or pin doesn't support adc
-    if (!state || scan_count_next >= ADC_CHANNEL_COUNT || function == (uint32_t)NC) 
+    if (scan_count_next >= ADC_CHANNEL_COUNT || function == (uint32_t)NC) 
         return;
 
-    // set analog mode for gpio (b11)
-    GPIO_TypeDef *gpio = (GPIO_TypeDef *) Set_GPIO_Clock(STM_PORT(pin));
-    gpio->MODER |= (0x3 << (2*STM_PIN(pin)));
-
     stm_chan = STM_PIN_CHANNEL(function);
-    chan = scan_count_next++;
 
-    scan_chan_lut[stm_chan] = chan;
+    if (state) {
+        // set analog mode for gpio (b11)
+        GPIO_TypeDef *gpio = (GPIO_TypeDef *) Set_GPIO_Clock(STM_PORT(pin));
+        gpio->MODER |= (0x3 << (2*STM_PIN(pin)));
 
-    // configure adc scan channel
-    if (chan < 6) {
-        STM_ADC->SQR3 |= (stm_chan << (ADC_SQR3_SQ2_Pos*chan));
-    } else if (chan < 12) {
-        STM_ADC->SQR2 |= (stm_chan << (ADC_SQR2_SQ8_Pos*(chan - 6)));
-    } else if (chan < 16) {
-        STM_ADC->SQR1 |= (stm_chan << (ADC_SQR1_SQ14_Pos*(chan - 12)));
+        // Assign next channel ID
+        chan = scan_count_next++;
+        scan_chan_lut[stm_chan] = chan;
+
+        // configure adc scan channel
+        adc_set_chan_seq(chan, stm_chan);
+    } else {
+        // Clear the ADC mode
+        chan = scan_chan_lut[stm_chan];
+        if (chan == 0xff) {
+            // Not enabled, just leave
+            return;
+        }
+        scan_chan_lut[stm_chan] = 0xff; // clear this channel ID mapping
+        // clear the adc sequence configuration for this channel
+        adc_clear_chan_seq(chan);
+        for (int idx = 0; idx < ADC_CHANNEL_COUNT; idx++) {
+            if (scan_chan_lut[idx] != 0xff && scan_chan_lut[idx] > chan) {
+                // We found allocated channel with ID higher than the current one.
+                // Clear the ADC sequence mapping
+                adc_clear_chan_seq(scan_chan_lut[idx]);
+                // Recalculate the new ID
+                scan_chan_lut[idx]--;
+                // Assign new sequence mapping
+                adc_set_chan_seq(scan_chan_lut[idx], idx);
+            }
+        }
+        // Make the last ID available
+        scan_count_next--;
     }
 }
 
@@ -377,8 +423,7 @@ void ADC::interrupt_state(PinName pin, int state) {
      }    
 }
 
-void ADC::adcisr(void)
-{
+void ADC::adcisr(void) {
     // dr read clears eoc bit
     // must read data before checking overflow bit
     uint16_t data = STM_ADC->DR; // to be sure we are valid
@@ -389,7 +434,7 @@ void ADC::adcisr(void)
 
         // overrun will abort scan sequence, next start will resume from beginning
         scan_index = 0;
-        __debugbreak();
+        //__debugbreak();
     } else {
         // don't clear EOC flag, it could have popped after we read dr, and dr may have new valid data
         if (_adc_g_isr != NULL && (interrupt_mask & (1 << scan_index)))
@@ -404,15 +449,15 @@ void ADC::adcisr(void)
 
 //Callback for attaching to slowticker as scan start timer 
 uint32_t ADC::on_tick(uint32_t dummy) {
-    // previous conversion still running
-    if (STM_ADC->SR & ADC_SR_STRT)
+    // previous conversion still running or there are no active channels
+    if ((STM_ADC->SR & ADC_SR_STRT) != 0 || scan_count_next == 0)
         return dummy;
 
     // synchronize scan_count_active used by isr and scan_count_next while adding channels
     if (scan_count_active != scan_count_next) {
         scan_count_active = scan_count_next;
 
-        // increase scan count
+        // set scan count
         STM_ADC->SQR1 = (STM_ADC->SQR1 & (~ADC_SQR1_L)) | ((scan_count_active-1) << 20);
     }
     STM_ADC->CR2 |= ADC_CR2_SWSTART;
@@ -422,8 +467,7 @@ uint32_t ADC::on_tick(uint32_t dummy) {
 
 #endif // __STM32F4__
 
-void ADC::_adcisr(void)
-{
+void ADC::_adcisr(void) {
     instance->adcisr();
 }
 
