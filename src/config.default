@@ -92,23 +92,23 @@ extruder.hotend1.z_offset                        0                # z offset fro
 
 # Stepper module pins ( ports, and pin numbers, appending "!" to the number will invert a pin )
 alpha_step_pin                                    a.4             # Pin for alpha stepper step signal
-alpha_dir_pin                                     c.4!            # Pin for alpha stepper direction
+alpha_dir_pin                                     c.4             # Pin for alpha stepper direction
 alpha_en_pin                                      a.5             # Pin for alpha enable pin
 
 beta_step_pin                                     c.5             # Pin for beta stepper step signal
-beta_dir_pin                                      b.12            # Pin for beta stepper direction
+beta_dir_pin                                      b.12!           # Pin for beta stepper direction
 beta_en_pin                                       a.5             # Pin for beta enable
 
 gamma_step_pin                                    b.13            # Pin for gamma stepper step signal
-gamma_dir_pin                                     b.15            # Pin for gamma stepper direction
+gamma_dir_pin                                     b.15!           # Pin for gamma stepper direction
 gamma_en_pin                                      a.5             # Pin for gamma enable
 
 extruder.hotend0.step_pin                         c.7             # Pin for extruder step signal
-extruder.hotend0.dir_pin                          c.8             # Pin for extruder dir signal
+extruder.hotend0.dir_pin                          c.8!            # Pin for extruder dir signal
 extruder.hotend0.en_pin                           a.5             # Pin for extruder enable signal
 
 extruder.hotend1.step_pin                         c.9             # Pin for extruder step signal
-extruder.hotend1.dir_pin                          a.9             # Pin for extruder dir signal
+extruder.hotend1.dir_pin                          a.9!            # Pin for extruder dir signal
 extruder.hotend1.en_pin                           a.5             # Pin for extruder enable signal
 
 ## Motor driver configuration
@@ -146,7 +146,7 @@ motor_driver_control.delta.enable                 true            # Enable motor
 motor_driver_control.delta.axis                   A               # Axis designator on which the motor driver is set 
 motor_driver_control.delta.chip                   TMC2130         # Motor driver chip type
 motor_driver_control.delta.spi_channel            0               # Set corresponding pins of the selected spi channel
-motor_driver_control.delta.spi_cs_pin             b.3             # Set chip select pin
+motor_driver_control.delta.spi_cs_pin             b.8             # Set chip select pin
 motor_driver_control.delta.current                400             # Motor currents in mA
 motor_driver_control.delta.sense_resistor         150             # Sensing resistor value as a reference in milliohms
 motor_driver_control.delta.microsteps             16              # Set microstepping value per step pulse. It can be 1, 2, 4, 8, 16, 32, 64, 128 or 256 microsteps
@@ -156,7 +156,7 @@ motor_driver_control.epsilon.enable               true            # Enable motor
 motor_driver_control.epsilon.axis                 B               # Axis designator on which the motor driver is set 
 motor_driver_control.epsilon.chip                 TMC2130         # Motor driver chip type
 motor_driver_control.epsilon.spi_channel          0               # Set corresponding pins of the selected spi channel
-motor_driver_control.epsilon.spi_cs_pin           b.1             # Set chip select pin
+motor_driver_control.epsilon.spi_cs_pin           b.9             # Set chip select pin
 motor_driver_control.epsilon.current              400             # Motor currents in mA
 motor_driver_control.epsilon.sense_resistor       150             # Sensing resistor value as a reference in milliohms
 motor_driver_control.epsilon.microsteps           16              # Set microstepping value per step pulse. It can be 1, 2, 4, 8, 16, 32, 64, 128 or 256 microsteps
@@ -182,9 +182,9 @@ temperature_control.hotend0.designator            T0              #
 #temperature_control.hotend0.max_temp             300             # Set maximum temperature - Will prevent heating above 300 by default
 #temperature_control.hotend0.min_temp             0               # Set minimum temperature - Will prevent heating below 0 by default
 
-temperature_control.hotend0.p_factor              21.5            #
-temperature_control.hotend0.i_factor              0.975           #
-temperature_control.hotend0.d_factor              119             #
+temperature_control.hotend0.p_factor              73.0            #
+temperature_control.hotend0.i_factor              8.388           #
+temperature_control.hotend0.d_factor              159             #
 
 # Heater 1
 temperature_control.hotend1.enable                true            # Whether to activate this ( "hotend" ) module at all. All configuration is ignored if false.
@@ -203,9 +203,9 @@ temperature_control.hotend1.designator            T1              #
 #temperature_control.hotend1.max_temp             300             # Set maximum temperature - Will prevent heating above 300 by default
 #temperature_control.hotend1.min_temp             0               # Set minimum temperature - Will prevent heating below 0 by default
 
-temperature_control.hotend1.p_factor              21.5            #
-temperature_control.hotend1.i_factor              0.975           #
-temperature_control.hotend1.d_factor              119             #
+temperature_control.hotend1.p_factor              54.9            #
+temperature_control.hotend1.i_factor              5.282           #
+temperature_control.hotend1.d_factor              143             #
 
 # Heater Bed
 temperature_control.bed.enable                    true            # Whether to activate this ( "hotend" ) module at all. All configuration is ignored if false.
@@ -218,9 +218,9 @@ temperature_control.bed.set_m_code                140             #
 temperature_control.bed.set_and_wait_m_code       190             #
 temperature_control.bed.designator                B               #
 
-temperature_control.bed.p_factor                  21.5            #
-temperature_control.bed.i_factor                  0.975           #
-temperature_control.bed.d_factor                  119             #
+temperature_control.bed.p_factor                  271.8           #
+temperature_control.bed.i_factor                  35.068          #
+temperature_control.bed.d_factor                  527             #
 
 # Switch modules for fan control
 
