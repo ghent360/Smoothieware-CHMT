@@ -42,7 +42,7 @@ Watchdog::Watchdog(uint32_t timeout, WDT_ACTION action)
 
     __HAL_RCC_WWDG_CLK_ENABLE();
 
-    HAL_WWDG_Init(&m_wdt_handle);
+    //HAL_WWDG_Init(&m_wdt_handle);
     feed();
     if(action == WDT_MRI) {
         // enable the interrupt
