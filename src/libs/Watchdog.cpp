@@ -38,7 +38,7 @@ Watchdog::Watchdog(uint32_t timeout, WDT_ACTION action)
     m_wdt_handle.Init.Prescaler   = WWDG_CFR_WDGTB; // prescale /8
     m_wdt_handle.Init.Window      = WWDG_CFR_W; // load max values, still timeout ~ 100ms
     m_wdt_handle.Init.Counter     = WWDG_CR_T;  // TODO rewrite to use IWDG for longer timeouts
-    //m_wdt_handle.Init.EWIMode     = (action == WDT_MRI) ? WWDG_CFR_EWI : 0;   
+    m_wdt_handle.Init.EWIMode     = (action == WDT_MRI) ? WWDG_CFR_EWI : 0;   
 
     __HAL_RCC_WWDG_CLK_ENABLE();
 
