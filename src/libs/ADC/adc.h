@@ -17,6 +17,7 @@
 #endif
 
 namespace mbed {
+
 class ADC {
 public:
 
@@ -58,14 +59,17 @@ private:
     //Callback for attaching to slowticker as scan start timer 
     uint32_t on_tick(uint32_t dummy);
 
-    uint8_t attached;
+    bool attached;
     uint8_t scan_chan_lut[ADC_CHANNEL_COUNT];
-    uint8_t scan_count_active;
     uint8_t scan_count_next;
-    uint8_t scan_index;
     uint32_t interrupt_mask;
+    bool active;
+    bool paused;
+    uint8_t skipped_ticks;
+    uint16_t adc_data[ADC_CHANNEL_COUNT];
 #endif
 };
-}
+
+} /* namespace mbed */
 
 #endif

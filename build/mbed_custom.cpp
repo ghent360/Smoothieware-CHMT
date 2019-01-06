@@ -40,7 +40,6 @@ extern "C" unsigned int __end__;
 extern "C" int  main(void);
 #ifdef __STM32F4__
 extern "C" void mbed_sdk_init(void);
-extern "C" void SetSysClock();
 #endif
 extern "C" void __libc_init_array(void);
 // extern "C" void exit(int ErrorCode);

@@ -143,6 +143,8 @@ Kernel::Kernel()
     
 #ifdef __STM32F4__
     NVIC_SetPriority(WWDG_IRQn, 1);
+    // ADC DMA stream
+    NVIC_SetPriority(DMA2_Stream0_IRQn, 5);
 #endif
     // Set other priorities lower than the timers
     NVIC_SetPriority(ADC_IRQn, 5);
