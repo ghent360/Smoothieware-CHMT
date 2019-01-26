@@ -17,7 +17,7 @@
 
 // define how many bits of extra resolution required
 // 2 bits means the 12bit ADC is 14 bits of resolution
-#define OVERSAMPLE 2
+//#define OVERSAMPLE 2
 
 class Adc
 {
