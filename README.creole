@@ -6,7 +6,7 @@ https://github.com/mattthebaker/Smoothieware-CHMT
 
 ==STM32/CHMT Notes
 
-To build, follow normal smoothie build process to get setup.  Then checkout chmt branch and rebuild.
+To build, follow normal smoothie build process to get setup.  Then checkout stm32f4-v4 branch and rebuild.
 
 ===Port Status:
 * mbed hooks - Added, compiles, tested
