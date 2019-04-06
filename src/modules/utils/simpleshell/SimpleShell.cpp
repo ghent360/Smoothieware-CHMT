@@ -684,12 +684,16 @@ void SimpleShell::version_command( string parameters, StreamOutput *stream)
     stream->printf("  NOMSD Build\r\n");
     #endif
     stream->printf("%d axis\n", MAX_ROBOT_ACTUATORS);
+#ifndef __STM32F4__
     if(!(dev & 0x00100000)) {
         stream->printf("WARNING: This is not a sanctioned board and may be unreliable and even dangerous.\nThis MCU is deprecated, and cannot guarantee proper function\n");
         THEKERNEL->set_bad_mcu(true);
     }else{
         THEKERNEL->set_bad_mcu(false);
     }
+#else
+    THEKERNEL->set_bad_mcu(false);
+#endif    
 }
 
 // Reset the system
