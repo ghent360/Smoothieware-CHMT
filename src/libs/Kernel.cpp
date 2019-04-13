@@ -142,9 +142,6 @@ Kernel::Kernel()
     // TODO : These should go into platform-specific files
     // LPC17xx-specific
     NVIC_SetPriorityGrouping(0);
-    //NVIC_SetPriority(TIM7_IRQn, 2); // 0
-    //NVIC_SetPriority(TIM8_TRG_COM_TIM14_IRQn, 1); // 1
-    //NVIC_SetPriority(TIM6_DAC_IRQn, 4); // 2
     NVIC_SetPriority(TIMER0_IRQn, 2);
     NVIC_SetPriority(TIMER1_IRQn, 1);
     NVIC_SetPriority(TIMER2_IRQn, 4);
