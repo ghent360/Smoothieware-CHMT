@@ -120,6 +120,7 @@ INCLUDE_DIRS+=$(VENDOR_CAPI_DEVICE_SRC)
 INCLUDE_DIRS+=$(VENDOR_CMSIS_SRC)
 ifeq "$(VENDOR)" "STM"
 INCLUDE_DIRS+=$(VENDOR_HAL_SRC)
+INCLUDE_DIRS+=$(VENDOR_CAPI_SRC)
 endif
 
 # Optimization levels to be used for Debug and Release versions of the library.
@@ -138,7 +139,7 @@ C_FLAGS+=-ffunction-sections -fdata-sections -fno-exceptions -fno-delete-null-po
 C_FLAGS+=-Wall -Wextra
 C_FLAGS+=-Wno-unused-parameter -Wcast-align -Wpointer-arith -Wredundant-decls -Wcast-qual -Wcast-align
 C_FLAGS+=$(patsubst %,-I%,$(INCLUDE_DIRS))
-C_FLAGS+=-DTARGET_$(DEVICE) -DTOOLCHAIN_GCC_ARM
+C_FLAGS+=-DTARGET_$(DEVICE) -DVENDOR_$(VENDOR) -DTOOLCHAIN_GCC_ARM
 C_FLAGS+=$(DEP_FLAGS)
 
 CPP_FLAGS:=$(C_FLAGS) -fno-rtti

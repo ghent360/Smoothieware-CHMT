@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "mbed_toolchain.h": "c"
+        "mbed_toolchain.h": "c",
+        "us_ticker_api.h": "c"
     }
 }

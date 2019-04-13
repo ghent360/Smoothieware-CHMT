@@ -16,7 +16,13 @@
 #ifndef MBED_TIMEREVENT_H
 #define MBED_TIMEREVENT_H
 
+#ifdef VENDOR_STM
+#include "ticker_api.h"
+extern "C" uint32_t us_ticker_read();
+extern "C" const ticker_data_t* get_us_ticker_data(void);
+#else
 #include "us_ticker_api.h"
+#endif
 
 namespace mbed {
 
@@ -25,7 +31,6 @@ namespace mbed {
 class TimerEvent {
 public:
     TimerEvent();
-
     /** The handler registered with the underlying timer interrupt
      */
     static void irq(uint32_t id);
@@ -35,6 +40,9 @@ public:
     virtual ~TimerEvent();
 
 protected:
+#ifdef VENDOR_STM
+    TimerEvent(const ticker_data_t *data);
+#endif
     // The handler called to service the timer event of the derived class
     virtual void handler() = 0;
 
@@ -45,6 +53,9 @@ protected:
     void remove();
 
     ticker_event_t event;
+#ifdef VENDOR_STM    
+    const ticker_data_t *_ticker_data;
+#endif
 };
 
 } // namespace mbed

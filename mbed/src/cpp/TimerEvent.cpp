@@ -20,17 +20,25 @@
 
 namespace mbed {
 
+#ifdef VENDOR_STM
+TimerEvent::TimerEvent() : event(), _ticker_data(get_us_ticker_data()) {
+    ticker_set_handler(_ticker_data, (&TimerEvent::irq));
+}
+
+TimerEvent::TimerEvent(const ticker_data_t *data) : event(), _ticker_data(data) {
+    ticker_set_handler(_ticker_data, (&TimerEvent::irq));
+}
+ 
+void TimerEvent::insert(unsigned int timestamp) {
+    ticker_insert_event(_ticker_data, &event, timestamp, (uint32_t)this);
+}
+
+void TimerEvent::remove() {
+    ticker_remove_event(_ticker_data, &event);
+}
+#else
 TimerEvent::TimerEvent() {
     us_ticker_set_handler((&TimerEvent::irq));
-}
-
-void TimerEvent::irq(uint32_t id) {
-    TimerEvent *timer_event = (TimerEvent*)id;
-    timer_event->handler();
-}
-
-TimerEvent::~TimerEvent() {
-    remove();
 }
 
 // insert in to linked list
@@ -40,6 +48,16 @@ void TimerEvent::insert(unsigned int timestamp) {
 
 void TimerEvent::remove() {
     us_ticker_remove_event(&event);
+}
+#endif
+
+void TimerEvent::irq(uint32_t id) {
+    TimerEvent *timer_event = (TimerEvent*)id;
+    timer_event->handler();
+} 
+
+TimerEvent::~TimerEvent() {
+    remove();
 }
 
 } // namespace mbed
