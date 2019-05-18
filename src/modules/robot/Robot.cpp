@@ -100,6 +100,9 @@
 
 #define PI 3.14159265358979323846F // force to be float, do not use M_PI
 
+//#define DEBUG_PRINTF THEKERNEL->streams->printf
+#define DEBUG_PRINTF(...)
+
 // The Robot converts GCodes into actual movements, and then adds them to the Planner, which passes them to the Conveyor so they can be added to the queue
 // It takes care of cutting arcs into segments, same thing for line that are too long
 
@@ -1042,8 +1045,7 @@ void Robot::process_move(Gcode *gcode, enum MOTION_MODE_T motion_mode)
         }
     }
 
-    // process ABC axis, this is mutually exclusive to using E for an extruder, so if E is used and A
-    // then the results are undefined
+    // process ABC axis, this is mutually exclusive to using E for an extruder, so if E is used and A then the results are undefined
     for (int i = A_AXIS; i < n_motors; ++i) {
         char letter= 'A'+i-A_AXIS;
         if(gcode->has_letter(letter)) {
@@ -1246,7 +1248,7 @@ bool Robot::append_milestone(const float target[], float rate_mm_s)
     // find distance moved by each axis, use transformed target from the current compensated machine position
     for (size_t i = 0; i < n_motors; i++) {
         deltas[i] = transformed_target[i] - compensated_machine_position[i];
-        if(deltas[i] == 0) continue;
+        if(fabsf(deltas[i]) < 0.00001F) continue;
         // at least one non zero delta
         move = true;
         if(i < N_PRIMARY_AXIS) {
@@ -1260,7 +1262,7 @@ bool Robot::append_milestone(const float target[], float rate_mm_s)
     // see if this is a primary axis move or not
     bool auxilliary_move= true;
     for (int i = 0; i < N_PRIMARY_AXIS; ++i) {
-        if(deltas[i] != 0) {
+        if(fabsf(deltas[i]) >= 0.00001F) {
             auxilliary_move= false;
             break;
         }
@@ -1323,48 +1325,39 @@ bool Robot::append_milestone(const float target[], float rate_mm_s)
     }
     if(auxilliary_move) {
         distance= sqrtf(sos); // distance in mm of the e move
-        if(distance < 0.00001F) return false; // avoid divide by zero furter on
+        if(distance < 0.00001F) return false;
     }
 #endif
+
+    DEBUG_PRINTF("distance: %f, aux_move: %d\n", distance, auxilliary_move);
 
     // use default acceleration to start with
     float acceleration = default_acceleration;
 
-    // this is the time it should take to execute this cartesian move, it is approximate
-    // as it does not take into account accel/decel
-    float secs = distance / rate_mm_s;
+    float isecs = rate_mm_s / distance;
 
-    // check per-actuator speed limits by looking at the minimum time each axis can move its specified amount
-    // this is regardless of whether it is mm/sec or deg/sec for a rotary axis
+    // check per-actuator speed limits
     for (size_t actuator = 0; actuator < n_motors; actuator++) {
-        // actual distance moved for this actuator
-        // NOTE for a rotary axis this will be degrees turned not distance
         float d = fabsf(actuator_pos[actuator] - actuators[actuator]->get_last_milestone());
-        if(d == 0 || !actuators[actuator]->is_selected()) continue; // no movement for this actuator
+        if(d < 0.00001F || !actuators[actuator]->is_selected()) continue; // no realistic movement for this actuator
 
-        // find approximate min time this axis needs to move its distance
-        float actuator_min_time= d / actuators[actuator]->get_max_rate();
-        if (secs < actuator_min_time ) {
-            // this move at the default rate will move too quickly for this actuator
-            // so we decrease the overall feed rate so it can complete within the min time for this actuator
-            rate_mm_s= distance / actuator_min_time;
-            // recalculate time from new rate
-            secs = distance / rate_mm_s;
+        float actuator_rate= d * isecs;
+        if (actuator_rate > actuators[actuator]->get_max_rate()) {
+            rate_mm_s *= (actuators[actuator]->get_max_rate() / actuator_rate);
+            isecs = rate_mm_s / distance;
+            DEBUG_PRINTF("new rate: %f - %d\n", rate_mm_s, actuator);
         }
 
-        // we cannot handle acceleration for non linear (ie rotary) actuators the same way
-        // if limiting acceleration for a rotary axis is needed then issue it as a solo move
-        if(actuator >= N_PRIMARY_AXIS && !(auxilliary_move || actuators[actuator]->is_extruder())) continue;
+        DEBUG_PRINTF("act: %d, d: %f, distance: %f, actrate: %f, rate: %f, secs: %f, acc: %f\n", actuator, d, distance, actuator_rate, rate_mm_s, 1/isecs, acceleration);
 
-        // adjust acceleration to not exceed the actuators acceleration, based on the ratio it
-        // presents for the overall move (NOTE this may be incorrect)
+        // adjust acceleration to lowest found, for all actuators as this also corrects
+        // the math for a tiny X move and large A move
         float ma =  actuators[actuator]->get_acceleration(); // in mm/sec²
         if(!isnan(ma)) {  // if axis does not have acceleration set then it uses the default_acceleration
-            // this is the proportion of the total move scaling the acceleration
-            float ca = fabsf((d/distance) * acceleration);
-            // if it exceeds the axis acceleration then we reduce the acceleration by the ratio it is over
+            float ca = (d/distance) * acceleration;
             if (ca > ma) {
                 acceleration *= ( ma / ca );
+                DEBUG_PRINTF("new acceleration: %f\n", acceleration);
             }
         }
     }
@@ -1438,7 +1431,7 @@ bool Robot::append_line(Gcode *gcode, const float target[], float rate_mm_s, flo
 
     /*
         For extruders, we need to do some extra work to limit the volumetric rate if specified...
-        If using volumetric limits we need to be using volumetric extrusion for this to work as Ennn needs to be in mm³ not mm
+        If using volumetric limts we need to be using volumetric extrusion for this to work as Ennn needs to be in mm³ not mm
         We ask Extruder to do all the work but we need to pass in the relevant data.
         NOTE we need to do this before we segment the line (for deltas)
     */
