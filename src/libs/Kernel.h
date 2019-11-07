@@ -54,8 +54,6 @@ class Kernel {
         void set_feed_hold(bool f) { feed_hold= f; }
         bool get_feed_hold() const { return feed_hold; }
         bool is_feed_hold_enabled() const { return enable_feed_hold; }
-        void set_bad_mcu(bool b) { bad_mcu= b; }
-        bool is_bad_mcu() const { return bad_mcu; }
 
         std::string get_query_string();
 
@@ -86,7 +84,6 @@ class Kernel {
             bool feed_hold:1;
             bool ok_per_line:1;
             bool enable_feed_hold:1;
-            bool bad_mcu:1;
         };
 
 };
