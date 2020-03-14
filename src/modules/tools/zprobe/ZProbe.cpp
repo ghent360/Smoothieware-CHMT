@@ -382,7 +382,7 @@ void ZProbe::on_gcode_received(void *argument)
                     this->slow_feedrate, this->fast_feedrate, this->return_feedrate, this->max_z, this->probe_height, this->dwell_before_probing);
 
                 // fall through is intended so leveling strategies can handle m-codes too
-
+                [[gnu::fallthrough]];
             default:
                 for(auto s : strategies){
                     if(s->handleGcode(gcode)) {

@@ -44,7 +44,7 @@ uint32_t pinmap_merge(uint32_t a, uint32_t b) {
 }
 
 uint32_t pinmap_peripheral(PinName pin, const PinMap* map) {
-    if (pin == (uint32_t)NC)
+    if (pin == (PinName)NC)
         return (uint32_t)NC;
 
     while (map->pin != NC) {
@@ -59,7 +59,7 @@ uint32_t pinmap_peripheral(PinName pin, const PinMap* map) {
 }
 
 uint32_t pinmap_function(PinName pin, const PinMap* map) {
-    if (pin == (uint32_t)NC)
+    if (pin == (PinName)NC)
         return (uint32_t)NC;
 
     while (map->pin != NC) {

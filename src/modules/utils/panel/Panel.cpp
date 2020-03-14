@@ -671,7 +671,7 @@ void  Panel::set_playing_file(string f)
     // just copy the first 20 characters after the first / if there
     size_t n = f.find_last_of('/');
     if (n == string::npos) n = 0;
-    strncpy(playing_file, f.substr(n + 1, 19).c_str(), sizeof(playing_file));
+    strncpy(playing_file, f.substr(n + 1, 19).c_str(), sizeof(playing_file) - 1);
     playing_file[sizeof(playing_file) - 1] = 0;
 }
 

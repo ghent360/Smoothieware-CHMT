@@ -136,7 +136,9 @@ extern GPIO leds[];
 #endif
 void SlowTicker::on_idle(void*)
 {
+#ifndef DISABLELEDS
     static uint16_t ledcnt= 0;
+#endif
     if(THEKERNEL->is_using_leds()) {
 #ifndef DISABLELEDS
         // flash led 3 to show we are alive

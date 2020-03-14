@@ -289,7 +289,9 @@ int main()
 {
     init();
 
+#ifndef DISABLELEDS
     uint16_t cnt= 0;
+#endif    
     // Main loop
     while(1){
 #ifndef DISABLELEDS

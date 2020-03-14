@@ -214,15 +214,14 @@ void SCARAcal::on_gcode_received(void *argument)
                 if(gcode->has_letter('P')) {
                     // Program the current position as target
                     ActuatorCoordinates actuators;
-                    float S_delta[2],
-                          S_trim[3];
+                    float S_delta;
 
                     THEROBOT->get_axis_position(cartesian);    // get actual position from robot
                     THEROBOT->arm_solution->cartesian_to_actuator( cartesian, actuators );      // translate to get actuator position
 
-                    S_delta[0] = actuators[0] - target[0];
+                    S_delta = actuators[0] - target[0];
 
-                    set_trim(S_delta[0], S_trim[1], S_trim[2], gcode->stream);
+                    set_trim(S_delta, S_trim[1], S_trim[2], gcode->stream);
                 } else {
                     set_trim(0, S_trim[1], S_trim[2], gcode->stream);               // reset trim for calibration move
                     this->home();                                                   // home
