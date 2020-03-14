@@ -554,7 +554,8 @@ int ethernet_write(const char *data, int slen) {
    return ncopy;
 
 #else
-    void       *pdst, *psrc;
+    void       *pdst;
+    const void *psrc;
     const int   dlen = ETH_FRAG_SIZE;
     int         copy = 0;
     int         soff = 0;
@@ -570,7 +571,7 @@ int ethernet_write(const char *data, int slen) {
     do {
         copy = min(slen - soff, dlen - send_doff);
         pdst = (void *)(txdesc[send_idx].Packet + send_doff);
-        psrc = (void *)(data + soff);
+        psrc = (const void *)(data + soff);
         if(send_doff + copy > ETH_FRAG_SIZE) {
             txdesc[send_idx].Ctrl = (send_doff-1) | (TCTRL_INT);
             send_idx = rinc(send_idx, NUM_TX_FRAG);
@@ -678,7 +679,7 @@ int ethernet_receive() {
     if(receive_idx == -1) {
       receive_idx = LPC_EMAC->RxConsumeIndex;
     } else {
-        while(!(rxstat[receive_idx].Info & RINFO_LAST_FLAG) && (receive_idx != LPC_EMAC->RxProduceIndex)) {
+        while(!(rxstat[receive_idx].Info & RINFO_LAST_FLAG) && ((uint32_t)receive_idx != LPC_EMAC->RxProduceIndex)) {
             receive_idx  = rinc(receive_idx, NUM_RX_FRAG);
         }
         unsigned int info =   rxstat[receive_idx].Info;
@@ -694,7 +695,7 @@ int ethernet_receive() {
         LPC_EMAC->RxConsumeIndex = receive_idx;
     }
 
-    if(receive_idx == LPC_EMAC->RxProduceIndex) {
+    if((uint32_t)receive_idx == LPC_EMAC->RxProduceIndex) {
         receive_idx = -1;
         return 0;
     }
@@ -743,7 +744,7 @@ int ethernet_read(char *data, int dlen) {
     void        *pdst, *psrc;
     int          doff = 0;
 
-    if(receive_idx == LPC_EMAC->RxProduceIndex || receive_idx == -1) {
+    if(receive_idx == -1 || (uint32_t)receive_idx == LPC_EMAC->RxProduceIndex) {
         return 0;
     }
 
