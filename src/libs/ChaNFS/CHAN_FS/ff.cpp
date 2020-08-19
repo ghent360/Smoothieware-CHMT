@@ -825,8 +825,8 @@ DWORD get_fat (    /* 0xFFFFFFFF:Disk error, 1:Internal error, Else:Cluster stat
     if (clst < 2 || clst >= fs->n_fatent)    /* Chack range */
         return 1;
 
-    switch (fs->fs_type) {
-    case FS_FAT12 :
+        switch (fs->fs_type) {
+        case FS_FAT12 :
         bc = (UINT)clst; bc += bc / 2;
         if (move_window(fs, fs->fatbase + (bc / SS(fs)))) break;
         wc = fs->win[bc % SS(fs)]; bc++;
@@ -834,12 +834,12 @@ DWORD get_fat (    /* 0xFFFFFFFF:Disk error, 1:Internal error, Else:Cluster stat
         wc |= fs->win[bc % SS(fs)] << 8;
         return (clst & 1) ? (wc >> 4) : (wc & 0xFFF);
 
-    case FS_FAT16 :
+        case FS_FAT16 :
         if (move_window(fs, fs->fatbase + (clst / (SS(fs) / 2)))) break;
         p = &fs->win[clst * 2 % SS(fs)];
         return LD_WORD(p);
 
-    case FS_FAT32 :
+        case FS_FAT32 :
         if (move_window(fs, fs->fatbase + (clst / (SS(fs) / 4)))) break;
         p = &fs->win[clst * 4 % SS(fs)];
         return LD_DWORD(p) & 0x0FFFFFFF;
@@ -1839,7 +1839,6 @@ void get_fileinfo (        /* No return code */
     BYTE nt, *dir;
     TCHAR *p, c;
     p = fno->fname;
-    
     if (dj->sect) {
         dir = dj->dir;
         nt = dir[DIR_NTres];        /* NT flag */
@@ -2464,6 +2463,7 @@ FRESULT f_read (
 
 
 #if !_FS_READONLY
+#pragma GCC diagnostic ignored "-Wcast-qual"
 /*-----------------------------------------------------------------------*/
 /* Write File                                                            */
 /*-----------------------------------------------------------------------*/
