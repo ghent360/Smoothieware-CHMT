@@ -1298,8 +1298,23 @@ void SimpleShell::jog(string parameters, StreamOutput *stream)
         return;
     }
 
+    bool cont_mode= false;
     while(!parameters.empty()) {
         string p= shift_parameter(parameters);
+
+        if(p.size() == 2 && p[0] == '-') {
+            // process option
+            switch(toupper(p[1])) {
+                case 'C':
+                    cont_mode= true;
+                    break;
+                default:
+                    stream->printf("error:illegal option %c\n", p[1]);
+                    return;
+            }
+            continue;
+        }
+
 
         char ax= toupper(p[0]);
         if(ax == 'S') {
@@ -1341,10 +1356,42 @@ void SimpleShell::jog(string parameters, StreamOutput *stream)
     }
 
     //stream->printf("F%f\n", rate_mm_s*scale);
+    THEKERNEL->set_stop_request(false);
+    if(cont_mode) {
+        // continuous jog mode
+        float fr= rate_mm_s*scale;
+        // calculate minimum distance to travel to accomodate acceleration and feedrate
+        float acc= THEROBOT->get_default_acceleration();
+        float t= fr/acc; // time to reach frame rate
+        float d= 0.5F * acc * powf(t, 2); // distance required to accelerate (or decelerate)
 
-    THEROBOT->delta_move(delta, rate_mm_s*scale, n_motors);
-    // turn off queue delay and run it now
-    THECONVEYOR->force_queue();
+        // we need to move at least this distance to reach full speed
+        for (int i = 0; i < n_motors; ++i) {
+            if(delta[i] != 0) {
+                delta[i]= d * (delta[i]<0?-1:1);
+            }
+        }
+
+        // feed moves into planner until full then keep it topped up
+        while(!THEKERNEL->get_stop_request()) {
+            while(!THECONVEYOR->is_queue_full()) {
+                if(THEKERNEL->get_stop_request() || THEKERNEL->is_halted()) break;
+                THEROBOT->delta_move(delta, fr, n_motors);
+            }
+            if(THEKERNEL->is_halted()) break;
+            THEKERNEL->call_event(ON_IDLE);
+        }
+        // fast foward all blocks but the last which is a deceleration block
+        THECONVEYOR->set_controlled_stop(true);
+        THECONVEYOR->wait_for_idle();
+        THEKERNEL->set_stop_request(false);
+        THECONVEYOR->set_controlled_stop(false);
+
+    }else{
+        THEROBOT->delta_move(delta, rate_mm_s*scale, n_motors);
+        // turn off queue delay and run it now
+        THECONVEYOR->force_queue();
+    }
 }
 
 void SimpleShell::help_command( string parameters, StreamOutput *stream )
