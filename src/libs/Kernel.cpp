@@ -41,8 +41,6 @@
 #include <string>
 
 #define laser_checksum CHECKSUM("laser")
-#define baud_rate_setting_checksum CHECKSUM("baud_rate")
-#define uart0_checksum             CHECKSUM("uart0")
 
 #define base_stepping_frequency_checksum            CHECKSUM("base_stepping_frequency")
 #define microseconds_per_step_pulse_checksum        CHECKSUM("microseconds_per_step_pulse")
@@ -65,7 +63,8 @@ Kernel::Kernel()
 
     // serial first at fixed baud rate (DEFAULT_SERIAL_BAUD_RATE) so config can report errors to serial
     // Set to UART0, this will be changed to use the same UART as MRI if it's enabled
-    this->serial = new SerialConsole(USBTX, USBRX, DEFAULT_SERIAL_BAUD_RATE);
+    this->serial = new SerialConsole(0);
+    this->serial->init_uart(DEFAULT_SERIAL_BAUD_RATE);
 
     // Config next, but does not load cache yet
     this->config = new Config();
@@ -88,22 +87,22 @@ Kernel::Kernel()
 #if MRI_ENABLE != 0
     switch( __mriPlatform_CommUartIndex() ) {
         case 0:
-            this->serial = new(AHB0) SerialConsole(SERIAL0_TX, SERIAL0_RX, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
+            this->serial = new(AHB0) SerialConsole(0);
             break;
         case 1:
-            this->serial = new(AHB0) SerialConsole(SERIAL1_TX, SERIAL1_RX, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
+            this->serial = new(AHB0) SerialConsole(1);
             break;
         case 2:
-            this->serial = new(AHB0) SerialConsole(SERIAL2_TX, SERIAL2_RX, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
+            this->serial = new(AHB0) SerialConsole(2);
             break;
         case 3:
-            this->serial = new(AHB0) SerialConsole(SERIAL3_TX, SERIAL3_TX, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
+            this->serial = new(AHB0) SerialConsole(3);
             break;
     }
 #endif
     // default
     if(this->serial == NULL) {
-        this->serial = new(AHB0) SerialConsole(USBTX, USBRX, this->config->value(uart0_checksum, baud_rate_setting_checksum)->by_default(DEFAULT_SERIAL_BAUD_RATE)->as_number());
+        this->serial = new(AHB0) SerialConsole(0);
     }
 
     //some boards don't have leds.. TOO BAD!

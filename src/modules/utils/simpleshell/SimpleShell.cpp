@@ -499,7 +499,11 @@ void SimpleShell::upload_command( string parameters, StreamOutput *stream )
             continue;
         }
 
-        char c = stream->_getc();
+        int c = stream->_getc();
+        if(c == -1) {
+            stream->printf("error reading input, aborting\n");
+            return;
+        }
         if( c == 4 || c == 26) { // ctrl-D or ctrl-Z
             uploading = false;
             // close file
@@ -526,10 +530,15 @@ void SimpleShell::upload_command( string parameters, StreamOutput *stream )
         }
     }
     // we got an error so ignore everything until EOF
-    char c;
+    int c;
     do {
         if(stream->ready()) {
             c= stream->_getc();
+            if(c == -1) {
+                stream->printf("error reading input, aborting\n");
+                return;
+            }
+
         }else{
             THEKERNEL->call_event(ON_IDLE);
             c= 0;
@@ -1356,7 +1365,15 @@ void SimpleShell::jog(string parameters, StreamOutput *stream)
     }
 
     //stream->printf("F%f\n", rate_mm_s*scale);
-    THEKERNEL->set_stop_request(false);
+    // There is a race condition where a quick press/release could send the ^Y before the $J -c is executed
+    // this would result in continuous movement, not a good thing.
+    // so check if stop request is true and abort if it is, this means we must leave stop request false after this
+    if(THEKERNEL->get_stop_request()) {
+        THEKERNEL->set_stop_request(false);
+        stream->printf("ok\n");
+        return;
+    }
+
     if(cont_mode) {
         // continuous jog mode
         float fr= rate_mm_s*scale;
@@ -1372,6 +1389,10 @@ void SimpleShell::jog(string parameters, StreamOutput *stream)
             }
         }
 
+        // turn off any compensation transform so Z does not move as we jog
+        auto savect= THEROBOT->compensationTransform;
+        THEROBOT->reset_compensated_machine_position();
+
         // feed moves into planner until full then keep it topped up
         while(!THEKERNEL->get_stop_request()) {
             while(!THECONVEYOR->is_queue_full()) {
@@ -1386,6 +1407,11 @@ void SimpleShell::jog(string parameters, StreamOutput *stream)
         THECONVEYOR->wait_for_idle();
         THEKERNEL->set_stop_request(false);
         THECONVEYOR->set_controlled_stop(false);
+        // reset the position based on current actuator position
+        THEROBOT->reset_position_from_current_actuator_position();
+        // restore compensationTransform
+        THEROBOT->compensationTransform= savect;
+        stream->printf("ok\n");
 
     }else{
         THEROBOT->delta_move(delta, rate_mm_s*scale, n_motors);
