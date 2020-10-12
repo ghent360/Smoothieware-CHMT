@@ -1,7 +1,4 @@
 
-To use multi-axis and ABC axis
-==============================
-
 **In order to use there should be no extruders defined.**
 This is being tested in CNC mode, it is not currently known to work for extruders.
 
@@ -82,6 +79,11 @@ To upgrade from old master or very old edge to the new motion control firmware
 
 for builds prior to July 1, 2016 you must do the following....
 
+=======
+To upgrade from an old master or old edge to the new motion control firmware
+----------------------------------------------------------------------------
+
+If upgrading from a build prior to July 1, 2016....
 
 The following changes must be made to your config
 
