@@ -274,7 +274,10 @@ try_again:
                                 Version vers;
 
                                 new_message.stream->printf(
-                                    "FIRMWARE_NAME:Smoothieware, FIRMWARE_URL:http%%3A//smoothieware.org, X-SOURCE_CODE_URL:https://github.com/Smoothieware/Smoothieware, FIRMWARE_VERSION:%s, X-FIRMWARE_BUILD_DATE:%s, X-SYSTEM_CLOCK:%ldMHz, X-AXES:%d, X-GRBL_MODE:%d",
+                                    "FIRMWARE_NAME:Smoothieware, FIRMWARE_URL:http%%3A//smoothieware.org, "
+                                    "X-SOURCE_CODE_URL:https://github.com/Smoothieware/Smoothieware, "
+                                    "FIRMWARE_VERSION:%s, PROTOCOL_VERSION:1.0, X-FIRMWARE_BUILD_DATE:%s, "
+                                    "X-SYSTEM_CLOCK:%ldMHz, X-AXES:%d, X-GRBL_MODE:%d, X-ARCS:1",
                                     vers.get_build(),
                                     vers.get_build_date(),
                                     SystemCoreClock / 1000000,
