@@ -1294,7 +1294,7 @@ void SimpleShell::jog(string parameters, StreamOutput *stream)
     // $J is first parameter
     shift_parameter(parameters);
     if(parameters.empty()) {
-        stream->printf("usage: $J X0.01 [S0.5] - axis can be XYZABC, optional speed is scale of max_rate\n");
+        stream->printf("usage: $J [-c] X0.01 [S0.5] - axis can be XYZABC, optional speed is scale of max_rate. -c turns on continuous jog mode\n");
         return;
     }
 
@@ -1347,7 +1347,6 @@ void SimpleShell::jog(string parameters, StreamOutput *stream)
             }else{
                 rate_mm_s = std::min(rate_mm_s, THEROBOT->actuators[i]->get_max_rate());
             }
-            //stream->printf("%d %f S%f\n", i, delta[i], rate_mm_s);
         }
     }
     if(!ok) {
@@ -1355,7 +1354,6 @@ void SimpleShell::jog(string parameters, StreamOutput *stream)
         return;
     }
 
-    //stream->printf("F%f\n", rate_mm_s*scale);
     // There is a race condition where a quick press/release could send the ^Y before the $J -c is executed
     // this would result in continuous movement, not a good thing.
     // so check if stop request is true and abort if it is, this means we must leave stop request false after this
@@ -1370,7 +1368,7 @@ void SimpleShell::jog(string parameters, StreamOutput *stream)
         float fr= rate_mm_s*scale;
         // calculate minimum distance to travel to accomodate acceleration and feedrate
         float acc= THEROBOT->get_default_acceleration();
-        float t= fr/acc; // time to reach frame rate
+        float t= fr/acc; // time to reach feed rate
         float d= 0.5F * acc * powf(t, 2); // distance required to accelerate (or decelerate)
 
         // we need to move at least this distance to reach full speed
@@ -1379,16 +1377,25 @@ void SimpleShell::jog(string parameters, StreamOutput *stream)
                 delta[i]= d * (delta[i]<0?-1:1);
             }
         }
+        // stream->printf("distance: %f, time:%f, X%f Y%f Z%f, speed:%f\n", d, t, delta[0], delta[1], delta[2], fr);
 
         // turn off any compensation transform so Z does not move as we jog
-        auto savect= THEROBOT->compensationTransform;
-        THEROBOT->reset_compensated_machine_position();
+        // auto savect= THEROBOT->compensationTransform;
+        // THEROBOT->reset_compensated_machine_position();
 
         // feed moves into planner until full then keep it topped up
+        // NOTE if feed rate is very high this cannot keep the queue full which
+        // can cause issues when we try to stop (at least on deltas)
+        // Also as it can feed a long move to fill the buffer deltas may get an error for out of bound move
         while(!THEKERNEL->get_stop_request()) {
+            int cnt= 0;
             while(!THECONVEYOR->is_queue_full()) {
                 if(THEKERNEL->get_stop_request() || THEKERNEL->is_halted()) break;
                 THEROBOT->delta_move(delta, fr, n_motors);
+                if(++cnt >= 16) {
+                    THEKERNEL->call_event(ON_IDLE);
+                    cnt= 0;
+                }
             }
             if(THEKERNEL->is_halted()) break;
             THEKERNEL->call_event(ON_IDLE);
@@ -1401,7 +1408,7 @@ void SimpleShell::jog(string parameters, StreamOutput *stream)
         // reset the position based on current actuator position
         THEROBOT->reset_position_from_current_actuator_position();
         // restore compensationTransform
-        THEROBOT->compensationTransform= savect;
+        // THEROBOT->compensationTransform= savect;
         stream->printf("ok\n");
 
     }else{

@@ -194,7 +194,7 @@ bool USBSerial::USBEvent_EPOut(uint8_t bEP, uint8_t bEPStatus)
 
         // handle backspace and delete by deleting the last character in the buffer if there is one
         if(b == 0x08 || b == 0x7F) {
-            if(!rxbuf.isEmpty()) rxbuf.pop();
+            if(!rxbuf.isEmpty()) rxbuf.ipop();
             continue;
         }
 
@@ -235,7 +235,7 @@ bool USBSerial::USBEvent_EPOut(uint8_t bEP, uint8_t bEPStatus)
         last_char_was_cr = (b=='\r');
 
         if (flush_to_nl == false)
-            rxbuf.queue(b);
+            rxbuf.iqueue(b);
 
         // if (b >= 32 && b < 128)
         // {
@@ -247,10 +247,11 @@ bool USBSerial::USBEvent_EPOut(uint8_t bEP, uint8_t bEPStatus)
         // }
 
         if (b == '\n' || b == '\r') {
-            if (flush_to_nl)
+            if (flush_to_nl) {
                 flush_to_nl = false;
-            else
+            }else{
                 nl_in_rx++;
+            }
         } else if (rxbuf.isFull() && (nl_in_rx == 0)) {
             // to avoid a deadlock with very long lines, we must dump the buffer
             // and continue flushing to the next newline
