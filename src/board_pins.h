@@ -7,6 +7,8 @@
 #include "board_pins_prntr_v1.h"
 #elif defined(PRNTR_V1_407)
 #include "board_pins_prntr_v1_407.h"
+#elif defined(PRNTR_V2)
+#include "board_pins_prntr_v1_407.h"
 #else
 #error "Please define board pin file."
 #endif
