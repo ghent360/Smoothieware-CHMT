@@ -620,6 +620,8 @@
  */
 TMC21X::TMC21X(std::function<int(uint8_t *b, int cnt, uint8_t *r)> spi, char d) : spi(spi), designator(d)
 {
+	connection_method = StepstickParameters::SPI;
+    max_current= 2000; //TMC2130 supports upto 2A.
     //we are not started yet
     started = false;
     //by default cool step is not enabled
@@ -635,7 +637,7 @@ void TMC21X::init(uint16_t cs)
 {
     // read chip specific config entries
     this->resistor= THEKERNEL->config->value(motor_driver_control_checksum, cs, sense_resistor_checksum)->by_default(50)->as_number(); // in milliohms
-    this->chopper_mode= THEKERNEL->config->value(motor_driver_control_checksum, cs, chopper_mode_checksum)->by_default(2)->as_number();
+    this->chopper_mode= THEKERNEL->config->value(motor_driver_control_checksum, cs, chopper_mode_checksum)->by_default(0)->as_int();
 
     //setting the default register values
     this->gconf_register_value = ZEROS_DEFAULT_DATA;
@@ -706,10 +708,10 @@ void TMC21X::init(uint16_t cs)
     }
 
     //start with driver disabled
-    setEnabled(false);
+    set_enable(false);
 
     //set a nice microstepping value
-    setMicrosteps(DEFAULT_MICROSTEPPING_VALUE);
+    set_microsteps(DEFAULT_MICROSTEPPING_VALUE);
 }
 
 void TMC21X::setGeneralConfiguration(bool i_scale_analog, bool internal_rsense, bool shaft, bool small_hysteresis)
@@ -838,7 +840,7 @@ void TMC21X::setDiag1options(bool stall, bool index, bool onstate, bool pushpull
  * any value in between will be mapped to the next smaller value
  * 0 and 1 set the motor in full step mode
  */
-void TMC21X::setMicrosteps(int number_of_steps)
+int TMC21X::set_microsteps(int number_of_steps)
 {
     long setting_pattern;
     //poor mans log
@@ -881,12 +883,14 @@ void TMC21X::setMicrosteps(int number_of_steps)
     if (started) {
         send2130(WRITE|CHOPCONF_REGISTER, chopconf_register_value);
     }
+    
+    return microsteps;
 }
 
 /*
  * returns the effective number of microsteps at the moment
  */
-int TMC21X::getMicrosteps(void)
+int TMC21X::get_microsteps(void)
 {
     return microsteps;
 }
@@ -1256,7 +1260,7 @@ void TMC21X::setCoolStepthreshold (uint32_t threshold)
     }
 }
 
-void TMC21X::setCurrent(unsigned int current)
+void TMC21X::set_current(uint16_t current)
 {
     uint8_t current_scaling = 0;
     //calculate the current scaling from the max current setting (in mA)
@@ -1264,22 +1268,23 @@ void TMC21X::setCurrent(unsigned int current)
     double resistor_value = (double) this->resistor;
     // remove vsense flag
     this->chopconf_register_value &= ~(CHOPCONF_VSENSE);
-    //this is derived from I=(CS+1)/32*(Vsense/Rsense)
-    //leading to CS = 32*Rsense*I/Vsense
-    //with I = 1000 mA (default)
-    //with Rsense = 50 milli Ohm (default)
+    //this is derived from I(rms)=(CS+1)/32*(Vsense/Rsense)*1/sqrt(2)
     //for vsense = 0,32V (VSENSE not set)
     //or vsense = 0,18V (VSENSE set)
-    //current_scaling = (uint8_t)(((resistor_value + 20) * mASetting * 32.0F / (0.32F * 1000.0F * 1000.0F)) - 0.5F); //theoretically - 1.0 for better rounding it is 0.5
-    current_scaling = (32.0 * 1.41421 * mASetting / 1000.0) * (resistor_value/1000 + 0.02) / 0.325 - 1;
+    // this is for I(rms) - but we use I(peak) everywhere
+    //current_scaling = (uint8_t)((5.65685F * (resistor_value + 20) * mASetting / 1000.0F) / (125 * 0.32F) - 1);
+    current_scaling = (uint8_t)(((resistor_value + 20) * mASetting * 32.0F / (0.32F * 1000.0F * 1000.0F)) - 0.5F); //theoretically - 1.0 for better rounding it is 0.5
+    //THEKERNEL->streams->printf("Current - %d, Final CS - %d",current, (uint16_t) current_scaling);
     //check if the current scaling is too low
     if (current_scaling < 16) {
         //set the Vsense bit to get a use half the sense voltage (to support lower motor currents)
         this->chopconf_register_value |= CHOPCONF_VSENSE;
         //and recalculate the current setting
-        //current_scaling = (uint8_t)(((resistor_value + 20) * mASetting * 32.0F / (0.18F * 1000.0F * 1000.0F)) - 0.5F); //theoretically - 1.0 for better rounding it is 0.5
-        current_scaling = (32.0 * 1.41421 * mASetting / 1000.0) * (resistor_value/1000 + 0.02) / 0.180 - 1;
+	    // I(rms) calculation
+        //current_scaling = (uint8_t)((5.65685F * (resistor_value + 20) * mASetting / 1000.0F) / (125 * 0.18F) - 1);
+        current_scaling = (uint8_t)(((resistor_value + 20) * mASetting * 32.0F / (0.18F * 1000.0F * 1000.0F)) - 0.5F); //theoretically - 1.0 for better rounding it is 0.5
     }
+
     //do some sanity checks
     if (current_scaling > 31) {
         current_scaling = 31;
@@ -1298,6 +1303,7 @@ void TMC21X::setCurrent(unsigned int current)
 
 void TMC21X::setHoldCurrent(uint8_t hold)
 {
+    //hold current is passed as a percentage of run current. Use the existing current_scale to calcualte new IHOLD value.
     double current_scaling = (double)((ihold_irun_register_value & IHOLD_IRUN_IRUN) >> IHOLD_IRUN_IRUN_SHIFT);
     //delete the old value
     ihold_irun_register_value &= ~(IHOLD_IRUN_IHOLD);
@@ -1313,13 +1319,15 @@ void TMC21X::setResistor(unsigned int value)
     this->resistor = value;
 }
 
-unsigned int TMC21X::getCurrent(void)
+unsigned int TMC21X::get_current(void)
 {
     //we calculate the current according to the datasheet to be on the safe side
     //this is not the fastest but the most accurate and illustrative way
     double result = (double)((ihold_irun_register_value & IHOLD_IRUN_IRUN) >> IHOLD_IRUN_IRUN_SHIFT);
     double resistor_value = (double)this->resistor;
     double voltage = (chopconf_register_value & CHOPCONF_VSENSE) ? 0.18F : 0.32F;
+    // this would return I(rms), but we're working with I(peak)
+    //result = (result + 1.0F) / 32.0F * voltage / ((resistor_value + 20)*0.001F) * 707.10678F;
     result = (result + 1.0F) / 32.0F * voltage / (resistor_value + 20) * 1000.0F * 1000.0F;
     return (unsigned int)result;
 }
@@ -1491,7 +1499,7 @@ unsigned int TMC21X::getCoolstepCurrent(void)
     float result = (float)getCurrentCSReading();
     float resistor_value = (float)this->resistor;
     float voltage = (chopconf_register_value & CHOPCONF_VSENSE) ? 0.18F : 0.32F;
-    result = (result + 1.0F) / 32.0F * voltage / (resistor_value + 20) * 1000.0F * 1000.0F;
+    result = (result + 1.0F) / 32.0F * voltage / ((resistor_value + 20)*0.001F) * 707.10678F;
     return (unsigned int)roundf(result);
 }
 
@@ -1580,7 +1588,7 @@ bool TMC21X::isStallGuardReached(void)
     return (readStatus(TMC21X_READOUT_STALLGUARD_CURRENT) & DRV_STATUS_STALLGUARD);
 }
 
-void TMC21X::setEnabled(bool enabled)
+void TMC21X::set_enable(bool enabled)
 {
     int8_t constant_off_time=this->constant_off_time;
     //perform some sanity checks
@@ -1597,7 +1605,7 @@ void TMC21X::setEnabled(bool enabled)
     chopconf_register_value &= ~(CHOPCONF_TOFF);
     if (enabled) {
         //and set the t_off time
-        chopconf_register_value |= this->constant_off_time << CHOPCONF_TOFF_SHIFT;
+        chopconf_register_value |= this->constant_off_time;
     }
     //if not enabled we don't have to do anything since we already delete t_off from the register
     if (started) {
@@ -1630,109 +1638,108 @@ uint32_t TMC21X::readStatus(int8_t read_value)
     return data;
 }
 
-void TMC21X::dumpStatus(StreamOutput *stream, bool readable)
+void TMC21X::dump_status(StreamOutput *stream)
 {
-    if (readable) {
-        stream->printf("designator %c, Chip type TMC21X\n", designator);
+    uint8_t actu= (designator >= 'X' && designator <= 'Z') ? designator-'X' : designator-'A'+3;
+    
+    stream->printf("designator %c, Chip type TMC21X\n", designator);
 
-        check_error_status_bits(stream);
+    check_error_status_bits(stream);
 
-        if (this->isStallGuardReached()) {
-            stream->printf("INFO: Stall Guard level reached!\n");
-        }
+    if (this->isStallGuardReached()) {
+        stream->printf("INFO: Stall Guard level reached!\n");
+    }
 
-        if (this->isStandStill()) {
-            stream->printf("INFO: Motor is standing still.\n");
-        }
+    if (this->isStandStill()) {
+        stream->printf("INFO: Motor is standing still.\n");
+    }
 
-        int value = readStatus(TMC21X_READOUT_MICROSTEP);
-        stream->printf("Microstep position phase A: %d\n", value);
+    int value = readStatus(TMC21X_READOUT_MICROSTEP);
+    stream->printf("Microstep position phase A: %d\n", value);
 
-        value = getCurrentStallGuardReading();
-        stream->printf("Stall Guard value: %d\n", value);
+    value = getCurrentStallGuardReading();
+    stream->printf("Stall Guard value: %d\n", value);
 
-        stream->printf("Current setting: %dmA\n", getCurrent());
-        stream->printf("Coolstep current: %dmA\n", getCoolstepCurrent());
+    stream->printf("Current setting: %dmA\n", get_current());
+    stream->printf("Coolstep current: %dmA\n", getCoolstepCurrent());
 
-        stream->printf("Microsteps: 1/%d\n", microsteps);
+    stream->printf("Microsteps: 1/%d\n", microsteps);
 
-        stream->printf("Register dump:\n");
-        stream->printf(" gconf register: %08lX(%ld)\n", gconf_register_value, gconf_register_value);
-        stream->printf(" ihold_irun register: %08lX(%ld)\n", ihold_irun_register_value, ihold_irun_register_value);
-        stream->printf(" tpowerdown register: %08lX(%ld)\n", tpowerdown_register_value, tpowerdown_register_value);
-        stream->printf(" tpwmthrs register: %08lX(%ld)\n", tpwmthrs_register_value, tpwmthrs_register_value);
-        stream->printf(" tcoolthrs register: %08lX(%ld)\n", tcoolthrs_register_value, tcoolthrs_register_value);
-        stream->printf(" thigh register: %08lX(%ld)\n", thigh_register_value, thigh_register_value);
-        stream->printf(" chopconf register: %08lX(%ld)\n", chopconf_register_value, chopconf_register_value);
-        stream->printf(" coolconf register: %08lX(%ld)\n", coolconf_register_value, coolconf_register_value);
-        stream->printf(" pwmconf register: %08lX(%ld)\n", pwmconf_register_value, pwmconf_register_value);
-        stream->printf(" motor_driver_control.xxx.reg %05lX,%05lX,%05lX,%05lX,%05lX,%05lX,%05lX,%05lX,%05lX\n", gconf_register_value, ihold_irun_register_value, tpowerdown_register_value,
+    stream->printf("Register dump:\n");
+    stream->printf(" gconf register: %08lX (%ld)\n", gconf_register_value, gconf_register_value);
+    stream->printf(" ihold_irun register: %08lX (%ld)\n", ihold_irun_register_value, ihold_irun_register_value);
+    stream->printf(" tpowerdown register: %08lX (%ld)\n", tpowerdown_register_value, tpowerdown_register_value);
+    stream->printf(" tpwmthrs register: %08lX (%ld)\n", tpwmthrs_register_value, tpwmthrs_register_value);
+    stream->printf(" tcoolthrs register: %08lX (%ld)\n", tcoolthrs_register_value, tcoolthrs_register_value);
+    stream->printf(" thigh register: %08lX (%ld)\n", thigh_register_value, thigh_register_value);
+    stream->printf(" chopconf register: %08lX (%ld)\n", chopconf_register_value, chopconf_register_value);
+    stream->printf(" coolconf register: %08lX (%ld)\n", coolconf_register_value, coolconf_register_value);
+    stream->printf(" pwmconf register: %08lX (%ld)\n", pwmconf_register_value, pwmconf_register_value);
+    stream->printf(" motor_driver_control.xxx.reg %05lX,%05lX,%05lX,%05lX,%05lX,%05lX,%05lX,%05lX,%05lX\n", gconf_register_value, ihold_irun_register_value, tpowerdown_register_value,
                                                                                                                       tpwmthrs_register_value, tcoolthrs_register_value, thigh_register_value,
                                                                                                                       chopconf_register_value, coolconf_register_value, pwmconf_register_value);
-
+    
+    bool moving = THEROBOT->actuators[actu]->is_moving();
+    // dump out in the format that the processing script needs
+    if (moving) {
+        stream->printf("#sg%d,p%lu,k%u,r,", getCurrentStallGuardReading(), THEROBOT->actuators[actu]->get_current_step(), getCoolstepCurrent());
     } else {
-        // TODO hardcoded for X need to select ABC as needed
-        bool moving = THEROBOT->actuators[0]->is_moving();
-        // dump out in the format that the processing script needs
-        if (moving) {
-            stream->printf("#sg%d,p%lu,k%u,r,", getCurrentStallGuardReading(), THEROBOT->actuators[0]->get_current_step(), getCoolstepCurrent());
-        } else {
-            readStatus(TMC21X_READOUT_MICROSTEP); // get the status bits
-            stream->printf("#s,");
-        }
-        stream->printf("d%d,", THEROBOT->actuators[0]->which_direction() ? -1 : 1);
-        stream->printf("c%u,m%d,", getCurrent(), getMicrosteps());
-        // stream->printf('S');
-        // stream->printf(tmc21XStepper.getSpeed(), DEC);
-        stream->printf("t%d,f%d,", getStallGuardThreshold(), getStallGuardFilter());
-
-        //print out the general cool step config
-        if (isCoolStepEnabled()) stream->printf("Ke+,");
-        else stream->printf("Ke-,");
-
-        stream->printf("Kl%u,Ku%u,Kn%u,Ki%u,Km%u,",
-                       getCoolStepLowerSgThreshold(), getCoolStepUpperSgThreshold(), getCoolStepNumberOfSGReadings(), getCoolStepCurrentIncrementSize(), getCoolStepLowerCurrentLimit());
-
-        //detect the winding status
-        if (isOpenLoadA()) {
-            stream->printf("ao,");
-        } else if(isShortToGroundA()) {
-            stream->printf("ag,");
-        } else {
-            stream->printf("a-,");
-        }
-        //detect the winding status
-        if (isOpenLoadB()) {
-            stream->printf("bo,");
-        } else if(isShortToGroundB()) {
-            stream->printf("bg,");
-        } else {
-            stream->printf("b-,");
-        }
-
-        char temperature = getOverTemperature();
-        if (temperature == 0) {
-            stream->printf("x-,");
-        } else if (temperature == TMC21X_OVERTEMPERATURE_PREWARNING) {
-            stream->printf("xw,");
-        } else {
-            stream->printf("xe,");
-        }
-
-        if (isEnabled()) {
-            stream->printf("e1,");
-        } else {
-            stream->printf("e0,");
-        }
-
-        //write out the current chopper config
-        stream->printf("Cm%d,", (chopconf_register_value & CHOPCONF_CHM) != 0);
-        stream->printf("Co%d,Cb%d,", constant_off_time, blank_time);
-        if ((chopconf_register_value & CHOPCONF_CHM) == 0) {
-            stream->printf("Cs%d,Ce%d,Cd%d,", h_start, h_end, h_decrement);
-        }
-        stream->printf("\n");
+        readStatus(TMC21X_READOUT_MICROSTEP); // get the status bits
+        stream->printf("#s,");
     }
+    stream->printf("d%d,", THEROBOT->actuators[actu]->which_direction() ? -1 : 1);
+    stream->printf("c%u,m%d,", get_current(), get_microsteps());
+    // stream->printf('S');
+    // stream->printf(tmc21XStepper.getSpeed(), DEC);
+    stream->printf("t%d,f%d,", getStallGuardThreshold(), getStallGuardFilter());
+
+    //print out the general cool step config
+    if (isCoolStepEnabled()) stream->printf("Ke+,");
+    else stream->printf("Ke-,");
+
+    stream->printf("Kl%u,Ku%u,Kn%u,Ki%u,Km%u,",
+                   getCoolStepLowerSgThreshold(), getCoolStepUpperSgThreshold(), getCoolStepNumberOfSGReadings(), getCoolStepCurrentIncrementSize(), getCoolStepLowerCurrentLimit());
+
+    //detect the winding status
+    if (isOpenLoadA()) {
+        stream->printf("ao,");
+    } else if(isShortToGroundA()) {
+        stream->printf("ag,");
+    } else {
+        stream->printf("a-,");
+    }
+    //detect the winding status
+    if (isOpenLoadB()) {
+        stream->printf("bo,");
+    } else if(isShortToGroundB()) {
+        stream->printf("bg,");
+    } else {
+        stream->printf("b-,");
+    }
+
+    char temperature = getOverTemperature();
+    if (temperature == 0) {
+        stream->printf("x-,");
+    } else if (temperature == TMC21X_OVERTEMPERATURE_PREWARNING) {
+        stream->printf("xw,");
+    } else {
+        stream->printf("xe,");
+    }
+
+    if (isEnabled()) {
+        stream->printf("e1,");
+    } else {
+        stream->printf("e0,");
+    }
+
+    //write out the current chopper config
+    stream->printf("Cm%d,", (chopconf_register_value & CHOPCONF_CHM) != 0);
+    stream->printf("Co%d,Cb%d,", constant_off_time, blank_time);
+    if ((chopconf_register_value & CHOPCONF_CHM) == 0) {
+        stream->printf("Cs%d,Ce%d,Cd%d,", h_start, h_end, h_decrement);
+    }
+    stream->printf("\n");
+
 }
 
 // check error bits and report, only report once
@@ -1792,14 +1799,14 @@ bool TMC21X::check_error_status_bits(StreamOutput *stream)
     return error;
 }
 
-bool TMC21X::checkAlarm()
+bool TMC21X::check_alarm()
 {
     return check_error_status_bits(THEKERNEL->streams);
 }
 
 // sets a raw register to the value specified, for advanced settings
 // register 255 writes them, 0 displays what registers are mapped to what
-bool TMC21X::setRawRegister(StreamOutput *stream, uint32_t reg, uint32_t val)
+bool TMC21X::set_raw_register(StreamOutput *stream, uint32_t reg, uint32_t val)
 {
     switch(reg) {
         case 255:
@@ -1849,12 +1856,7 @@ bool TMC21X::setRawRegister(StreamOutput *stream, uint32_t reg, uint32_t val)
  */
 uint32_t TMC21X::send2130(uint8_t reg, uint32_t datagram)
 {
-    uint8_t buf[] {
-        (uint8_t)(reg),
-        (uint8_t)(datagram >> 24),
-        (uint8_t)(datagram >> 16),
-        (uint8_t)(datagram >> 8),
-        (uint8_t)(datagram >> 0)};
+    uint8_t buf[] {(uint8_t)(reg), (uint8_t)(datagram >> 24), (uint8_t)(datagram >> 16), (uint8_t)(datagram >> 8), (uint8_t)(datagram >> 0)};
     uint8_t rbuf[5];
 
     //write/read the values
@@ -1865,9 +1867,6 @@ uint32_t TMC21X::send2130(uint8_t reg, uint32_t datagram)
     spi_status_result = rbuf[0];
     uint32_t i_datagram = ((rbuf[1] << 24) | (rbuf[2] << 16) | (rbuf[3] << 8) | (rbuf[4] << 0));
 
-    //if (reg & 0x80) {
-    //  THEKERNEL->streams->printf("W: %02X, %08lX\n", reg & 0x7f, datagram);
-    //}
     //THEKERNEL->streams->printf("sent: %02X, %02X, %02X, %02X, %02X received: %02X, %02X, %02X, %02X, %02X \n", buf[4], buf[3], buf[2], buf[1], buf[0], rbuf[4], rbuf[3], rbuf[2], rbuf[1], rbuf[0]);
 
     return i_datagram;
