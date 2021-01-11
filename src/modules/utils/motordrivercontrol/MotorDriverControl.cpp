@@ -196,9 +196,11 @@ bool MotorDriverControl::config_module(uint16_t cs)
         // select which SPI pins to use
         PinName mosi, miso, sclk;
         if(spi_channel == 0) {
-            mosi = P0_18; miso = P0_17; sclk = P0_15;
+            // Channel 0
+            mosi=SPI1_MOSI; miso=SPI1_MISO; sclk=SPI1_SCK;
         } else if(spi_channel == 1) {
-            mosi = P0_9; miso = P0_8; sclk = P0_7;
+            // Channel 1
+            mosi=SPI2_MOSI; miso=SPI2_MISO; sclk=SPI2_SCK;
         } else {
             printf("MotorDriverControl %c ERROR: Unknown SPI Channel: %d\n", axis, spi_channel);
             return false;
