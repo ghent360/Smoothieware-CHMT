@@ -271,6 +271,7 @@ try_again:
                                 return;
 
                             case 115: { // M115 Get firmware version and capabilities
+                                delete gcode;
                                 Version vers;
 
                                 new_message.stream->printf(
